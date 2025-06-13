@@ -251,9 +251,9 @@ const SidebarContent = (props) => {
             </li>
 
             <li>
-              <Link to="/branch">
+              <Link to="/customer">
                 <i className="bx bx-home-circle"></i>
-                <span>{props.t("Quản lí chi nhánh")}</span>
+                <span>{props.t("Quản lí khách hàng")}</span>
               </Link>
             </li>
 

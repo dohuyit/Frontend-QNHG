@@ -6,7 +6,6 @@ import FormSelect2 from "./FormSelect2";
 import ReactColorPicker from "./ReactColorpicker";
 import BootstrapMaxLength from "./BootstrapMaxLength";
 import BootstrapTouchSpin from "./BootstrapTouchSpin";
-import CssSwitch from "./CssSwitch";
 import BootstrapDatePicker from "./BootstrapDatePicker";
 import DatePicker from "./DatePicker";
 

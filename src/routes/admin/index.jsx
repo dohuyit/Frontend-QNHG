@@ -76,6 +76,7 @@ import UiNotifications from "@pages/admin/Ui/UINotifications";
 import UiPlaceholders from "@pages/admin/Ui/UiPlaceholders";
 import UiToasts from "@pages/admin/Ui/UiToast";
 import UiUtilities from "@pages/admin/Ui/UiUtilities";
+import SwitchUI from "@components/admin/ui/SwitchUI";
 
 // //Pages
 import PagesStarter from "@pages/admin/Utility/pages-starter";
@@ -87,13 +88,15 @@ import PagesPricing from "@pages/admin/Utility/pages-pricing";
 import Pages404 from "@pages/admin/Utility/pages-404";
 import Pages500 from "@pages/admin/Utility/pages-500";
 
-import PageBranch from "@pages/admin/Branches/index";
+import PageCustomer from "@pages/admin/Customers/index";
+import UpdateCustomer from "@components/admin/Customers/UpdateCustomer";
 
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard /> },
 
-  //chat
-  { path: "/branch", component: <PageBranch /> },
+  //Customer routes
+  { path: "/customer", component: <PageCustomer /> },
+  { path: "/customer/edit/:id", component: <UpdateCustomer /> },
 
   //File Manager
   { path: "/apps-filemanager", component: <FileManager /> },
@@ -140,6 +143,7 @@ const authProtectedRoutes = [
   { path: "/ui-placeholders", component: <UiPlaceholders /> },
   { path: "/ui-toasts", component: <UiToasts /> },
   { path: "/ui-utilities", component: <UiUtilities /> },
+  { path: "/ui-switch", component: <SwitchUI /> },
 
   //   //Utility
   { path: "/pages-starter", component: <PagesStarter /> },
