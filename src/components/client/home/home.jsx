@@ -17,7 +17,6 @@ export default function Home() {
     slidesToShow: 4,
     slidesToScroll: 1,
     arrows: true,
-
     responsive: [
       { breakpoint: 1200, settings: { slidesToShow: 4 } },
       { breakpoint: 992, settings: { slidesToShow: 2 } },
@@ -28,7 +27,6 @@ export default function Home() {
   return (
     <>
       {/* Đã xóa <Header /> */}
-      {/* Section 1: Tiêu đề */}
       {/* Section 1: tiêu đề */}
       <section className="home-section">
         <div className="home-content">
@@ -71,7 +69,6 @@ export default function Home() {
 
       {/* Section 4: Khuyến mãi & Tin tức */}
       <section className="promo-cards-section">
-        {/* <h2 className="section-title">Ưu đãi &amp; Tin tức</h2> */}
         <div className="slider-wrapper promo">
           <Slider {...settings}>
             {endows.map(item => (
