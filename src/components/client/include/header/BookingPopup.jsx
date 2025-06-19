@@ -9,8 +9,7 @@ const BookingPopup = ({ isOpen, onClose }) => {
   return (
     <div className="popup-overlay">
       <div className="popup">
-        <h2>Đặt bàn</h2>
-
+        <h2 className="popup-title">Đặt bàn</h2>
         <form className="form">
           {/* THÔNG TIN CỦA BẠN */}
           <div className="form-group">
@@ -22,7 +21,6 @@ const BookingPopup = ({ isOpen, onClose }) => {
           {/* THÔNG TIN ĐẶT BÀN */}
           <div className="form-group">
             <h4>Thông tin đặt bàn</h4>
-
             <div className="row">
               <div className="form-field">
                 <label>Số lượng khách</label>
@@ -32,25 +30,22 @@ const BookingPopup = ({ isOpen, onClose }) => {
                   <button type="button" onClick={() => setGuestCount(guestCount + 1)}>+</button>
                 </div>
               </div>
-
               <div className="form-field">
                 <label>Ngày đặt</label>
                 <input type="date" />
               </div>
-
               <div className="form-field">
                 <label>Giờ đến</label>
                 <input type="time" />
               </div>
             </div>
-
             <textarea placeholder="Ghi chú" />
           </div>
 
-          {/* BUTTON */}
-          <div className="actions">
-            <button type="button" onClick={onClose}>Đóng</button>
-            <button type="submit">ĐẶT BÀN NGAY</button>
+          {/* BUTTONS dưới cùng */}
+          <div className="actions-bottom">
+            <button type="button" className="close-button-bottom" onClick={onClose}>×</button>
+            <button type="submit" className="submit-button-bottom">ĐẶT BÀN NGAY</button>
           </div>
         </form>
       </div>
