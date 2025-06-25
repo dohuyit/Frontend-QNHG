@@ -2,10 +2,11 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { connect } from "react-redux";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Import Routes
-import { authProtectedRoutes, publicRoutes } from "@routes/admin/index.jsx";
+import {  publicRoutes } from "@routes/admin/index.jsx";
 //FE
 import { clientRoutes } from "@routes/client/index.jsx";
 // Middleware
@@ -20,8 +21,9 @@ import "@assets/admin/scss/theme.scss";
 import fakeBackend from "@helpers/admin/AuthType/fakeBackend";
 
 // Layouts
-import BaseLayout from "@layouts/BaseLayout.jsx";
+import AdminLayout from "@layouts/AdminLayout";
 import ClientLayout from "@components/client/include/ClientLayout";
+import { authProtectedRoutes } from "@routes/admin";
 
 fakeBackend();
 
@@ -39,13 +41,22 @@ const App = (props) => {
         {publicRoutes.map((route, idx) => (
           <Route
             path={route.path}
-            element={<BaseLayout>{route.component}</BaseLayout>}
+            element={<AdminLayout>{route.component}</AdminLayout>}
             key={idx}
             exact={true}
           />
         ))}
 
-        {authProtectedRoutes.map((route, idx) => (
+         {authProtectedRoutes.map((route, idx) => (
+          <Route
+            path={route.path}
+            element={<Layout>{route.component}</Layout>}
+            key={idx}
+            exact={true}
+          />
+        ))}
+
+        {/* {authProtectedRoutes.map((route, idx) => (
           <Route
             path={route.path}
             element={
@@ -56,7 +67,7 @@ const App = (props) => {
             key={idx}
             exact={true}
           />
-        ))}
+        ))} */}
 
         {/* ✅ Client Routes — Header + Footer tự động */}
         {clientRoutes.map((route, idx) => (

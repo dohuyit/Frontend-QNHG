@@ -42,15 +42,56 @@ const Header = () => {
           </Link>
           <span className="hotline-main">HOTLINE <b>*2005</b></span>
         </div>
-        <div className="header-right">
-          <nav className="nav-links">
-            <Link to="/home-page" className={`nav-link ${location.pathname.includes("/home-page") ? "active" : ""}`}>TRANG CHỦ</Link>
-            <Link to="/menu-page" className={`nav-link ${location.pathname.includes("/menu-page") ? "active" : ""}`}>THỰC ĐƠN</Link>
-            <Link to="/branch-page" className={`nav-link ${location.pathname.includes("/branch-page") ? "active" : ""}`}>CƠ SỞ</Link>
-            <Link to="/endow-page" className={`nav-link ${location.pathname.includes("/endow-page") ? "active" : ""}`}>ƯU ĐÃI</Link>
-            <Link to="/contact-page" className={`nav-link ${location.pathname.includes("/contact-page") ? "active" : ""}`}>LIÊN HỆ</Link>
-            <button className="nav-button" onClick={() => setShowPopup(true)}>ĐẶT BÀN</button>
-          </nav>
+
+        <div className="nav-menu">
+          <div className="nav-links">
+            <Link
+              to="/"
+              className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
+            >
+              Trang Chủ
+            </Link>
+            <Link
+              to="/menu-page"
+              className={`nav-link ${
+                location.pathname.includes("/menu-page") ? "active" : ""
+              }`}
+            >
+              Thực Đơn
+            </Link>
+            <Link
+              to="/branch-page"
+              className={`nav-link ${
+                location.pathname.includes("/branch-page") ? "active" : ""
+              }`}
+            >
+              Cơ Sở
+            </Link>
+            <Link
+              to="/endow-page"
+              className={`nav-link ${
+                location.pathname.includes("/endow-page") ? "active" : ""
+              }`}
+            >
+              Ưu Đãi
+            </Link>
+            <Link
+              to="/contact-page"
+              className={`nav-link ${
+                location.pathname.includes("/contact-page") ? "active" : ""
+              }`}
+            >
+              Liên Hệ
+            </Link>
+
+            {/* Nút Đặt Bàn mở popup */}
+            <button
+              className="nav-button"
+              onClick={() => setShowPopup(true)}
+            >
+              ĐẶT BÀN
+            </button>
+          </div>
         </div>
         {showPopup && (
           <BookingPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />

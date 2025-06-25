@@ -1,0 +1,43 @@
+.arrival-time-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #174229;
+  }
+
+  .arrival-toggle {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    font-size: 13.5px;
+    color: #333;
+    border-radius: 6px;
+    text-align: left;
+
+     &:hover,
+  &:focus {
+    background-color: #145d33; // Màu xanh hover
+    border-color: #f39c12;
+    color: #fff;
+    box-shadow: none;
+  }
+  }
+
+  .arrival-menu {
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 13.5px;
+    border-radius: 8px;
+  }
+
+  .dropdown-item.active,
+  .dropdown-item:hover {
+    background-color: #f39c12;
+    color: white;
+  }
+}

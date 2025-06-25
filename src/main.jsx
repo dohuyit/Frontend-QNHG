@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./i18n.jsx";
 import { Provider } from "react-redux";
 import store from "@store/admin/index.js";
+// import "react-toastify/dist/ReactToastify.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.Fragment>
@@ -13,6 +14,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
+       {/* <ToastContainer /> */}
     </Provider>
   </React.Fragment>
 );

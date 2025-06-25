@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Row, Col, FormGroup } from "reactstrap";
 
@@ -42,6 +42,12 @@ import {
 } from "@constants/admin/layout";
 
 const RightSidebar = (props) => {
+  useEffect(() => {
+    if (!props.leftSideBarTheme || !Object.values(leftSideBarThemeTypes).includes(props.leftSideBarTheme)) {
+      props.changeSidebarTheme(leftSideBarThemeTypes.LIGHT);
+    }
+  }, []);
+
   return (
     <React.Fragment>
       <div className="right-bar" id="right-bar">

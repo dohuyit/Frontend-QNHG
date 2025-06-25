@@ -1,0 +1,121 @@
+.area-swiper {
+    position: relative;
+    padding-bottom: 50px; /* Increased padding to give more space for controls */
+  }
+  
+  /* --- Swiper Navigation Buttons (Prev/Next) --- */
+  .area-swiper .swiper-button-prev,
+  .area-swiper .swiper-button-next {
+    position: absolute;
+    bottom: 10px; /* Align to the bottom */
+    top: auto; /* Ensure it's not influenced by 'top' property */
+    z-index: 10;
+    width: 40px; /* Slightly larger for better touch target */
+    height: 40px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); /* Gradient blue background */
+    color: #ffffff; /* White icon color */
+    border-radius: 50%; /* Perfect circle */
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); /* Softer, more pronounced shadow */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1; /* Always visible */
+    cursor: pointer;
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+  
+    &:hover {
+      background: linear-gradient(135deg, #0056b3 0%, #004085 100%); /* Darker gradient on hover */
+      box-shadow: 0 6px 20px rgba(0, 123, 255, 0.45); /* More intense shadow on hover */
+      transform: translateY(-2px); /* Slight lift effect */
+    }
+  
+    /* Style for the actual arrow icon */
+    &::after {
+      font-size: 20px; /* Larger icon for better visibility */
+      font-weight: bold; /* Make the arrow bolder */
+    }
+  }
+  
+  /* Positioning for Prev button */
+  .area-swiper .swiper-button-prev {
+    left: 20px; /* More padding from the left edge */
+  }
+  
+  /* Positioning for Next button */
+  .area-swiper .swiper-button-next {
+    left: 70px; /* Position next to the prev button with a gap */
+  }
+  
+  
+  /* --- Swiper Pagination Dots --- */
+  .area-swiper .swiper-pagination {
+    position: absolute;
+    bottom: 20px; /* Adjust vertical position */
+    right: 20px; /* Align to the right */
+    left: auto; /* Reset left property */
+    width: auto;
+    text-align: right; /* Align dots to the right */
+  }
+  
+  .area-swiper .swiper-pagination-bullet {
+    background: #cccccc; /* Default grey for inactive dots */
+    opacity: 1; /* Ensure all dots are visible */
+    margin: 0 4px; /* More space between dots */
+    width: 10px; /* Standard size */
+    height: 10px;
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+  
+  .area-swiper .swiper-pagination-bullet-active {
+    background: #007bff; /* Vibrant blue for active dot */
+    width: 12px; /* Slightly larger active dot */
+    height: 12px;
+    transform: scale(1.2); /* Slight scale effect for active dot */
+  }
+
+.area-card.selected {
+  border: 2px solid #007bff !important;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+  position: relative;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.area-selected-indicator {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #4fc3f7 60%, #007bff 100%);
+  box-shadow: 0 0 8px 2px #4fc3f7;
+  animation: area-indicator-glow 1s infinite alternate;
+  vertical-align: middle;
+}
+
+@keyframes area-indicator-glow {
+  from {
+    box-shadow: 0 0 8px 2px #0892d2;
+    opacity: 1;
+  }
+  to {
+    box-shadow: 0 0 16px 6px #007bff;
+    opacity: 0.7;
+  }
+}
+
+.badge-area-selected {
+  background: #f4f6fa;
+  color: #007bff;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  border: 1px solid #e3e8ee;
+  transition: background 0.2s;
+}
+
+.badge-area-selected > span{
+    color: rgb(22, 22, 22);
+}
+
+.badge-area-selected strong {
+  color: #0056b3;
+}

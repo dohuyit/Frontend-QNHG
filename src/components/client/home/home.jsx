@@ -5,7 +5,7 @@ import { introInfo, partyInfo, dishes, endows, promoSlides } from "./data-home";
 import { Link } from "react-router-dom";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import plush from "@assets/client/images/menu/plush.svg";
+// import plush from "@assets/client/images/menu/plush.svg";
 
 // Đã xóa import Header
 
@@ -37,7 +37,9 @@ export default function Home() {
       {/* Section 2: Món mới ra lò */}
       <section className="new-menu-section">
         <h2 className="section-title">Món mới ra lò</h2>
+       
         <div className="slider-wrapper">
+          <div className="slider-inner">
           <Slider {...settings}>
             {dishes.map(d => (
               <div key={d.id} className="card-item small">
@@ -52,20 +54,24 @@ export default function Home() {
               </div>
             ))}
           </Slider>
+          </div>
         </div>
+        
         <div className="btn-wrap">
           <button className="btn-view-menu">Xem thực đơn</button>
         </div>
       </section>
 
       {/* Section 3: chữ chạy */}
-      <section className="promotion-section">
-        <div className="promotion-wrapper">
-          <span className="promotion-text">
-            ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖
-          </span>
-        </div>
-      </section>
+   <section className="promotion-section">
+  <div className="marquee">
+    <div className="marquee-track">
+      <div className="marquee-content">
+        ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖 ƯU ĐÃI HOÀNG GIA 🔖
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Section 4: Khuyến mãi & Tin tức */}
       <section className="promo-cards-section">

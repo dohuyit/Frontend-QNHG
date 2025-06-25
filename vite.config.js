@@ -26,6 +26,8 @@ export default defineConfig({
       // eslint-disable-next-line no-undef
       "@locales": resolve(__dirname, "src/locales"),
       "@layouts": resolve(__dirname, "src/layouts"),
+      "@services": resolve(__dirname, "src/services"),
+      "@hooks": resolve(__dirname, "src/hooks"),
     },
   },
 });

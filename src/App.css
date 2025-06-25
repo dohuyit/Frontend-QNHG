@@ -40,3 +40,16 @@
 .read-the-docs {
   color: #888;
 }
+
+
+.invalid-feedback {
+  font-size: 0.95em; /* Tăng kích thước chữ (mặc định của Bootstrap thường là 0.875em) */
+  font-weight: bold; /* Làm đậm chữ */
+  color: #dc3545; /* Đảm bảo màu đỏ chuẩn của Bootstrap */
+  margin-top: 0.25rem; /* Có thể điều chỉnh khoảng cách trên nếu cần */
+}
+
+/* Nếu bạn muốn áp dụng cho các input bị invalid nhưng không có FormFeedback đi kèm */
+.form-control.is-invalid {
+  border-color: #dc3545;
+}

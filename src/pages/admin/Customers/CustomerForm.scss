@@ -1,0 +1,48 @@
+// CustomerForm.scss
+
+.invalid-feedback {
+  font-size: 0.95em;
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+// Cập nhật style cho ảnh preview
+.avatar-preview-container {
+  margin-top: 1rem;
+  text-align: center;
+  position: relative;
+  // Box shadow cho ảnh nếu cần, hoặc bạn có thể bỏ đi
+  // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden; // Đảm bảo ảnh không tràn ra ngoài
+  display: inline-block; // Quan trọng để bao bọc ảnh chính xác
+}
+
+.avatar-preview-image {
+  max-width: 100%; // Ảnh không vượt quá chiều rộng của container
+  height: auto; // Giữ tỉ lệ khung hình
+  display: block; // Loại bỏ khoảng trắng thừa dưới ảnh
+  // border-radius: 50%; // Bỏ border-radius để có hình chữ nhật
+  cursor: pointer; // Thể hiện rằng ảnh có thể click
+  border: 1px solid #ddd; // Thêm viền nhẹ
+  padding: 5px; // Khoảng cách nhỏ bên trong viền
+}
+
+.avatar-remove-button {
+  position: absolute;
+  top: 5px; // Điều chỉnh vị trí của nút X
+  right: 5px; // Điều chỉnh vị trí của nút X
+  width: 28px; // Kích thước nút
+  height: 28px; // Kích thước nút
+  font-size: 16px; // Kích thước chữ X
+  line-height: 1;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%; // Giữ hình tròn cho nút X
+  padding: 0; // Xóa padding mặc định của button
+}
