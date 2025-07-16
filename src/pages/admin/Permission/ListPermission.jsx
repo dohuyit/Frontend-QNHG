@@ -10,6 +10,8 @@ import {
     Form,
     FormGroup,
     Label,
+    InputGroup,
+    InputGroupText,
 } from "reactstrap";
 import Swal from "sweetalert2";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
@@ -96,22 +98,39 @@ export default function ListPermission() {
             </div>
 
             <Card className="mb-4">
-                <CardHeader className="bg-white border-bottom-0 d-flex justify-content-between">
-                    <Input
-                        type="search"
-                        placeholder="Tìm kiếm quyền..."
-                        value={keyword}
-                        onChange={(e) => {
-                            setPage(1);
-                            setKeyword(e.target.value);
-                        }}
-                        style={{ maxWidth: 250 }}
-                    />
-                    <Button color="light" className="border" onClick={() => setShowFilter(true)}>
-                        <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
-                    </Button>
+                <CardHeader className="bg-white border-bottom-0">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        {/* Ô tìm kiếm quyền có icon */}
+                        <div style={{ width: 320 }}>
+                            <div className="input-group">
+          <span className="input-group-text">
+            <i className="bi bi-search" />
+          </span>
+                                <Input
+                                    type="search"
+                                    placeholder="Tìm kiếm quyền..."
+                                    value={keyword}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        setKeyword(e.target.value);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Nút lọc nâng cao */}
+                        <Button
+                            color="light"
+                            className="border"
+                            onClick={() => setShowFilter(true)}
+                            style={{ minWidth: 140 }}
+                        >
+                            <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                        </Button>
+                    </div>
                 </CardHeader>
             </Card>
+
 
             {loading ? (
                 <p>Đang tải dữ liệu...</p>

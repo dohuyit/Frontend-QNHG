@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
     Card,
     CardHeader,
-    Row,
-    Col,
     Button,
     Badge,
     Input,
@@ -18,6 +16,7 @@ import Swal from "sweetalert2";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import CreateRole from "./CreateRole";
 import { getRoles, deleteRole } from "@services/admin/roleService";
+import CustomerFilterBar from "@components/admin/CustomerFilterBar"; // ✅ import component tái sử dụng
 
 export default function ListRole() {
     const [roles, setRoles] = useState([]);
@@ -66,7 +65,7 @@ export default function ListRole() {
             confirmButtonColor: "#d33",
             cancelButtonColor: "#3085d6",
             confirmButtonText: "Xóa",
-            cancelButtonText: "Hủy"
+            cancelButtonText: "Hủy",
         }).then((result) => {
             if (result.isConfirmed) {
                 deleteRole(id)
@@ -97,21 +96,17 @@ export default function ListRole() {
 
             <Card className="mb-4">
                 <CardHeader className="bg-white border-bottom-0">
-                    <Row className="align-items-center">
-                        <Col md="12" sm="12" className="d-flex justify-content-between align-items-center">
-                            <Input
-                                type="search"
-                                placeholder="Tìm kiếm vai trò..."
-                                value={keyword}
-                                onChange={(e) => setKeyword(e.target.value)}
-                                style={{ maxWidth: 250 }}
-                            />
-                            <Button color="light" className="border" onClick={() => setShowFilter(true)}>
-                                <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
-                            </Button>
-                        </Col>
-
-                    </Row>
+                    {/* ✅ Sử dụng lại FilterBar */}
+                    <CustomerFilterBar
+                        searchKeyword={keyword}
+                        onSearchChange={(val) => {
+                            setKeyword(val);
+                        }}
+                        placeholder="Tìm kiếm vai trò..."
+                        showDropdown={false}
+                        onOpenAdvancedFilter={() => setShowFilter(true)}
+                        buttonLabel="Lọc nâng cao"
+                    />
                 </CardHeader>
             </Card>
 
@@ -184,7 +179,6 @@ export default function ListRole() {
                         </table>
                     </div>
 
-                    {/* Pagination */}
                     {meta.total > meta.per_page && (
                         <div className="d-flex justify-content-end mt-3 align-items-center gap-2">
                             <Button
@@ -209,7 +203,6 @@ export default function ListRole() {
                 </>
             )}
 
-            {/* Offcanvas lọc nâng cao */}
             <Offcanvas direction="end" isOpen={showFilter} toggle={() => setShowFilter(false)}>
                 <OffcanvasHeader toggle={() => setShowFilter(false)}>
                     Bộ lọc nâng cao
@@ -240,7 +233,6 @@ export default function ListRole() {
                 </OffcanvasBody>
             </Offcanvas>
 
-            {/* Modal thêm/sửa */}
             {showModal && (
                 <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
                     <div className="modal-dialog">

@@ -3,7 +3,9 @@ import {
     Button,
     Input,
     Card,
-    CardHeader
+    CardHeader,
+    InputGroup,
+    InputGroupText,
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { getUserRoleList, deleteUserRole } from "@services/admin/userRoleService";
@@ -60,16 +62,25 @@ export default function ListUserRole() {
             </div>
 
             <Card className="mb-4">
-                <CardHeader className="bg-white border-bottom-0 d-flex justify-content-between">
-                    <Input
-                        type="search"
-                        placeholder="Tìm theo username hoặc email..."
-                        value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
-                        style={{ maxWidth: 250 }}
-                    />
+                <CardHeader className="bg-white border-bottom-0">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div style={{ width: 320 }}>
+                            <div className="input-group">
+          <span className="input-group-text">
+            <i className="bi bi-search" />
+          </span>
+                                <Input
+                                    type="search"
+                                    placeholder="Tìm theo username hoặc email..."
+                                    value={keyword}
+                                    onChange={(e) => setKeyword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </CardHeader>
             </Card>
+
 
             {loading ? (
                 <p>Đang tải dữ liệu...</p>

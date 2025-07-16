@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
     Card,
     CardHeader,
-    Input,
     Button,
     Offcanvas,
     OffcanvasHeader,
@@ -10,10 +9,12 @@ import {
     Form,
     FormGroup,
     Label,
+    Input,
 } from "reactstrap";
 import Swal from "sweetalert2";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import CreatePermissionGroup from "./CreatePermissionGroup";
+import CustomerFilterBar from "@components/admin/CustomerFilterBar"; // ✅ đúng đường dẫn theo cấu trúc của bạn
 import { getPermissionGroups, deletePermissionGroup } from "@services/admin/permissiongroupService";
 
 export default function ListPermissionGroup() {
@@ -58,7 +59,7 @@ export default function ListPermissionGroup() {
             confirmButtonColor: "#d33",
             cancelButtonColor: "#3085d6",
             confirmButtonText: "Xóa",
-            cancelButtonText: "Hủy"
+            cancelButtonText: "Hủy",
         }).then((res) => {
             if (res.isConfirmed) {
                 deletePermissionGroup(id).then(() => {
@@ -74,29 +75,31 @@ export default function ListPermissionGroup() {
             <Breadcrumbs title="Danh sách nhóm quyền" breadcrumbItem="Quản lý nhóm quyền" />
 
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button color="primary" onClick={() => {
-                    setEditingGroup(null);
-                    setShowModal(true);
-                }}>
+                <Button
+                    color="primary"
+                    onClick={() => {
+                        setEditingGroup(null);
+                        setShowModal(true);
+                    }}
+                >
                     + Thêm mới
                 </Button>
             </div>
 
             <Card className="mb-4">
-                <CardHeader className="bg-white border-bottom-0 d-flex justify-content-between">
-                    <Input
-                        type="search"
-                        placeholder="Tìm kiếm nhóm quyền..."
-                        value={keyword}
-                        onChange={(e) => {
+                <CardHeader className="bg-white border-bottom-0">
+                    {/* ✅ Sử dụng lại component filter bar */}
+                    <CustomerFilterBar
+                        searchKeyword={keyword}
+                        onSearchChange={(val) => {
                             setPage(1);
-                            setKeyword(e.target.value);
+                            setKeyword(val);
                         }}
-                        style={{ maxWidth: 250 }}
+                        placeholder="Tìm kiếm nhóm quyền..."
+                        showDropdown={false}
+                        onOpenAdvancedFilter={() => setShowFilter(true)}
+                        buttonLabel="Lọc nâng cao"
                     />
-                    <Button color="light" className="border" onClick={() => setShowFilter(true)}>
-                        <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
-                    </Button>
                 </CardHeader>
             </Card>
 
@@ -117,7 +120,9 @@ export default function ListPermissionGroup() {
                         <tbody>
                         {groups.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="text-center">Không có nhóm quyền nào.</td>
+                                <td colSpan="5" className="text-center">
+                                    Không có nhóm quyền nào.
+                                </td>
                             </tr>
                         ) : (
                             groups.map((group) => (
@@ -168,8 +173,8 @@ export default function ListPermissionGroup() {
                         Trước
                     </Button>
                     <span>
-                        Trang {meta.current_page} / {meta.last_page}
-                    </span>
+            Trang {meta.current_page} / {meta.last_page}
+          </span>
                     <Button
                         color="light"
                         disabled={!meta.next_page_url}
@@ -180,7 +185,7 @@ export default function ListPermissionGroup() {
                 </div>
             )}
 
-            {/* Bộ lọc nâng cao */}
+            {/* Offcanvas: Lọc nâng cao */}
             <Offcanvas
                 direction="end"
                 isOpen={showFilter}
