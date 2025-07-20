@@ -37,11 +37,6 @@ export const updateKitchenOrderStatus = (id, data) => {
     return apiClient.post(`/kitchen-orders/${id}/update-status`, data);
 };
 
-// Hủy đơn bếp
-export const cancelKitchenOrder = (id) => {
-    return apiClient.post(`/kitchen-orders/${id}/cancel`);
-};
-
 // Đếm số lượng đơn bếp theo trạng thái
 export const countKitchenOrdersByStatus = () => {
     return apiClient.get(`/kitchen-orders/count-by-status`);
