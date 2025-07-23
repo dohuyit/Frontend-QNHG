@@ -191,28 +191,67 @@ export default function ListPermission() {
                 </div>
             )}
 
-            {/* Pagination */}
-            {meta.total > meta.per_page && (
-                <div className="d-flex justify-content-end mt-3 align-items-center gap-2">
+            {meta.total > meta.perPage && (
+                <div className="d-flex justify-content-end mt-3 align-items-center gap-2 flex-wrap">
                     <Button
                         color="light"
-                        disabled={!meta.prev_page_url}
-                        onClick={() => setPage(meta.current_page - 1)}
+                        disabled={page === 1}
+                        onClick={() => setPage(1)}
+                    >
+                        &laquo;
+                    </Button>
+                    <Button
+                        color="light"
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
                     >
                         Trước
                     </Button>
-                    <span>
-                        Trang {meta.current_page} / {meta.last_page}
-                    </span>
+
+                    {(() => {
+                        const visiblePageCount = 3;
+                        const half = Math.floor(visiblePageCount / 2);
+                        let start = Math.max(1, page - half);
+                        let end = Math.min(meta.totalPage, start + visiblePageCount - 1);
+
+                        // đảm bảo luôn đủ 3 nút nếu có thể
+                        if (end - start < visiblePageCount - 1) {
+                            start = Math.max(1, end - visiblePageCount + 1);
+                        }
+
+                        const buttons = [];
+                        for (let i = start; i <= end; i++) {
+                            buttons.push(
+                                <Button
+                                    key={i}
+                                    color={page === i ? "primary" : "light"}
+                                    onClick={() => setPage(i)}
+                                >
+                                    {i}
+                                </Button>
+                            );
+                        }
+                        return buttons;
+                    })()}
+
+
                     <Button
                         color="light"
-                        disabled={!meta.next_page_url}
-                        onClick={() => setPage(meta.current_page + 1)}
+                        disabled={page === meta.totalPage}
+                        onClick={() => setPage(page + 1)}
                     >
                         Sau
                     </Button>
+                    <Button
+                        color="light"
+                        disabled={page === meta.totalPage}
+                        onClick={() => setPage(meta.totalPage)}
+                    >
+                        &raquo;
+                    </Button>
                 </div>
             )}
+
 
             {/* Bộ lọc nâng cao */}
             <Offcanvas

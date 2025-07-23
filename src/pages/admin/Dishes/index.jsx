@@ -14,6 +14,9 @@ import {
   NavLink,
   TabContent,
   TabPane,
+  Offcanvas,
+  OffcanvasHeader,
+  OffcanvasBody,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListDish from "@components/admin/Dishes/ListDish";
@@ -21,9 +24,16 @@ import ListTrashDish from "@components/admin/Dishes/ListTrashDish";
 import ModalDish from "@components/admin/Dishes/ModalDish";
 import DeleteModal from "@components/admin/ui/DeleteModal";
 import PaginateUi from "@components/admin/ui/paginateUi";
-import CustomerFilterBar from "@components/admin/CustomerFilterBar";
+import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
+import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 import { convertTagsToString } from "@helpers/admin/api_helper";
-import { getDishes, createDish, updateDish, deleteSoftDish, getDish } from "@services/admin/dishService";
+import {
+  getDishes,
+  createDish,
+  updateDish,
+  deleteSoftDish,
+  getDish,
+} from "@services/admin/dishService";
 import { getCategories } from "@services/admin/categoryService";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
@@ -34,11 +44,15 @@ const DishIndex = () => {
   const [dishes, setDishes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingDishes, setLoadingDishes] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [meta, setMeta] = useState({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
+  const [meta, setMeta] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    last_page: 1,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [newDish, setNewDish] = useState({
@@ -59,6 +73,7 @@ const DishIndex = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteDishId, setDeleteDishId] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
 
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
@@ -75,8 +90,13 @@ const DishIndex = () => {
     { value: "other", label: "Khác" },
   ];
 
-  useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { if (activeTab === "list") fetchDishes(currentPage); }, [currentPage, search, status, categoryFilter, activeTab]);
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "list") fetchDishes(currentPage);
+  }, [currentPage, search, status, categoryFilter, activeTab]);
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus);
     setCurrentPage(1);
@@ -84,15 +104,12 @@ const DishIndex = () => {
   };
 
   const fetchCategories = async () => {
-    setLoadingCategories(true);
     try {
       const res = await getCategories();
       setCategories(res.data.data.items || []);
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi tải danh sách danh mục!");
       setCategories([]);
-    } finally {
-      setLoadingCategories(false);
     }
   };
 
@@ -116,7 +133,7 @@ const DishIndex = () => {
         setDishes([]);
         setMeta({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi tải danh sách món ăn!");
       setDishes([]);
     } finally {
@@ -154,7 +171,10 @@ const DishIndex = () => {
     const formData = new FormData();
     Object.entries(newDish).forEach(([k, v]) => {
       if (k === "tags") {
-        v.split(",").map((tag) => tag.trim()).filter(Boolean).forEach((tag) => formData.append("tags[]", tag));
+        v.split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+          .forEach((tag) => formData.append("tags[]", tag));
       } else if (k === "image" && v instanceof File) {
         formData.append("image_url", v);
       } else {
@@ -163,8 +183,12 @@ const DishIndex = () => {
     });
 
     try {
-      isEdit ? await updateDish(editDishId, formData) : await createDish(formData);
-      toast.success(isEdit ? "Cập nhật món ăn thành công!" : "Thêm món ăn thành công!");
+      isEdit
+        ? await updateDish(editDishId, formData)
+        : await createDish(formData);
+      toast.success(
+        isEdit ? "Cập nhật món ăn thành công!" : "Thêm món ăn thành công!"
+      );
       setModalOpen(false);
       resetNewDish();
       fetchDishes(currentPage);
@@ -176,8 +200,17 @@ const DishIndex = () => {
   };
 
   const handleDeleteClick = (id) => {
-    Swal.fire({ title: "Xóa món ăn?", icon: "warning", showCancelButton: true, confirmButtonText: "Xóa" })
-        .then((res) => { if (res.isConfirmed) { setDeleteDishId(id); setDeleteModalOpen(true); } });
+    Swal.fire({
+      title: "Xóa món ăn?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+    }).then((res) => {
+      if (res.isConfirmed) {
+        setDeleteDishId(id);
+        setDeleteModalOpen(true);
+      }
+    });
   };
 
   const handleDeleteDish = async () => {
@@ -194,7 +227,18 @@ const DishIndex = () => {
   };
 
   const resetNewDish = () => {
-    setNewDish({ category_id: "", name: "", description: "", original_price: "", selling_price: "", unit: "plate", image_url: "", tags: "", is_featured: false, status: "active" });
+    setNewDish({
+      category_id: "",
+      name: "",
+      description: "",
+      original_price: "",
+      selling_price: "",
+      unit: "plate",
+      image_url: "",
+      tags: "",
+      is_featured: false,
+      status: "active",
+    });
     setErrors({});
     setIsEdit(false);
     setEditDishId(null);
@@ -212,83 +256,187 @@ const DishIndex = () => {
   };
 
   return (
-      <div className="page-content">
-        <Breadcrumbs title="Quản Lý Món Ăn" breadcrumbItem={activeTab === "list" ? "Danh sách món ăn" : "Thùng rác"} />
+    <div className="page-content">
+      <Breadcrumbs
+        title="Quản Lý Món Ăn"
+        breadcrumbItem={activeTab === "list" ? "Danh sách món ăn" : "Thùng rác"}
+      />
 
-        <Card className="mb-4">
-          <CardHeader className="bg-white border-bottom-0">
-            <Nav tabs>
-              <NavItem>
-                <NavLink className={activeTab === "list" ? "active" : ""} onClick={() => toggleTab("list")}>Danh sách món ăn</NavLink>
-              </NavItem>
-              <NavItem>
-                <NavLink className={activeTab === "trash" ? "active" : ""} onClick={() => toggleTab("trash")}>Thùng rác</NavLink>
-              </NavItem>
-            </Nav>
-          </CardHeader>
-        </Card>
+      <Card className="mb-4">
+        <CardHeader className="bg-white border-bottom-0">
+          <Nav tabs>
+            <NavItem>
+              <NavLink
+                className={activeTab === "list" ? "active" : ""}
+                onClick={() => toggleTab("list")}
+              >
+                Danh sách món ăn
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
+                className={activeTab === "trash" ? "active" : ""}
+                onClick={() => toggleTab("trash")}
+              >
+                Thùng rác
+              </NavLink>
+            </NavItem>
+          </Nav>
+        </CardHeader>
+      </Card>
 
-        <TabContent activeTab={activeTab}>
-          <TabPane tabId="list">
-            <Card className="mb-4">
-              <CardHeader className="bg-white border-bottom-0">
-                <Row className="align-items-center">
-                  <Col md={7} sm={12} className="mb-2 mb-md-0 d-flex align-items-center">
-                    <div style={{ display: "flex" }}>
-                      {statusOptions.map((opt) => (
-                          <button key={opt.value} onClick={() => handleStatusChange(opt.value)} style={{ background: "none", border: "none", padding: "8px 24px", fontWeight: status === opt.value ? 600 : 400, color: status === opt.value ? "#007bff" : "#333", borderBottom: status === opt.value ? "3px solid #007bff" : "3px solid transparent", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center" }}>
-                            {opt.label}
-                            <Badge color={opt.badgeColor} pill className="ms-2" style={{ fontSize: 13, minWidth: 28 }}>{opt.value === "all" ? meta.total : dishes.filter(d => d.status === opt.value).length}</Badge>
-                          </button>
-                      ))}
-                    </div>
-                  </Col>
-                  <Col md={5} sm={12} className="d-flex justify-content-md-end justify-content-start gap-2">
-                    <Button color="success" onClick={() => { resetNewDish(); setModalOpen(true); }}>
-                      <i className="mdi mdi-plus" /> Thêm mới món ăn
-                    </Button>
-                  </Col>
-                </Row>
-              </CardHeader>
-            </Card>
-
-            <Card className="mb-4">
-              <CardHeader className="bg-white border-bottom-0">
-                <CustomerFilterBar
-                    searchKeyword={search}
-                    onSearchChange={setSearch}
-                    selectedStatus={status}
-                    onStatusChange={handleStatusChange}
-                    statusOptions={statusOptions}
-                    showDropdown={true}
-                    onOpenAdvancedFilter={() => {}}
-                    placeholder="Tìm kiếm món ăn..."
+      <TabContent activeTab={activeTab}>
+        <TabPane tabId="list">
+          <Card className="mb-4">
+            <CardHeader className="bg-white border-bottom-0">
+              <Row className="align-items-center">
+                <Col
+                  md={7}
+                  sm={12}
+                  className="mb-2 mb-md-0 d-flex align-items-center"
                 >
-                  <Input type="select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                    <option value="">Tất cả danh mục</option>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </Input>
-                </CustomerFilterBar>
-              </CardHeader>
-            </Card>
+                  <StatusFilterGroup
+                    options={statusOptions.map((opt) => ({
+                      ...opt,
+                      badgeCount:
+                        opt.value === "all"
+                          ? meta.total
+                          : dishes.filter((d) => d.status === opt.value).length,
+                    }))}
+                    value={status}
+                    onChange={handleStatusChange}
+                    style={{ gap: "1rem" }}
+                  />
+                </Col>
+                <Col
+                  md={5}
+                  sm={12}
+                  className="d-flex justify-content-md-end justify-content-start gap-2"
+                >
+                  <Button
+                    color="success"
+                    onClick={() => {
+                      resetNewDish();
+                      setModalOpen(true);
+                    }}
+                  >
+                    <i className="mdi mdi-plus" /> Thêm mới món ăn
+                  </Button>
+                </Col>
+              </Row>
+            </CardHeader>
+          </Card>
 
-            <Card className="mb-4">
-              <CardBody>
-                {loadingDishes ? <div className="text-center my-5"><Spinner color="primary" /></div> : <ListDish paginate={{ page: meta.current_page, perPage: meta.per_page, totalPage: meta.last_page }} data={dishes} onDelete={handleDeleteClick} onPageChange={setCurrentPage} onEdit={handleDishClick} />}
-              </CardBody>
-            </Card>
+          <Card className="mb-4">
+            <CardHeader className="bg-white border-bottom-0">
+              <SearchAndStatusFilterBar
+                searchValue={search}
+                onSearchChange={setSearch}
+                statusValue={status}
+                onStatusChange={handleStatusChange}
+                statusOptions={statusOptions}
+                searchPlaceholder="Tìm kiếm món ăn..."
+                statusPlaceholder="Tất cả trạng thái"
+                rightContent={
+                  <Button
+                    color="light"
+                    className="border"
+                    style={{ minWidth: 140 }}
+                    onClick={() => setShowAdvancedFilter(true)}
+                  >
+                    <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                  </Button>
+                }
+              />
+            </CardHeader>
+          </Card>
 
-            <PaginateUi currentPage={meta.current_page} totalPages={meta.last_page} onPageChange={setCurrentPage} />
-          </TabPane>
+          <Card className="mb-4">
+            <CardBody>
+              {loadingDishes ? (
+                <div className="text-center my-5">
+                  <Spinner color="primary" />
+                </div>
+              ) : (
+                <ListDish
+                  paginate={{
+                    page: meta.current_page,
+                    perPage: meta.per_page,
+                    totalPage: meta.last_page,
+                  }}
+                  data={dishes}
+                  onDelete={handleDeleteClick}
+                  onPageChange={setCurrentPage}
+                  onEdit={handleDishClick}
+                />
+              )}
+            </CardBody>
+          </Card>
 
-          <TabPane tabId="trash">
-            <ListTrashDish />
-          </TabPane>
-        </TabContent>
+          <PaginateUi
+            currentPage={meta.current_page}
+            totalPages={meta.last_page}
+            onPageChange={setCurrentPage}
+          />
+        </TabPane>
 
-        <ModalDish modalOpen={modalOpen} setModalOpen={setModalOpen} newDish={newDish} setNewDish={setNewDish} categories={categories} unitOptions={unitOptions} onSave={handleSave} isEdit={isEdit} errors={errors} />
-        <DeleteModal show={deleteModalOpen} onDeleteClick={handleDeleteDish} onCloseClick={() => setDeleteModalOpen(false)} />
-      </div>
+        <TabPane tabId="trash">
+          <ListTrashDish />
+        </TabPane>
+      </TabContent>
+      <Offcanvas
+        direction="end"
+        isOpen={showAdvancedFilter}
+        toggle={() => setShowAdvancedFilter(false)}
+      >
+        <OffcanvasHeader toggle={() => setShowAdvancedFilter(false)}>
+          Lọc nâng cao
+        </OffcanvasHeader>
+        <OffcanvasBody>
+          {/* Tùy biến nội dung lọc nâng cao ở đây */}
+          <div>
+            <h6>Lọc theo giá:</h6>
+            <Input type="number" placeholder="Giá từ..." className="mb-2" />
+            <Input type="number" placeholder="...đến" className="mb-3" />
+
+            <h6>Lọc theo đơn vị:</h6>
+            <Input type="select" className="mb-3">
+              <option value="">Tất cả</option>
+              {unitOptions.map((u) => (
+                <option key={u.value} value={u.value}>
+                  {u.label}
+                </option>
+              ))}
+            </Input>
+
+            <Button
+              color="primary"
+              block
+              onClick={() => setShowAdvancedFilter(false)}
+            >
+              Áp dụng
+            </Button>
+          </div>
+        </OffcanvasBody>
+      </Offcanvas>
+
+      <ModalDish
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        newDish={newDish}
+        setNewDish={setNewDish}
+        categories={categories}
+        unitOptions={unitOptions}
+        onSave={handleSave}
+        isEdit={isEdit}
+        errors={errors}
+      />
+      <DeleteModal
+        show={deleteModalOpen}
+        onDeleteClick={handleDeleteDish}
+        onCloseClick={() => setDeleteModalOpen(false)}
+      />
+    </div>
   );
 };
 

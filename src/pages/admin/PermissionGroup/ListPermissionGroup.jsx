@@ -14,12 +14,20 @@ import {
 import Swal from "sweetalert2";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import CreatePermissionGroup from "./CreatePermissionGroup";
-import CustomerFilterBar from "@components/admin/CustomerFilterBar"; // ✅ đúng đường dẫn theo cấu trúc của bạn
-import { getPermissionGroups, deletePermissionGroup } from "@services/admin/permissiongroupService";
+import CustomerFilterBar from "@components/admin/CustomerFilterBar";
+import {
+    getPermissionGroups,
+    deletePermissionGroup,
+} from "@services/admin/permissiongroupService";
 
 export default function ListPermissionGroup() {
     const [groups, setGroups] = useState([]);
-    const [meta, setMeta] = useState({});
+    const [meta, setMeta] = useState({
+        current_page: 1,
+        last_page: 1,
+        per_page: 10,
+        total: 0,
+    });
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingGroup, setEditingGroup] = useState(null);
@@ -43,9 +51,16 @@ export default function ListPermissionGroup() {
 
         getPermissionGroups(params)
             .then((res) => {
-                const result = res.data.data;
+                const result = res?.data?.data || {};
                 setGroups(result.items || []);
-                setMeta(result.meta || {});
+
+                const metaRaw = result.meta || {};
+                setMeta({
+                    current_page: metaRaw.page,
+                    last_page: metaRaw.totalPage,
+                    per_page: metaRaw.perPage,
+                    total: metaRaw.total,
+                });
             })
             .finally(() => setLoading(false));
     };
@@ -72,7 +87,10 @@ export default function ListPermissionGroup() {
 
     return (
         <div className="page-content">
-            <Breadcrumbs title="Danh sách nhóm quyền" breadcrumbItem="Quản lý nhóm quyền" />
+            <Breadcrumbs
+                title="Danh sách nhóm quyền"
+                breadcrumbItem="Quản lý nhóm quyền"
+            />
 
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <Button
@@ -88,7 +106,6 @@ export default function ListPermissionGroup() {
 
             <Card className="mb-4">
                 <CardHeader className="bg-white border-bottom-0">
-                    {/* ✅ Sử dụng lại component filter bar */}
                     <CustomerFilterBar
                         searchKeyword={keyword}
                         onSearchChange={(val) => {
@@ -162,28 +179,58 @@ export default function ListPermissionGroup() {
                 </div>
             )}
 
-            {/* Pagination */}
             {meta.total > meta.per_page && (
-                <div className="d-flex justify-content-end mt-3 align-items-center gap-2">
+                <div className="d-flex justify-content-center mt-3 align-items-center gap-2 flex-wrap">
                     <Button
+                        size="sm"
                         color="light"
-                        disabled={!meta.prev_page_url}
-                        onClick={() => setPage(meta.current_page - 1)}
+                        disabled={meta.current_page <= 1}
+                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                     >
                         Trước
                     </Button>
-                    <span>
-            Trang {meta.current_page} / {meta.last_page}
+
+                    {[...Array(meta.last_page)].map((_, idx) => {
+                        const pageNum = idx + 1;
+                        if (
+                            pageNum === 1 ||
+                            pageNum === meta.last_page ||
+                            (pageNum >= meta.current_page - 1 && pageNum <= meta.current_page + 1)
+                        ) {
+                            return (
+                                <Button
+                                    size="sm"
+                                    key={pageNum}
+                                    color={pageNum === meta.current_page ? "primary" : "light"}
+                                    onClick={() => setPage(pageNum)}
+                                >
+                                    {pageNum}
+                                </Button>
+                            );
+                        } else if (
+                            (pageNum === meta.current_page - 2 && pageNum > 1) ||
+                            (pageNum === meta.current_page + 2 && pageNum < meta.last_page)
+                        ) {
+                            return (
+                                <span key={pageNum} className="px-2">
+            ...
           </span>
+                            );
+                        }
+                        return null;
+                    })}
+
                     <Button
+                        size="sm"
                         color="light"
-                        disabled={!meta.next_page_url}
-                        onClick={() => setPage(meta.current_page + 1)}
+                        disabled={meta.current_page >= meta.last_page}
+                        onClick={() => setPage((prev) => Math.min(meta.last_page, prev + 1))}
                     >
                         Sau
                     </Button>
                 </div>
             )}
+
 
             {/* Offcanvas: Lọc nâng cao */}
             <Offcanvas
@@ -223,7 +270,10 @@ export default function ListPermissionGroup() {
 
             {/* Modal thêm/sửa */}
             {showModal && (
-                <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                <div
+                    className="modal d-block"
+                    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+                >
                     <div className="modal-dialog modal-lg">
                         <div className="modal-content">
                             <div className="modal-header">

@@ -18,11 +18,14 @@ import CreateRole from "./CreateRole";
 import { getRoles, deleteRole } from "@services/admin/roleService";
 import CustomerFilterBar from "@components/admin/CustomerFilterBar"; // ✅ import component tái sử dụng
 
+// ... (imports giữ nguyên)
+
 export default function ListRole() {
     const [roles, setRoles] = useState([]);
     const [meta, setMeta] = useState({});
     const [loading, setLoading] = useState(true);
 
+    const [currentPage, setCurrentPage] = useState(1);
     const [showModal, setShowModal] = useState(false);
     const [editingRole, setEditingRole] = useState(null);
 
@@ -32,8 +35,8 @@ export default function ListRole() {
     const [filterName, setFilterName] = useState("");
 
     useEffect(() => {
-        fetchRoles();
-    }, [keyword, filterStatus]);
+        fetchRoles(currentPage);
+    }, [keyword, filterStatus, currentPage]);
 
     const fetchRoles = (page = 1) => {
         setLoading(true);
@@ -50,8 +53,15 @@ export default function ListRole() {
         getRoles(params)
             .then((res) => {
                 const result = res.data.data;
+                const m = result.meta || {};
+                setMeta({
+                    current_page: m.page,
+                    last_page: m.totalPage,
+                    per_page: m.perPage,
+                    total: m.total,
+                });
                 setRoles(result.items || []);
-                setMeta(result.meta || {});
+                setCurrentPage(m.page || 1);
             })
             .finally(() => setLoading(false));
     };
@@ -71,7 +81,7 @@ export default function ListRole() {
                 deleteRole(id)
                     .then(() => {
                         Swal.fire("Đã xóa!", "Vai trò đã được xóa thành công.", "success");
-                        fetchRoles();
+                        fetchRoles(currentPage);
                     })
                     .catch((err) => {
                         const message = err?.response?.data?.message || "Xóa thất bại.";
@@ -79,6 +89,58 @@ export default function ListRole() {
                     });
             }
         });
+    };
+
+    const renderPagination = () => {
+        if (!meta || meta.last_page <= 1) return null;
+
+        const pages = [];
+        const current = meta.current_page;
+        const last = meta.last_page;
+
+        let start = Math.max(current - 1, 1);
+        let end = Math.min(current + 1, last);
+
+        if (current === 1) end = Math.min(3, last);
+        if (current === last) start = Math.max(last - 2, 1);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        return (
+            <div className="d-flex justify-content-center mt-3 align-items-center gap-2">
+                <Button
+                    color="light"
+                    disabled={current === 1}
+                    onClick={() => setCurrentPage(current - 1)}
+                >
+                    &laquo;
+                </Button>
+
+                {pages.map((page) => (
+                    <Button
+                        key={page}
+                        color={page === current ? "primary" : "light"}
+                        onClick={() => setCurrentPage(page)}
+                    >
+                        {page}
+                    </Button>
+                ))}
+
+                <Button
+                    color="light"
+                    disabled={current === last}
+                    onClick={() => setCurrentPage(current + 1)}
+                >
+                    &raquo;
+                </Button>
+
+                <span className="ms-2">
+                    Trang {current} / {last}
+                </span>
+            </div>
+        );
     };
 
     return (
@@ -96,12 +158,9 @@ export default function ListRole() {
 
             <Card className="mb-4">
                 <CardHeader className="bg-white border-bottom-0">
-                    {/* ✅ Sử dụng lại FilterBar */}
                     <CustomerFilterBar
                         searchKeyword={keyword}
-                        onSearchChange={(val) => {
-                            setKeyword(val);
-                        }}
+                        onSearchChange={(val) => setKeyword(val)}
                         placeholder="Tìm kiếm vai trò..."
                         showDropdown={false}
                         onOpenAdvancedFilter={() => setShowFilter(true)}
@@ -179,27 +238,7 @@ export default function ListRole() {
                         </table>
                     </div>
 
-                    {meta.total > meta.per_page && (
-                        <div className="d-flex justify-content-end mt-3 align-items-center gap-2">
-                            <Button
-                                color="light"
-                                disabled={!meta.prev_page_url}
-                                onClick={() => fetchRoles(meta.current_page - 1)}
-                            >
-                                Trước
-                            </Button>
-                            <span>
-                                Trang {meta.current_page} / {meta.last_page}
-                            </span>
-                            <Button
-                                color="light"
-                                disabled={!meta.next_page_url}
-                                onClick={() => fetchRoles(meta.current_page + 1)}
-                            >
-                                Sau
-                            </Button>
-                        </div>
-                    )}
+                    {renderPagination()}
                 </>
             )}
 
@@ -224,6 +263,7 @@ export default function ListRole() {
                             block
                             onClick={() => {
                                 setShowFilter(false);
+                                setCurrentPage(1);
                                 fetchRoles(1);
                             }}
                         >
@@ -247,7 +287,7 @@ export default function ListRole() {
                                 <CreateRole
                                     role={editingRole}
                                     onSuccess={() => {
-                                        fetchRoles();
+                                        fetchRoles(currentPage);
                                         setShowModal(false);
                                     }}
                                     onClose={() => setShowModal(false)}
@@ -260,3 +300,4 @@ export default function ListRole() {
         </div>
     );
 }
+

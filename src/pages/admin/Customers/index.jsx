@@ -101,7 +101,6 @@ const CustomerIndex = () => {
                 <Input
                     id="filterName"
                     placeholder="Nhập tên khách hàng..."
-                    disabled
                 />
               </FormGroup>
               <FormGroup>
@@ -109,10 +108,9 @@ const CustomerIndex = () => {
                 <Input
                     id="filterAddress"
                     placeholder="Nhập địa chỉ..."
-                    disabled
                 />
               </FormGroup>
-              <Button color="primary" className="mt-3" block disabled>
+              <Button color="primary" className="mt-3" block>
                 Áp dụng lọc
               </Button>
             </Form>

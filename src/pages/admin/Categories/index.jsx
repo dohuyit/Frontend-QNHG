@@ -13,12 +13,19 @@ import {
   NavLink,
   TabContent,
   TabPane,
+  Offcanvas,
+  OffcanvasHeader,
+  OffcanvasBody,
+  Form,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListCategory from "@components/admin/Categories/ListCategory";
 import ListTrashCategory from "@components/admin/Categories/ListTrashCategory";
 import ModalCategory from "@components/admin/Categories/ModalCategory";
-import CustomerFilterBar from "@components/admin/CustomerFilterBar";
+import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import "react-toastify/dist/ReactToastify.css";
@@ -30,6 +37,7 @@ import {
   deleteSoftCategory,
   getCategory,
 } from "@services/admin/categoryService";
+import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 
 const CategoryIndex = () => {
   const [categories, setCategories] = useState([]);
@@ -55,6 +63,8 @@ const CategoryIndex = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
+
+  const [showFilter, setShowFilter] = useState(false); // Thêm state showFilter
 
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
@@ -86,8 +96,7 @@ const CategoryIndex = () => {
         setCategories([]);
         setMeta({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
       }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+    } catch {
       toast.error("Lỗi khi tải danh sách danh mục!");
     } finally {
       setLoadingCategories(false);
@@ -115,7 +124,7 @@ const CategoryIndex = () => {
       setIsEdit(true);
       setModalOpen(true);
       setErrors({});
-    } catch (error) {
+    } catch {
       toast.error("Không lấy được thông tin danh mục!");
     }
   };
@@ -138,7 +147,8 @@ const CategoryIndex = () => {
     formData.append("name", newCategory.name || "");
     formData.append("description", newCategory.description || "");
     formData.append("is_active", newCategory.is_active ? "1" : "0");
-    if (newCategory.parent_id) formData.append("parent_id", newCategory.parent_id);
+    if (newCategory.parent_id)
+      formData.append("parent_id", newCategory.parent_id);
     if (newCategory.image instanceof File) {
       formData.append("image_url", newCategory.image);
     }
@@ -178,7 +188,7 @@ const CategoryIndex = () => {
         await deleteSoftCategory(categoryId);
         toast.success("Xóa danh mục thành công!");
         fetchCategories(currentPage);
-      } catch (error) {
+      } catch {
         toast.error("Lỗi khi xóa danh mục!");
       }
     }
@@ -208,149 +218,176 @@ const CategoryIndex = () => {
   };
 
   return (
-      <div className="page-content">
-        <Breadcrumbs
-            title="Quản Lý Danh Mục"
-            breadcrumbItem={activeTab === "list" ? "Danh sách danh mục" : "Thùng rác"}
-        />
+    <div className="page-content">
+      <Breadcrumbs
+        title="Quản Lý Danh Mục"
+        breadcrumbItem={
+          activeTab === "list" ? "Danh sách danh mục" : "Thùng rác"
+        }
+      />
 
-        <Card className="mb-4">
-          <CardHeader className="bg-white border-bottom-0">
-            <Nav tabs>
-              <NavItem>
-                <NavLink
-                    style={{ cursor: "pointer" }}
-                    className={activeTab === "list" ? "active" : ""}
-                    onClick={() => toggleTab("list")}
+      <Card className="mb-4">
+        <CardHeader className="bg-white border-bottom-0">
+          <Nav tabs>
+            <NavItem>
+              <NavLink
+                style={{ cursor: "pointer" }}
+                className={activeTab === "list" ? "active" : ""}
+                onClick={() => toggleTab("list")}
+              >
+                Danh sách danh mục
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
+                style={{ cursor: "pointer" }}
+                className={activeTab === "trash" ? "active" : ""}
+                onClick={() => toggleTab("trash")}
+              >
+                Thùng rác
+              </NavLink>
+            </NavItem>
+          </Nav>
+        </CardHeader>
+      </Card>
+
+      {/* ✅ Offcanvas bộ lọc nâng cao */}
+      <Offcanvas
+        direction="end"
+        isOpen={showFilter}
+        toggle={() => setShowFilter(false)}
+      >
+        <OffcanvasHeader toggle={() => setShowFilter(false)}>
+          Bộ lọc nâng cao
+        </OffcanvasHeader>
+        <OffcanvasBody>
+          <Form>
+            <FormGroup>
+              <Label for="filterName">Tên danh mục</Label>
+              <Input id="filterName" placeholder="Nhập tên danh mục..." />
+            </FormGroup>
+            <FormGroup>
+              <Label for="filterParent">Danh mục cha</Label>
+              <Input id="filterParent" placeholder="Nhập danh mục cha..." />
+            </FormGroup>
+            <Button color="primary" className="mt-3" block>
+              Áp dụng lọc
+            </Button>
+          </Form>
+        </OffcanvasBody>
+      </Offcanvas>
+
+      <TabContent activeTab={activeTab}>
+        <TabPane tabId="list">
+          <Card className="mb-4">
+            <CardHeader className="bg-white border-bottom-0">
+              <Row className="align-items-center">
+                <Col
+                  md={7}
+                  sm={12}
+                  className="mb-2 mb-md-0 d-flex align-items-center"
                 >
-                  Danh sách danh mục
-                </NavLink>
-              </NavItem>
-              <NavItem>
-                <NavLink
-                    style={{ cursor: "pointer" }}
-                    className={activeTab === "trash" ? "active" : ""}
-                    onClick={() => toggleTab("trash")}
+                  <StatusFilterGroup
+                    options={statusOptions.map((opt) => ({
+                      ...opt,
+                      badgeCount:
+                        opt.value === "all"
+                          ? meta.total
+                          : categories.filter((c) =>
+                              opt.value === "active"
+                                ? c.is_active === true
+                                : opt.value === "inactive"
+                                ? c.is_active === false
+                                : false
+                            ).length,
+                    }))}
+                    value={status}
+                    onChange={handleStatusChange}
+                    style={{ gap: "1rem" }}
+                  />
+                </Col>
+                <Col
+                  md={5}
+                  sm={12}
+                  className="d-flex justify-content-md-end justify-content-start gap-2"
                 >
-                  Thùng rác
-                </NavLink>
-              </NavItem>
-            </Nav>
-          </CardHeader>
-        </Card>
+                  <Button
+                    color="success"
+                    onClick={() => {
+                      resetNewCategory();
+                      setModalOpen(true);
+                    }}
+                  >
+                    <i className="mdi mdi-plus" /> Thêm mới danh mục
+                  </Button>
+                </Col>
+              </Row>
+            </CardHeader>
+          </Card>
 
-        <TabContent activeTab={activeTab}>
-          <TabPane tabId="list">
-            <Card className="mb-4">
-              <CardHeader className="bg-white border-bottom-0">
-                <Row className="align-items-center">
-                  <Col md={7} sm={12} className="mb-2 mb-md-0 d-flex align-items-center">
-                    <div style={{ display: "flex" }}>
-                      {statusOptions.map((opt) => (
-                          <button
-                              key={opt.value}
-                              onClick={() => handleStatusChange(opt.value)}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                padding: "8px 24px",
-                                fontWeight: status === opt.value ? 600 : 400,
-                                color: status === opt.value ? "#007bff" : "#333",
-                                borderBottom:
-                                    status === opt.value ? "3px solid #007bff" : "3px solid transparent",
-                                fontSize: 16,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                              }}
-                          >
-                            {opt.label}
-                            <Badge
-                                color={opt.badgeColor}
-                                pill
-                                className="ms-2"
-                                style={{ fontSize: 13, minWidth: 28 }}
-                            >
-                              {opt.value === "all"
-                                  ? meta.total
-                                  : categories.filter(
-                                      (c) => c.is_active === (opt.value === "active")
-                                  ).length}
-                            </Badge>
-                          </button>
-                      ))}
-                    </div>
-                  </Col>
-                  <Col md={5} sm={12} className="d-flex justify-content-md-end justify-content-start gap-2">
-                    <Button
-                        color="success"
-                        onClick={() => {
-                          resetNewCategory();
-                          setModalOpen(true);
-                        }}
-                    >
-                      <i className="mdi mdi-plus" /> Thêm mới danh mục
-                    </Button>
-                  </Col>
-                </Row>
-              </CardHeader>
-            </Card>
+          <Card className="mb-4">
+            <CardHeader className="bg-white border-bottom-0">
+              <SearchAndStatusFilterBar
+                searchValue={search}
+                onSearchChange={setSearch}
+                statusValue={status}
+                onStatusChange={handleStatusChange}
+                statusOptions={statusOptions}
+                searchPlaceholder="Tìm kiếm danh mục..."
+                statusPlaceholder="Tất cả trạng thái"
+                rightContent={
+                  <Button
+                    color="light"
+                    className="border"
+                    style={{ minWidth: 140 }}
+                    onClick={() => setShowFilter(true)}
+                  >
+                    <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                  </Button>
+                }
+              />
+            </CardHeader>
+          </Card>
 
-            {/* ✅ Đã tái sử dụng CustomerFilterBar */}
-            <Card className="mb-4">
-              <CardHeader className="bg-white border-bottom-0">
-                <CustomerFilterBar
-                    searchKeyword={search}
-                    onSearchChange={setSearch}
-                    selectedStatus={status}
-                    onStatusChange={handleStatusChange}
-                    statusOptions={statusOptions}
-                    showDropdown={true}
-                    onOpenAdvancedFilter={() => {}}
-                    placeholder="Tìm kiếm danh mục..."
+          <Card className="mb-4">
+            <CardBody>
+              {loadingCategories ? (
+                <div className="text-center my-5">
+                  <Spinner color="primary" />
+                </div>
+              ) : (
+                <ListCategory
+                  paginate={{
+                    page: meta.current_page,
+                    perPage: meta.per_page,
+                    totalPage: meta.last_page,
+                  }}
+                  data={categories}
+                  onDelete={handleDeleteClick}
+                  onPageChange={handlePageChange}
+                  onEdit={handleCategoryClick}
                 />
-              </CardHeader>
-            </Card>
+              )}
+            </CardBody>
+          </Card>
+        </TabPane>
 
-            <Card className="mb-4">
-              <CardBody>
-                {loadingCategories ? (
-                    <div className="text-center my-5">
-                      <Spinner color="primary" />
-                    </div>
-                ) : (
-                    <ListCategory
-                        paginate={{
-                          page: meta.current_page,
-                          perPage: meta.per_page,
-                          totalPage: meta.last_page,
-                        }}
-                        data={categories}
-                        onDelete={handleDeleteClick}
-                        onPageChange={handlePageChange}
-                        onEdit={handleCategoryClick}
-                    />
-                )}
-              </CardBody>
-            </Card>
-          </TabPane>
+        <TabPane tabId="trash">
+          <ListTrashCategory />
+        </TabPane>
+      </TabContent>
 
-          <TabPane tabId="trash">
-            <ListTrashCategory />
-          </TabPane>
-        </TabContent>
-
-        <ModalCategory
-            modalOpen={modalOpen}
-            setModalOpen={setModalOpen}
-            newCategory={newCategory}
-            setNewCategory={setNewCategory}
-            categories={categories}
-            onSave={handleSave}
-            isEdit={isEdit}
-            errors={errors}
-        />
-      </div>
+      <ModalCategory
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        newCategory={newCategory}
+        setNewCategory={setNewCategory}
+        categories={categories}
+        onSave={handleSave}
+        isEdit={isEdit}
+        errors={errors}
+      />
+    </div>
   );
 };
 

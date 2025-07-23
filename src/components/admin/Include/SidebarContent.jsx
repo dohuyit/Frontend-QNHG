@@ -297,22 +297,22 @@ const SidebarContent = (props) => {
               <ul className="sub-menu" aria-expanded="false">
                 {hasPermission("role.view") && (
                   <li>
-                    <Link to="/roles">{props.t("Vai trò")}</Link>
+                    <Link to="/roles">{props.t("Vai trò hệ thống")}</Link>
                   </li>
                 )}
                 {hasPermission("permission_group.view") && (
                   <li>
-                    <Link to="/permission_groups">{props.t("Nhóm quyền")}</Link>
+                    <Link to="/permission_groups">{props.t("Nhóm quyền chức năng")}</Link>
                   </li>
                 )}
                 {hasPermission("permission.view") && (
                   <li>
-                    <Link to="/permissions">{props.t("Quyền Hạn")}</Link>
+                    <Link to="/permissions">{props.t("Danh sách quyền")}</Link>
                   </li>
                 )}
                 {hasPermission("user_role.view") && (
                   <li>
-                    <Link to="/user_roles">{props.t("Nhân viên")}</Link>
+                    <Link to="/user_roles">{props.t("Phân quyền cho nhân viên")}</Link>
                   </li>
                 )}
               </ul>
@@ -323,11 +323,11 @@ const SidebarContent = (props) => {
               <li>
                 <Link to="/#" className="has-arrow ">
                   <i className="bx bxs-user"></i>
-                  <span>{props.t("Quản lí người dùng")}</span>
+                  <span>{props.t("Quản lý nhân viên")}</span>
                 </Link>
                 <ul className="sub-menu" aria-expanded="false">
                   <li>
-                    <Link to="/users">{props.t("Nhân viên")}</Link>
+                    <Link to="/users">{props.t("Danh sách nhân viên")}</Link>
                   </li>
                 </ul>
               </li>

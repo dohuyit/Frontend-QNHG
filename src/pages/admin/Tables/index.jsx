@@ -13,7 +13,7 @@ import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import TableCard from "@components/admin/Table/CardTable";
 import ModalTable from "@components/admin/Table/ModalTable";
 import TableDetailModal from "@components/admin/Table/TableDetailModal";
-import CustomerFilterBar from "@components/admin/CustomerFilterBar";
+import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 import DeleteModal from "@components/admin/ui/DeleteModal";
 import PaginateUi from "@components/admin/ui/paginateUi";
 import RealtimeTableUpdater from "@components/admin/Table/RealtimeTableUpdater";
@@ -25,6 +25,7 @@ import {
   deleteTable,
   getTable,
 } from "@services/admin/tableService";
+import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -102,7 +103,9 @@ const TableIndex = () => {
     setErrors({});
     const tableData = {
       ...newTable,
-      tags: newTable.tags ? newTable.tags.split(",").map((tag) => tag.trim()) : [],
+      tags: newTable.tags
+        ? newTable.tags.split(",").map((tag) => tag.trim())
+        : [],
     };
     try {
       if (isEdit) {
@@ -123,7 +126,7 @@ const TableIndex = () => {
       fetchTables();
     } catch (error) {
       const errorMessage =
-          error.response?.data?.message || "Lỗi khi lưu bàn, vui lòng thử lại!";
+        error.response?.data?.message || "Lỗi khi lưu bàn, vui lòng thử lại!";
       toast.error(errorMessage);
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
@@ -173,146 +176,165 @@ const TableIndex = () => {
   };
 
   return (
-      <div className="page-content">
-        <RealtimeTableUpdater onRefreshData={fetchTables} />
-        <Breadcrumbs title="Quản Lý Bàn Nhà Hàng" breadcrumbItem="Danh sách bàn" />
+    <div className="page-content">
+      <RealtimeTableUpdater onRefreshData={fetchTables} />
+      <Breadcrumbs
+        title="Quản Lý Bàn Nhà Hàng"
+        breadcrumbItem="Danh sách bàn"
+      />
 
-        <Card className="mb-4">
-          <CardHeader className="bg-white border-bottom-0">
-            <Row className="align-items-center">
-              <Col md={7} sm={12} className="mb-2 mb-md-0 d-flex align-items-center">
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
-                  {statusOptions.map((opt) => (
-                      <button
-                          key={opt.value}
-                          onClick={() => handleStatusChange(opt.value)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            padding: "8px 16px",
-                            fontWeight: status === opt.value ? 600 : 400,
-                            color: status === opt.value ? "#007bff" : "#333",
-                            borderBottom:
-                                status === opt.value ? "3px solid #007bff" : "3px solid transparent",
-                            fontSize: 16,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                      >
-                        {opt.label}
-                        <Badge
-                            color={opt.badgeColor}
-                            pill
-                            className="ms-2"
-                            style={{ fontSize: 13, minWidth: 28 }}
-                        >
-                          {opt.value === "all"
-                              ? meta.total
-                              : tables.filter((t) => t.status === opt.value).length}
-                        </Badge>
-                      </button>
-                  ))}
-                </div>
-              </Col>
-              <Col md={5} sm={12} className="d-flex justify-content-md-end justify-content-start gap-2">
-                <Button
-                    color="success"
-                    onClick={() => {
-                      setNewTable({
-                        table_number: "",
-                        description: "",
-                        table_type: "",
-                        tags: "",
-                        table_area_id: "",
-                      });
-                      setIsEdit(false);
-                      setModalOpen(true);
-                      setErrors({});
-                    }}
-                >
-                  <i className="mdi mdi-plus"></i> Thêm mới bàn
-                </Button>
-              </Col>
-            </Row>
-          </CardHeader>
-        </Card>
+      <Card className="mb-4">
+        <CardHeader className="bg-white border-bottom-0">
+          <Row className="align-items-center">
+            <Col
+              md={7}
+              sm={12}
+              className="mb-2 mb-md-0 d-flex align-items-center"
+            >
+              <StatusFilterGroup
+                options={statusOptions.map((opt) => ({
+                  ...opt,
+                  badgeCount:
+                    opt.value === "all"
+                      ? meta.total
+                      : tables.filter((t) => t.status === opt.value).length,
+                }))}
+                value={status}
+                onChange={handleStatusChange}
+                style={{ gap: "1rem" }}
+              />
+            </Col>
+            <Col
+              md={5}
+              sm={12}
+              className="d-flex justify-content-md-end justify-content-start gap-2"
+            >
+              <Button
+                color="success"
+                onClick={() => {
+                  setNewTable({
+                    table_number: "",
+                    description: "",
+                    table_type: "",
+                    tags: "",
+                    table_area_id: "",
+                  });
+                  setIsEdit(false);
+                  setModalOpen(true);
+                  setErrors({});
+                }}
+              >
+                <i className="mdi mdi-plus"></i> Thêm mới bàn
+              </Button>
+            </Col>
+          </Row>
+        </CardHeader>
+      </Card>
 
-        <Card className="mb-4">
-          <CardHeader className="bg-white border-bottom-0">
-            <CustomerFilterBar
-                searchKeyword={search}
-                onSearchChange={setSearch}
-                selectedStatus={status}
-                onStatusChange={(val) => setStatus(val)}
-                statusOptions={statusOptions}
-                showDropdown={true}
-                onOpenAdvancedFilter={() => {}}
-                placeholder="Tìm kiếm bàn..."
-            />
-          </CardHeader>
-        </Card>
+      <Card className="mb-4">
+        <CardHeader className="bg-white border-bottom-0">
+          <SearchAndStatusFilterBar
+            searchValue={search}
+            onSearchChange={setSearch}
+            statusValue={status}
+            onStatusChange={handleStatusChange}
+            statusOptions={statusOptions}
+            searchPlaceholder="Tìm kiếm bàn..."
+            statusPlaceholder="Tất cả trạng thái"
+            rightContent={
+              <Button
+                color="success"
+                onClick={() => {
+                  setNewTable({
+                    table_number: "",
+                    description: "",
+                    table_type: "",
+                    tags: "",
+                    table_area_id: "",
+                  });
+                  setIsEdit(false);
+                  setModalOpen(true);
+                  setErrors({});
+                }}
+              >
+                <i className="mdi mdi-plus"></i> Thêm mới bàn
+              </Button>
+            }
+          />
+        </CardHeader>
+      </Card>
 
-        <Card className="mb-4">
-          <CardBody>
-            {loadingTables ? (
-                <div className="text-center my-5">
-                  <Spinner color="primary" />
-                </div>
-            ) : (
-                <>
-                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem" }}>
-                    {tables.map((table) => (
-                        <TableCard
-                            key={table.id}
-                            tableId={table.id}
-                            tableNumber={table.table_number}
-                            seatCount={table.table_type_label}
-                            status={table.status}
-                            onViewDetail={() => setSelectedTable(table) || setDetailModalOpen(true)}
-                            onClick={handleTableClick}
-                            onDelete={handleDeleteClick}
-                            hideMenu={false}
-                        />
-                    ))}
-                  </div>
-                  {tables.length === 0 && (
-                      <div className="text-center text-muted">Không tìm thấy bàn nào.</div>
-                  )}
-                  <PaginateUi
-                      currentPage={currentPage}
-                      totalPages={meta.last_page}
-                      onPageChange={handlePageChange}
+      <Card className="mb-4">
+        <CardBody>
+          {loadingTables ? (
+            <div className="text-center my-5">
+              <Spinner color="primary" />
+            </div>
+          ) : (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  gap: "1rem",
+                }}
+              >
+                {tables.map((table) => (
+                  <TableCard
+                    key={table.id}
+                    tableId={table.id}
+                    tableNumber={table.table_number}
+                    seatCount={table.table_type_label}
+                    status={table.status}
+                    onViewDetail={() =>
+                      setSelectedTable(table) || setDetailModalOpen(true)
+                    }
+                    onClick={handleTableClick}
+                    onDelete={handleDeleteClick}
+                    hideMenu={false}
                   />
-                </>
-            )}
-          </CardBody>
-        </Card>
+                ))}
+              </div>
+              {tables.length === 0 && (
+                <div className="text-center text-muted">
+                  Không tìm thấy bàn nào.
+                </div>
+              )}
+              <PaginateUi
+                currentPage={currentPage}
+                totalPages={meta.last_page}
+                onPageChange={handlePageChange}
+              />
+            </>
+          )}
+        </CardBody>
+      </Card>
 
-        <ModalTable
-            modalOpen={modalOpen}
-            setModalOpen={setModalOpen}
-            newTable={newTable}
-            setNewTable={setNewTable}
-            tableAreas={[]}
-            onSave={handleSave}
-            isEdit={isEdit}
-            errors={errors}
-        />
+      <ModalTable
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        newTable={newTable}
+        setNewTable={setNewTable}
+        tableAreas={[]}
+        onSave={handleSave}
+        isEdit={isEdit}
+        errors={errors}
+      />
 
-        <DeleteModal
-            show={deleteModalOpen}
-            onDeleteClick={handleDeleteTable}
-            onCloseClick={() => setDeleteModalOpen(false)}
-        />
+      <DeleteModal
+        show={deleteModalOpen}
+        onDeleteClick={handleDeleteTable}
+        onCloseClick={() => setDeleteModalOpen(false)}
+      />
 
-        <TableDetailModal
-            isOpen={detailModalOpen}
-            toggle={() => setDetailModalOpen(false)}
-            table={selectedTable}
-            tableAreas={[]}
-        />
-      </div>
+      <TableDetailModal
+        isOpen={detailModalOpen}
+        toggle={() => setDetailModalOpen(false)}
+        table={selectedTable}
+        tableAreas={[]}
+      />
+    </div>
   );
 };
 
