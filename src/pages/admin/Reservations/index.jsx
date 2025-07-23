@@ -48,8 +48,6 @@ const bookingStatusOptions = [
     { label: "Đã xác nhận", value: "confirmed", badgeColor: "success" },
     { label: "Hoàn thành", value: "completed", badgeColor: "info" },
     { label: "Đã hủy", value: "cancelled", badgeColor: "danger" },
-    { label: "Không đến", value: "no_show", badgeColor: "secondary" },
-    { label: "Đã ngồi", value: "seated", badgeColor: "primary" },
 ];
 
 const TableBookingIndex = () => {
@@ -445,8 +443,6 @@ const TableBookingIndex = () => {
                                             <option value="confirmed">Đã xác nhận</option>
                                             <option value="completed">Hoàn thành</option>
                                             <option value="cancelled">Đã hủy</option>
-                                            <option value="no_show">Không đến</option>
-                                            <option value="seated">Đã ngồi</option>
                                         </Input>
                                     </div>
                                 </Col>

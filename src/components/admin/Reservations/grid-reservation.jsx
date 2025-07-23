@@ -133,9 +133,6 @@ const ReservationGrid = ({
                 timeValue = `${hours24.toString().padStart(2, '0')}:${minutes}`;
             }
 
-            // Combine date and time into datetime format (KHÔNG cần cho reservation_time)
-            // const combinedDateTime = `${editForm.reservation_date} ${timeValue}:00`;
-
             const payload = {
                 customer_id: selectedItem.customer_id || 1, // Add customer_id
                 customer_name: editForm.customer_name,

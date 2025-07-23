@@ -7,11 +7,12 @@ import {
   Alert,
 } from "reactstrap";
 import { toast } from "react-toastify";
+import Badge from "../ui/Badge";
 
 const TableCard = ({
   tableId,
   tableNumber,
-  seatCount = "4 ghế",
+  seatCount = "4",
   status = "available", // available, occupied, reserved
   onClick,
   onDelete,
@@ -69,6 +70,21 @@ const TableCard = ({
     return parseInt(seatType) || 4;
   };
 
+  const getStatusBadgeType = (status) => {
+    switch (status) {
+      case "occupied":
+        return "danger";
+      case "reserved":
+        return "warning";
+      case "cleaning":
+        return "info";
+      case "out_of_service":
+        return "secondary";
+      default:
+        return "success";
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "occupied":
@@ -112,15 +128,6 @@ const TableCard = ({
       default:
         return "Trống";
     }
-  };
-
-  const badgeStyle = {
-    backgroundColor: getStatusColor(status),
-    color: "white",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "bold",
   };
 
   const cardStyle = {
@@ -169,7 +176,7 @@ const TableCard = ({
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <span style={badgeStyle}>{getStatusText(status)}</span>
+        <Badge type={getStatusBadgeType(status)}>{getStatusText(status)}</Badge>
         {!hideMenu && (
           <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
             <DropdownToggle
@@ -302,9 +309,6 @@ const TableCard = ({
         <small className="text-muted">{seatCount} ghế</small>
       </div>
 
-      <Alert color="success" isOpen={show} toggle={toggle} timeout={0}>
-        {/* ... */}
-      </Alert>
     </div>
   );
 };
