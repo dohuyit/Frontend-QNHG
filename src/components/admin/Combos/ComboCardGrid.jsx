@@ -21,29 +21,26 @@ const ComboCardGrid = ({ data = [], onDetail, onEdit, onDelete, onAddDish, onTog
 
 const ComboCard = ({ combo, onDetail, onEdit, onDelete, onAddDish  }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [imgError, setImgError] = useState(false);
+
     return (
         <Col xs={12} sm={6} md={4} lg={3} xl={3}>
             <Card className="h-10 shadow-sm position-relative">
                 <div style={{ position: "relative", background: "#f8f9fa" }}>
                     {/* Ảnh combo */}
                     <div style={{ width: "100%", height: 150, background: combo.image_url ? undefined : "#eee", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", borderTopLeftRadius: 8, borderTopRightRadius: 8, overflow: "hidden" }}>
-                        {combo.image_url ? (
+                        {!imgError && combo.image_url ? (
                             <img
                                 src={
-                                    combo.image_url
-                                        ? combo.image_url.startsWith("http")
-                                            ? combo.image_url
-                                            : `${fullUrl}${combo.image_url}`
-                                        : "https://via.placeholder.com/300x150?text=Không+có+ảnh"
+                                    combo.image_url.startsWith("http")
+                                        ? combo.image_url
+                                        : `${fullUrl}${combo.image_url}`
                                 }
                                 alt={combo.name}
                                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                                onError={e => { 
-                                    e.target.onerror = null; 
-                                    e.target.src = "https://via.placeholder.com/300x150?text=Không+có+ảnh"; 
-                                    // Ghi log lỗi khi không load được ảnh
-                                    console.error("Lỗi tải ảnh combo:", combo.image_url, e);
-                                }}
+                                onError={() => setImgError(true)}
+                                // Thêm key để React unmount/mount lại img khi combo.id đổi (chặn lặp do re-render)
+                                key={combo.id}
                             />
                         ) : (
                             <span style={{ fontSize: 32, color: "#bbb" }}>Không có ảnh</span>

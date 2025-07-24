@@ -27,7 +27,7 @@ const ModalCombo = ({
   onSave,
 }) => {
   const [previewImage, setPreviewImage] = useState(null);
-  const [setDishList] = useState([]);
+  const [ setDishList] = useState([]);
   const [showAddDishModal, setShowAddDishModal] = useState(false);
   const [errors, setErrors] = useState({});
 
