@@ -1,175 +1,146 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Row,
   Col,
   Card,
-  Alert,
   CardBody,
+  Badge,
   Button,
-  Label,
-  Input,
-  FormFeedback,
-  Form,
+  Spinner,
+  Alert,
 } from "reactstrap";
-
-// Formik Validation
-import * as Yup from "yup";
-import { useFormik } from "formik";
-
-//redux
-import { useSelector, useDispatch } from "react-redux";
-import { createSelector } from "reselect";
-
-import withRouter from "@components/admin/ui/withRouter";
-
-//Import Breadcrumb
+import { getUserDetail } from "@services/admin/userService";
+import avatarDefault from "@assets/admin/images/users/avatar-1.jpg";
 import Breadcrumb from "@components/admin/ui/Breadcrumb";
+import { Link } from "react-router-dom";
 
-import avatar from "@assets/admin/images/users/avatar-1.jpg";
-// actions
-import { editProfile, resetProfileFlag } from "@store/admin/actions";
-
-const UserProfile = (props) => {
-  //meta title
-  document.title = "Profile | Skote - React Admin & Dashboard Template";
-
-  const dispatch = useDispatch();
-
-  const [email, setemail] = useState("");
-  const [name, setname] = useState("");
-  const [idx, setidx] = useState(1);
-
-  const ProfileProperties = createSelector(
-    (state) => state.Profile,
-    (profile) => ({
-      error: profile.error,
-      success: profile.success,
-    })
-  );
-
-  const { error, success } = useSelector(ProfileProperties);
+const UserProfile = () => {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (localStorage.getItem("authUser")) {
-      const obj = JSON.parse(localStorage.getItem("authUser"));
-      if (import.meta.env.VITE_APP_DEFAULTAUTH === "firebase") {
-        setname(obj.displayName);
-        setemail(obj.email);
-        setidx(obj.uid);
-      } else if (
-        import.meta.env.VITE_APP_DEFAULTAUTH === "fake" ||
-        import.meta.env.VITE_APP_DEFAULTAUTH === "jwt"
-      ) {
-        setname(obj.username);
-        setemail(obj.email);
-        setidx(obj.uid);
-      }
-      setTimeout(() => {
-        dispatch(resetProfileFlag());
-      }, 3000);
+    const local = JSON.parse(localStorage.getItem("admin_user"));
+    const userId = local?.id;
+
+    if (userId) {
+      getUserDetail(userId)
+          .then((res) => {
+            setUserData(res.data.data);
+          })
+          .catch(() => {
+            setError("Không thể lấy thông tin người dùng.");
+          })
+          .finally(() => setLoading(false));
     }
-  }, [dispatch, success]);
+  }, []);
 
-  const validation = useFormik({
-    // enableReinitialize : use this flag when initial values needs to be changed
-    enableReinitialize: true,
+  if (loading) {
+    return (
+        <div className="page-content">
+          <Container className="py-5 d-flex justify-content-center align-items-center">
+            <Spinner color="primary" />
+          </Container>
+        </div>
+    );
+  }
 
-    initialValues: {
-      username: name || "",
-      idx: idx || "",
-    },
-    validationSchema: Yup.object({
-      username: Yup.string().required("Please Enter Your UserName"),
-    }),
-    onSubmit: (values) => {
-      dispatch(editProfile(values));
-    },
-  });
+  if (error) {
+    return (
+        <div className="page-content">
+          <Container className="py-5">
+            <Alert color="danger">{error}</Alert>
+          </Container>
+        </div>
+    );
+  }
+
+  const { user, role, permissions } = userData;
 
   return (
-    <React.Fragment>
       <div className="page-content">
         <Container fluid>
-          {/* Render Breadcrumb */}
-          <Breadcrumb title="Skote" breadcrumbItem="Profile" />
-
-          <Row>
-            <Col lg="12">
-              {error && error ? <Alert color="danger">{error}</Alert> : null}
-              {success ? <Alert color="success">{success}</Alert> : null}
-
-              <Card>
+          <Breadcrumb title="Tài khoản" breadcrumbItem="Hồ sơ người dùng" />
+          <Row className="justify-content-center">
+            <Col md={10} lg={8}>
+              <Card className="shadow rounded border-0">
                 <CardBody>
-                  <div className="d-flex">
-                    <div className="ms-3">
-                      <img
-                        src={avatar}
-                        alt=""
-                        className="avatar-md rounded-circle img-thumbnail"
-                      />
-                    </div>
-                    <div className="flex-grow-1 align-self-center">
-                      <div className="text-muted">
-                        <h5>{name}</h5>
-                        <p className="mb-1">{email}</p>
-                        <p className="mb-0">Id no: #{idx}</p>
-                      </div>
+                  <div className="d-flex align-items-center mb-4">
+                    <img
+                        src={
+                          user.avatar
+                              ? `http://localhost:8000/storage/${user.avatar}`
+                              : avatarDefault
+                        }
+                        alt="Avatar"
+                        className="rounded-circle"
+                        width={80}
+                        height={80}
+                        style={{ objectFit: "cover" }}
+                    />
+                    <div className="ms-4">
+                      <h4 className="mb-0">{user.full_name}</h4>
+                      <div className="text-muted">{user.email}</div>
                     </div>
                   </div>
+
+                  <Row className="mb-4">
+                    <Col sm={6}>
+                      <strong>Username:</strong> {user.username}
+                    </Col>
+                    <Col sm={6}>
+                      <strong>Số điện thoại:</strong> {user.phone_number}
+                    </Col>
+                    <Col sm={6} className="mt-2">
+                      <strong>Vai trò:</strong>{" "}
+                      <Badge color="info" className="text-uppercase">
+                        {role}
+                      </Badge>
+                    </Col>
+                    <Col sm={6} className="mt-2">
+                      <strong>Trạng thái:</strong>{" "}
+                      <Badge
+                          color={
+                            user.status === "active" ? "success" : "secondary"
+                          }
+                      >
+                        {user.status === "active"
+                            ? "Đang hoạt động"
+                            : "Không hoạt động"}
+                      </Badge>
+                    </Col>
+                  </Row>
+
+                  <div>
+                    <strong>Danh sách quyền:</strong>
+                    <div className="mt-2 d-flex flex-wrap gap-2">
+                      {permissions.length > 0 ? (
+                          permissions.map((p, idx) => (
+                              <Badge color="primary" key={idx}>
+                                {p}
+                              </Badge>
+                          ))
+                      ) : (
+                          <span className="text-muted">Không có quyền</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-end mt-4 d-flex justify-content-end gap-2">
+                    <Link to="/change-password">
+                      <Button color="secondary">Đổi mật khẩu</Button>
+                    </Link>
+                    <Button color="danger">Chỉnh sửa hồ sơ</Button>
+                  </div>
+
                 </CardBody>
               </Card>
             </Col>
           </Row>
-
-          <h4 className="card-title mb-4">Change User Name</h4>
-
-          <Card>
-            <CardBody>
-              <Form
-                className="form-horizontal"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  validation.handleSubmit();
-                  return false;
-                }}
-              >
-                <div className="form-group">
-                  <Label className="form-label">User Name</Label>
-                  <Input
-                    name="username"
-                    // value={name}
-                    className="form-control"
-                    placeholder="Enter User Name"
-                    type="text"
-                    onChange={validation.handleChange}
-                    onBlur={validation.handleBlur}
-                    value={validation.values.username || ""}
-                    invalid={
-                      validation.touched.username && validation.errors.username
-                        ? true
-                        : false
-                    }
-                  />
-                  {validation.touched.username && validation.errors.username ? (
-                    <FormFeedback type="invalid">
-                      {validation.errors.username}
-                    </FormFeedback>
-                  ) : null}
-                  <Input name="idx" value={idx} type="hidden" />
-                </div>
-                <div className="text-center mt-4">
-                  <Button type="submit" color="danger">
-                    Update User Name
-                  </Button>
-                </div>
-              </Form>
-            </CardBody>
-          </Card>
         </Container>
       </div>
-    </React.Fragment>
   );
 };
 
-export default withRouter(UserProfile);
+export default UserProfile;

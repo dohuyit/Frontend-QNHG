@@ -5,7 +5,6 @@ import {
     Row,
     Col,
     Button,
-    ButtonGroup,
     Badge,
     Input,
     Offcanvas,
@@ -23,6 +22,7 @@ import {
     deleteUser,
     blockUser,
     unblockUser,
+    countUsersByStatus, // ✅ mới thêm
 } from "@services/admin/userService";
 
 const userStatusOptions = [
@@ -43,9 +43,16 @@ export default function ListUser() {
     const [showFilter, setShowFilter] = useState(false);
     const [filterUsername, setFilterUsername] = useState("");
     const [filterEmail, setFilterEmail] = useState("");
+    const [userStatusCounts, setUserStatusCounts] = useState({
+        active: 0,
+        inactive: 0,
+        blocked: 0,
+        pending_activation: 0,
+    }); // ✅ mới thêm
 
     useEffect(() => {
         fetchUsers();
+        fetchUserStatusCounts(); // ✅ gọi đếm trạng thái
     }, [keyword, filterStatus]);
 
     const fetchUsers = (page = 1) => {
@@ -64,7 +71,6 @@ export default function ListUser() {
             params.email = filterEmail;
         }
 
-        console.log("🔍 Params gửi lên BE:", params);
         getUsers(params)
             .then((res) => {
                 const result = res.data.data;
@@ -72,6 +78,16 @@ export default function ListUser() {
                 setMeta(result.meta || {});
             })
             .finally(() => setLoading(false));
+    };
+
+    const fetchUserStatusCounts = () => {
+        countUsersByStatus()
+            .then((res) => {
+                setUserStatusCounts(res.data.data || {});
+            })
+            .catch((err) => {
+                console.error("Lỗi khi lấy thống kê trạng thái user:", err);
+            });
     };
 
     const handleDelete = (id) => {
@@ -86,6 +102,7 @@ export default function ListUser() {
                 deleteUser(id).then(() => {
                     Swal.fire("Đã xóa!", "", "success");
                     fetchUsers();
+                    fetchUserStatusCounts();
                 });
             }
         });
@@ -102,6 +119,7 @@ export default function ListUser() {
                 blockUser(id).then(() => {
                     Swal.fire("Đã khóa người dùng", "", "success");
                     fetchUsers();
+                    fetchUserStatusCounts();
                 });
             }
         });
@@ -118,6 +136,7 @@ export default function ListUser() {
                 unblockUser(id).then(() => {
                     Swal.fire("Đã mở khóa người dùng", "", "success");
                     fetchUsers();
+                    fetchUserStatusCounts();
                 });
             }
         });
@@ -161,7 +180,11 @@ export default function ListUser() {
                                         className="ms-2"
                                         style={{ fontSize: 13 }}
                                     >
-                                        0
+                                        {
+                                            opt.value === "all"
+                                                ? Object.values(userStatusCounts).reduce((a, b) => a + b, 0)
+                                                : userStatusCounts[opt.value] || 0
+                                        }
                                     </Badge>
                                 </button>
                             ))}
@@ -295,7 +318,6 @@ export default function ListUser() {
                 </div>
             )}
 
-            {/* Paginate */}
             {meta.total > meta.per_page && (
                 <div className="d-flex justify-content-end mt-3 align-items-center gap-2">
                     <Button
@@ -318,7 +340,6 @@ export default function ListUser() {
                 </div>
             )}
 
-            {/* Offcanvas bộ lọc nâng cao */}
             <Offcanvas
                 direction="end"
                 isOpen={showFilter}
@@ -352,18 +373,16 @@ export default function ListUser() {
                             className="mt-3"
                             block
                             onClick={() => {
-                                setShowFilter(false); // đóng bộ lọc
-                                fetchUsers(1);        // gọi lại API từ trang 1
+                                setShowFilter(false);
+                                fetchUsers(1);
                             }}
                         >
                             Áp dụng lọc
                         </Button>
                     </Form>
-
                 </OffcanvasBody>
             </Offcanvas>
 
-            {/* Modal thêm/sửa */}
             {showModal && (
                 <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
                     <div className="modal-dialog">
@@ -379,6 +398,7 @@ export default function ListUser() {
                                     user={editingUser}
                                     onSuccess={() => {
                                         fetchUsers();
+                                        fetchUserStatusCounts();
                                         setShowModal(false);
                                     }}
                                     onClose={() => setShowModal(false)}

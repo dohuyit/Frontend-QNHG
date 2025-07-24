@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import Swal from "sweetalert2"
 import { resetPassword } from "@services/admin/authService"
+import { Eye, EyeOff } from "lucide-react" // Nếu bạn dùng Lucide
 
 export default function AdminResetPassword() {
     const { id } = useParams()
@@ -11,6 +12,8 @@ export default function AdminResetPassword() {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
@@ -44,36 +47,62 @@ export default function AdminResetPassword() {
     }
 
     return (
-        <div className="admin-forgot-container">
-            <div className="forgot-card">
-                <h2>🔒 Đặt lại mật khẩu</h2>
+        <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-light">
+            <div className="card p-4 shadow" style={{ width: "100%", maxWidth: "400px" }}>
+                <h3 className="mb-4 text-center">🔒 Đặt lại mật khẩu</h3>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Mật khẩu mới</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                        />
+                    <div className="mb-3">
+                        <label className="form-label">Mật khẩu mới</label>
+                        <div className="input-group">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="form-control"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={() => setShowPassword(!showPassword)}
+                                tabIndex={-1}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Xác nhận mật khẩu</label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="••••••••"
-                        />
+                    <div className="mb-3">
+                        <label className="form-label">Xác nhận mật khẩu</label>
+                        <div className="input-group">
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                className="form-control"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                tabIndex={-1}
+                            >
+                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
+                    {error && (
+                        <div className="alert alert-danger py-2">{error}</div>
+                    )}
 
-                    <button type="submit" className="submit-btn">Xác nhận</button>
+                    <button type="submit" className="btn btn-primary w-100">
+                        Xác nhận
+                    </button>
                 </form>
 
-                <div className="back-to-login">
+                <div className="text-center mt-3">
                     <a href="/admin/login">← Quay lại đăng nhập</a>
                 </div>
             </div>

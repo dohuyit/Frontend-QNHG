@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./bookingPopup.scss";
 import { useNavigate } from "react-router-dom";
 import { createBooking } from "../../../../services/client/bookingService";
@@ -66,6 +66,30 @@ const BookingPopup = ({ isOpen, onClose }) => {
       toast.error(error.response?.data?.message || "Lỗi tạo đơn đặt bàn");
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      const userData = localStorage.getItem("clientUser"); // Đổi key ở đây
+      if (userData) {
+        const userObj = JSON.parse(userData);
+        setOrderTable((prev) => ({
+          ...prev,
+          customer_id: userObj.id || "",
+          customer_name: userObj.full_name || "", // Đổi name thành full_name
+          customer_phone: userObj.phone || "",    // Nếu có phone thì lấy, không thì để ""
+          customer_email: userObj.email || "",
+        }));
+      } else {
+        setOrderTable((prev) => ({
+          ...prev,
+          customer_id: "",
+          customer_name: "",
+          customer_phone: "",
+          customer_email: "",
+        }));
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -9,7 +9,7 @@ import ProtectedRoute from "@components/admin/ProtectedRoute.jsx";
 import Authmiddleware from "@routes/admin/route.jsx";
 
 // Import Routes
-import { publicRoutes, authProtectedRoutes } from "@routes/admin/index.jsx";
+import { publicRoutes, authProtectedRoutes,authOnlyRoutes} from "@routes/admin/index.jsx";
 import { clientRoutes } from "@routes/client/index.jsx";
 
 // Layouts
@@ -36,6 +36,19 @@ const App = () => {
                         key={idx}
                         path={route.path}
                         element={<AdminLayout>{route.component}</AdminLayout>}
+                    />
+                ))}
+
+                {/* ✅ Routes chỉ cần login (không cần permission) */}
+                {authOnlyRoutes.map((route, idx) => (
+                    <Route
+                        key={idx}
+                        path={route.path}
+                        element={
+                            <Authmiddleware>
+                                <Layout>{route.component}</Layout>
+                            </Authmiddleware>
+                        }
                     />
                 ))}
 

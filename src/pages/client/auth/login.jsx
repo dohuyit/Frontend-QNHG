@@ -29,8 +29,13 @@ export default function LoginUserPage() {
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
         if (res.data.user) {
-          const { id, email, full_name } = res.data.user;
-          localStorage.setItem('clientUser', JSON.stringify({ id, email, full_name }));
+          const { id, email, full_name, phone_number } = res.data.user;
+          localStorage.setItem('clientUser', JSON.stringify({
+            id,
+            email,
+            full_name,
+            phone: phone_number // Lưu số điện thoại
+          }));
         }
         window.dispatchEvent(new Event('storage'));
       }

@@ -299,7 +299,7 @@ const TableCard = ({
       </div>
 
       <div className="text-center">
-        <small className="text-muted">{seatCount}</small>
+        <small className="text-muted">{seatCount} ghế</small>
       </div>
 
       <Alert color="success" isOpen={show} toggle={toggle} timeout={0}>

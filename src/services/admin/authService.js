@@ -42,3 +42,9 @@ export const forgotPassword = (email) => {
 export const resetPassword = (id, data) => {
     return apiClient.post(`/reset-password/${id}`, data, { headers: { "Authorization": undefined } }); // Reset password does not need a token
 };
+
+export const changePassword = (data) => {
+    return apiClient.post(`/users/change-password`, data, {
+        headers: { "Authorization": undefined }
+    });
+};

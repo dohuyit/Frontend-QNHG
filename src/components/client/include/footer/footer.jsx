@@ -1,6 +1,7 @@
 import React from "react";
 import "./footer.scss";
 import logo from "@assets/client/images/header/logo.png";
+import BookingPopup from "../header/BookingPopup";
 const Footer = ({ onOpenBooking }) => {
   return (
     <footer className="tudo-footer">

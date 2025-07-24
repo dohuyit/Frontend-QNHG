@@ -20,7 +20,7 @@ import {
   NavLink,
 } from "reactstrap";
 import { getDishes } from "@services/admin/dishService";
-import { getTables } from "@services/admin/tableService";
+import { getTables, getTableStatus } from "@services/admin/tableService";
 import { getTableAreas } from "@services/admin/tableAreaService";
 import { getOrderDetail, updateOrder, paymentOrder } from "@services/admin/orderService";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -41,7 +41,6 @@ const kitchenStatusBadge = {
   preparing: { label: "Đang chuẩn bị", color: "#ffc107", bg: "#fff8e1" },
   ready: { label: "Sẵn sàng", color: "#28a745", bg: "#e6f9ed" },
   cancelled: { label: "Đã hủy", color: "#dc3545", bg: "#fdeaea" },
-  // Thêm các trạng thái khác nếu có
 };
 
 const FormOrderUpdate = () => {
@@ -53,7 +52,7 @@ const FormOrderUpdate = () => {
   const [orderNotes, setOrderNotes] = useState("");
   const [orderMethod, setOrderMethod] = useState("Dine In");
   const [orderStatus, setOrderStatus] = useState("pending");
-  const [selectedTables, setSelectedTables] = useState([]); // [{id, table_number, ...}]
+  const [selectedTables, setSelectedTables] = useState([]);
   const [dishes, setDishes] = useState([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -68,17 +67,12 @@ const FormOrderUpdate = () => {
   const [showTableModal, setShowTableModal] = useState(false);
   const [editNote, setEditNote] = useState(false);
   const [tempNote, setTempNote] = useState("");
-  const [tableList, setTableList] = useState([]);
   const [loadingTables, setLoadingTables] = useState(false);
   const [tableAreas, setTableAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
   const fullUrl = `http://localhost:8000/storage/`;
   const [activeTab, setActiveTab] = useState("dishes");
   const [combos, setCombos] = useState([]);
@@ -90,8 +84,13 @@ const FormOrderUpdate = () => {
   const [removedItems, setRemovedItems] = useState([]);
   const [orderDataState, setOrderDataState] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
-
-  const selectedAreaIdFromTables = selectedTables.length > 0 ? selectedTables[0].table_area_id : null;
+  const [tempSelectedTables, setTempSelectedTables] = useState([]);
+  const [modalTableList, setModalTableList] = useState([]);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [activeTableId, setActiveTableId] = useState(null); // New state to track the actively selected table
 
   const statusOptionsMap = {
     "Dine In": [
@@ -128,7 +127,6 @@ const FormOrderUpdate = () => {
         .then(async (res) => {
           const orderData = res.data.data.order;
           setOrderDataState(orderData);
-          console.log(orderData.items);
           setOrderItems(
             orderData.items.map((item) => {
               if (item.combo_id) {
@@ -163,16 +161,14 @@ const FormOrderUpdate = () => {
               : "Delivery"
           );
           setOrderStatus(orderData.status || "pending");
+          setTempNote(orderData.notes || "");
           setDeliveryAddress(orderData.delivery_address || "");
           setContactName(orderData.contact_name || "");
           setContactEmail(orderData.contact_email || "");
           setContactPhone(orderData.contact_phone || "");
-
-          setSelectedTables(Array.isArray(orderData.tables) ? orderData.tables : []);
-          setTempNote(orderData.notes || "");
-
+          
           if (Array.isArray(orderData.tables) && orderData.tables.length > 0) {
-            setTableList(orderData.tables);
+            console.log("Order tables:", orderData.tables);
             const areaId = orderData.tables[0]?.table_area_id;
             if (areaId) {
               setSelectedArea(areaId);
@@ -188,14 +184,22 @@ const FormOrderUpdate = () => {
                     (t) => !orderData.tables.some((ot) => ot.id === t.id)
                   ),
                 ];
-                setTableList(mergedTables);
+                console.log("Merged tables:", mergedTables);
+                setSelectedTables(mergedTables);
               } catch (e) {
-                setTableList(orderData.tables);
+                console.log("Using original tables:", orderData.tables);
+                setSelectedTables(orderData.tables);
                 console.error("Error loading tables:", e);
               } finally {
                 setLoadingTables(false);
               }
+            } else {
+              console.log("No area ID, using original tables:", orderData.tables);
+              setSelectedTables(orderData.tables);
             }
+          } else {
+            console.log("No tables in order");
+            setSelectedTables([]);
           }
         })
         .catch(() => {
@@ -310,7 +314,6 @@ const FormOrderUpdate = () => {
   const updateQuantity = (id, quantity, comboId = null) => {
     setOrderItems((prevItems) => {
       if (quantity <= 0) {
-        // Lấy item chuẩn bị xóa
         const removed = prevItems.find((item) =>
           comboId ? item.combo_id === comboId : (item.dish_id?.id || item.id) === id && !item.combo_id
         );
@@ -355,75 +358,133 @@ const FormOrderUpdate = () => {
   };
 
   const handleEditTables = () => {
+    console.log("Opening modal, selectedTables:", selectedTables);
+    
+    setTempSelectedTables([...selectedTables]);
     setShowTableModal(true);
     setLoadingTables(true);
+    
     getTableAreas()
       .then((res) => {
         const areas = res.data?.data?.items || [];
-        setTableAreas(areas);
-        if (areas.length > 0) {
-          setSelectedArea(areas[0].id);
-        } else {
-          setSelectedArea(null);
-        }
+        const allAreas = [{ id: "selected", name: "Đã chọn" }, ...areas];
+        setTableAreas(allAreas);
+        setSelectedArea("selected");
         setLoadingTables(false);
       })
       .catch(() => {
-        setTableAreas([]);
+        setTableAreas([{ id: "selected", name: "Đã chọn" }]);
+        setSelectedArea("selected");
         toast.error("Lỗi khi tải danh sách khu vực bàn!");
         setLoadingTables(false);
+      })
+      .finally(() => {
+        if (selectedTables.length > 0) {
+          const firstSelectedTable = selectedTables[0];
+          setActiveTableId(firstSelectedTable.id);
+          getTableStatus(firstSelectedTable.table_number)
+            .then((res) => {
+              const tableData = res.data?.data?.table;
+              if (tableData && Array.isArray(tableData.tables)) {
+                setModalTableList(tableData.tables);
+              } else {
+                setModalTableList([...selectedTables]);
+                toast.error("Không tìm thấy bàn trong khu vực này!");
+              }
+            })
+            .catch(() => {
+              setModalTableList([...selectedTables]);
+              toast.error("Lỗi khi tải danh sách bàn!");
+            })
+            .finally(() => setLoadingTables(false));
+        } else {
+          setModalTableList([]);
+          setLoadingTables(false);
+        }
       });
   };
 
-  const handleCloseTableModal = () => setShowTableModal(false);
+  const handleCloseTableModal = () => {
+    setShowTableModal(false);
+    setTempSelectedTables([]);
+    setModalTableList([]);
+    setActiveTableId(null);
+  };
 
   const handleTableToggle = (tableId) => {
-    const clickedTable = tableList.find((t) => String(t.id) === String(tableId));
-    if (!clickedTable || clickedTable.status !== 'available') {
-      toast.error("Chỉ có thể chọn bàn ở trạng thái Trống.");
+    console.log("handleTableToggle called with tableId:", tableId);
+    const clickedTable = modalTableList.find((t) => String(t.id) === String(tableId));
+    if (!clickedTable) {
+      toast.error("Không tìm thấy bàn.");
       return;
     }
 
-    setSelectedTables((prev) => {
-      const existingIndex = prev.findIndex((t) => String(t.id) === String(tableId));
+    const isSelected = tempSelectedTables.some((t) => String(t.id) === String(tableId));
 
-      if (prev.length > 0 && String(prev[0].table_area_id) !== String(clickedTable.table_area_id)) {
-        // If a table from a different area is selected, clear previous selections and select new one
-        toast.info("Bạn chỉ có thể chọn bàn trong cùng một khu vực.");
-        return [clickedTable];
+    if (isSelected) {
+      setTempSelectedTables((prev) => prev.filter((t) => String(t.id) !== String(tableId)));
+      if (String(tableId) === String(activeTableId)) {
+        setActiveTableId(null);
+        setSelectedArea("selected");
       }
-
-      if (existingIndex !== -1) {
-        // Deselect if already selected
-        return prev.filter((t) => String(t.id) !== String(tableId));
-      } else {
-        // Select if not selected and within the same area
-        return [...prev, clickedTable];
+    } else {
+      const isOriginalTable = selectedTables.some((t) => String(t.id) === String(tableId));
+      if (clickedTable.status !== 'available' && !isOriginalTable && selectedArea !== 'selected') {
+        toast.error("Chỉ có thể chọn bàn ở trạng thái Trống.");
+        return;
       }
-    });
+      if (tempSelectedTables.length > 0) {
+        const firstTableAreaId = tempSelectedTables[0].table_area_id;
+        if (String(firstTableAreaId) !== String(clickedTable.table_area_id)) {
+          toast.info("Bạn chỉ có thể chọn bàn trong cùng một khu vực.");
+          return;
+        }
+      }
+      setTempSelectedTables((prev) => [...prev, clickedTable]);
+      setActiveTableId(tableId);
+      setSelectedArea("selected");
+    }
   };
 
   const handleAreaSelect = (areaId) => {
     setSelectedArea(areaId);
-    setSelectedTables([]); // Clear selected tables when area changes
     setLoadingTables(true);
-    if (areaId === 'all') {
-      getTables()
-        .then((res) => {
-          setTableList(res.data?.data?.items || []);
-        })
-        .catch(() => {
-          setTableList([]);
-          toast.error("Lỗi khi tải danh sách bàn!");
-        })
-        .finally(() => setLoadingTables(false));
+    if (areaId === "selected") {
+      if (activeTableId) {
+        const activeTable = tempSelectedTables.find((t) => String(t.id) === String(activeTableId)) || 
+                           selectedTables.find((t) => String(t.id) === String(activeTableId));
+        if (activeTable) {
+          getTableStatus(activeTable.table_number)
+            .then((res) => {
+              const tableData = res.data?.data?.table;
+              if (tableData && Array.isArray(tableData.tables)) {
+                setModalTableList(tableData.tables);
+              } else {
+                setModalTableList([...tempSelectedTables]);
+                toast.error("Không tìm thấy bàn trong khu vực này!");
+              }
+            })
+            .catch(() => {
+              setModalTableList([...tempSelectedTables]);
+              toast.error("Lỗi khi tải danh sách bàn!");
+            })
+            .finally(() => setLoadingTables(false));
+        } else {
+          setModalTableList([...tempSelectedTables]);
+          setLoadingTables(false);
+        }
+      } else {
+        setModalTableList([...tempSelectedTables]);
+        setLoadingTables(false);
+      }
     } else {
       getTables({ table_area_id: areaId })
         .then((res) => {
-          setTableList(res.data?.data?.items || []);
+          const tables = res.data?.data?.items || [];
+          setModalTableList(tables);
         })
         .catch(() => {
-          setTableList([]);
+          setModalTableList([]);
           toast.error("Lỗi khi tải danh sách bàn!");
         })
         .finally(() => setLoadingTables(false));
@@ -433,29 +494,48 @@ const FormOrderUpdate = () => {
   useEffect(() => {
     if (showTableModal && selectedArea) {
       setLoadingTables(true);
-      if (selectedArea === 'all') {
-        getTables()
-          .then((res) => {
-            setTableList(res.data?.data?.items || []);
-          })
-          .catch(() => {
-            setTableList([]);
-            toast.error("Lỗi khi tải danh sách bàn!");
-          })
-          .finally(() => setLoadingTables(false));
+      if (selectedArea === "selected") {
+        if (activeTableId) {
+          const activeTable = tempSelectedTables.find((t) => String(t.id) === String(activeTableId)) || 
+                             selectedTables.find((t) => String(t.id) === String(activeTableId));
+          if (activeTable) {
+            getTableStatus(activeTable.table_number)
+              .then((res) => {
+                const tableData = res.data?.data?.table;
+                if (tableData && Array.isArray(tableData.tables)) {
+                  setModalTableList(tableData.tables);
+                } else {
+                  setModalTableList([...tempSelectedTables]);
+                  toast.error("Không tìm thấy bàn trong khu vực này!");
+                }
+              })
+              .catch(() => {
+                setModalTableList([...tempSelectedTables]);
+                toast.error("Lỗi khi tải danh sách bàn!");
+              })
+              .finally(() => setLoadingTables(false));
+          } else {
+            setModalTableList([...tempSelectedTables]);
+            setLoadingTables(false);
+          }
+        } else {
+          setModalTableList([...tempSelectedTables]);
+          setLoadingTables(false);
+        }
       } else {
         getTables({ table_area_id: selectedArea })
           .then((res) => {
-            setTableList(res.data?.data?.items || []);
+            const tables = res.data?.data?.items || [];
+            setModalTableList(tables);
           })
           .catch(() => {
-            setTableList([]);
+            setModalTableList([]);
             toast.error("Lỗi khi tải danh sách bàn!");
           })
           .finally(() => setLoadingTables(false));
       }
     }
-  }, [showTableModal, selectedArea]);
+  }, [showTableModal, selectedArea, activeTableId]);
 
   const getOrderType = (method) => {
     if (method === "Dine In") return "dine-in";
@@ -479,36 +559,34 @@ const FormOrderUpdate = () => {
         ...removedItems
       ];
 
-      // Lấy danh sách bàn cũ từ orderData (bàn trước khi chỉnh sửa)
       const oldTables = Array.isArray(orderDataState?.tables) ? orderDataState.tables : [];
       const newTableIds = selectedTables.map(t => String(t.id));
 
-      const tablesPayload = [];
+      let tablesPayload = [];
 
-      // 1. Add tables that were in the old order but are now deselected (removed tables)
-      oldTables.forEach(oldTable => {
-        if (!newTableIds.includes(String(oldTable.id))) {
-          // This table was in the old order but is now removed
-          tablesPayload.push({
-            old_id_table: Number(oldTable.id),
-            status: oldTable.status // Get its last known status from orderDataState
-          });
-        }
-      });
-
-      // 2. Add all currently selected tables (these will be the final set of tables for the order)
-      selectedTables.forEach(currentTable => {
-        tablesPayload.push({
-          new_id_table: Number(currentTable.id),
-          status: currentTable.status // Get its current status (e.g., 'available' if just selected)
+      if (selectedTables.length > 0) {
+        oldTables.forEach(oldTable => {
+          if (!newTableIds.includes(String(oldTable.id))) {
+            tablesPayload.push({
+              old_id_table: Number(oldTable.id),
+              status: oldTable.status
+            });
+          }
         });
-      });
+
+        selectedTables.forEach(currentTable => {
+          tablesPayload.push({
+            new_id_table: Number(currentTable.id),
+            status: currentTable.status
+          });
+        });
+      }
 
       const payload = {
         order_type: getOrderType(orderMethod),
         status: orderStatus,
         notes: orderNotes || "",
-        tables: orderMethod === "Dine In" ? tablesPayload : [], // Use the new tablesPayload array
+        tables: orderMethod === "Dine In" ? tablesPayload : [],
         delivery_address: orderMethod === "Delivery" ? deliveryAddress || "" : "",
         contact_name: contactName || "",
         contact_email: contactEmail || "",
@@ -522,7 +600,7 @@ const FormOrderUpdate = () => {
         })),
       };
 
-      console.log("Payload gửi lên:", payload);
+      console.log('Payload gửi lên:', payload);
 
       await updateOrder(orderId, payload);
       toast.success("Cập nhật đơn hàng thành công!", {
@@ -558,7 +636,6 @@ const FormOrderUpdate = () => {
         </div>
       ) : (
         <Row>
-          {/* Product Catalog */}
           <Col md={8}>
             <Row className="align-items-center g-2 mb-3">
               <Col>
@@ -753,7 +830,6 @@ const FormOrderUpdate = () => {
             )}
           </Col>
 
-          {/* Order Summary */}
           <Col md={4} className="order-sidebar">
             <div className="order-sidebar-inner">
               <div className="order-sidebar-header mb-3">
@@ -761,6 +837,49 @@ const FormOrderUpdate = () => {
                   Chỉnh sửa đơn hàng
                 </div>
               </div>
+              
+              <div className="order-sidebar-section mb-3">
+                <Label className="order-sidebar-label mb-2">Thông tin khách hàng</Label>
+                <Row className="mb-2">
+                  <Col md={6}>
+                    <Input
+                      type="text"
+                      placeholder="Tên khách hàng"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <Input
+                      type="tel"
+                      placeholder="Số điện thoại"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                    />
+                  </Col>
+                </Row>
+                <Row className="mb-2">
+                  <Col md={12}>
+                    <Input
+                      type="email"
+                      placeholder="Email liên hệ"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                    />
+                  </Col>
+                </Row>
+                {orderMethod === "Delivery" && (
+                  <div className="mt-2">
+                    <Input
+                      type="textarea"
+                      placeholder="Địa chỉ giao hàng"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+              
               <div className="order-sidebar-section mb-3">
                 {orderMethod === "Dine In" && (
                   <div className="order-table-box d-flex align-items-center justify-content-between py-2 mb-2">
@@ -788,37 +907,50 @@ const FormOrderUpdate = () => {
                       style={{ maxWidth: '80vw' }}
                     >
                       <ModalHeader toggle={handleCloseTableModal}>
-                        Chọn bàn
+                        <div className="d-flex justify-content-between align-items-center w-100">
+                          <span>Chọn bàn</span>
+                          {tempSelectedTables.length > 0 && (
+                            <Button
+                            className="ms-3"
+                              color="outline-danger"
+                              size="sm"
+                              onClick={() => setTempSelectedTables([])}
+                            >
+                              Bỏ chọn tất cả
+                            </Button>
+                          )}
+                        </div>
                       </ModalHeader>
                       <ModalBody>
                         <div
                           className="table-area-carousel d-flex align-items-center mb-3"
                           style={{ overflowX: "auto" }}
                         >
-                          
                           {tableAreas.map((area) => {
-                            const hasAvailable = tableList.some(
+                            const hasAvailable = modalTableList.some(
                               (t) => t.table_area_id === area.id && t.status === 'available'
                             );
+                            const isDisabled = tempSelectedTables.length > 0 && tempSelectedTables[0].table_area_id !== area.id && area.id !== "selected";
+                            
                             return (
                               <div
                                 key={area.id}
                                 className={`table-area-item py-2 me-2 rounded ${
                                   selectedArea === area.id ? "active" : ""
-                                }`}
+                                } ${isDisabled ? "disabled" : ""}`}
                                 style={{
                                   background: selectedArea === area.id ? "#556ee6" : "#f4f4f6",
-                                  color: selectedArea === area.id ? "#fff" : "#222",
-                                  cursor: (selectedAreaIdFromTables && selectedAreaIdFromTables !== area.id) ? "not-allowed" : "pointer",
-                                  opacity: (selectedAreaIdFromTables && selectedAreaIdFromTables !== area.id) ? 0.6 : 1,
+                                  color: selectedArea === area.id ? "#fff" : isDisabled ? "#999" : "#222",
+                                  cursor: isDisabled ? "not-allowed" : "pointer",
                                   minWidth: 120,
                                   textAlign: "center",
                                   fontWeight: 500,
                                   border: selectedArea === area.id ? "2px solid #556ee6" : "2px solid transparent",
                                   transition: "all 0.2s",
                                   position: 'relative',
+                                  opacity: isDisabled ? 0.6 : 1,
                                 }}
-                                onClick={selectedAreaIdFromTables && selectedAreaIdFromTables !== area.id ? null : () => handleAreaSelect(area.id)}
+                                onClick={() => !isDisabled && handleAreaSelect(area.id)}
                               >
                                 {area.name}
                                 {hasAvailable && (
@@ -843,7 +975,7 @@ const FormOrderUpdate = () => {
                             <div className="text-center w-100 py-4">
                               <Spinner color="primary" />
                             </div>
-                          ) : tableList.length === 0 ? (
+                          ) : modalTableList.length === 0 ? (
                             <div className="text-muted text-center w-100">
                               Không có bàn nào trong khu vực này.
                             </div>
@@ -854,45 +986,46 @@ const FormOrderUpdate = () => {
                               { key: 'cleaning', label: 'Đang dọn dẹp' },
                               { key: 'out_of_service', label: 'Ngưng phục vụ' },
                             ].map(statusObj => {
-                              const tables = tableList.filter(t => t.status === statusObj.key);
+                              const tables = modalTableList.filter(t => t.status === statusObj.key);
                               if (tables.length === 0) return null;
                               return (
                                 <div className="table-status-row mb-3" key={statusObj.key}>
                                   <div className="table-status-label mb-1" style={{ fontWeight: 600 }}>{statusObj.label}</div>
                                   <div className="table-status-cards-row d-flex flex-row flex-nowrap align-items-center" style={{ gap: 12, overflowX: 'auto', minHeight: 48 }}>
-                                    {tables.length === 0 ? (
-                                      <span className="text-muted" style={{fontSize: '0.97rem'}}>Không có bàn</span>
-                                    ) : (
-                                      tables.map(table => {
-                                        const isSelected = selectedTables.some((t) => String(t.id) === String(table.id));
-                                        return (
-                                          <div
-                                            key={table.id}
-                                            className={`table-card-wrapper ${isSelected ? "selected" : ""} ${table.status !== 'available' ? "disabled-table" : ""}`}
-                                            onClick={() => handleTableToggle(String(table.id))}
-                                            style={{
-                                              margin: 4,
-                                              flex: '0 0 auto',
-                                              cursor: table.status !== 'available' ? 'not-allowed' : 'pointer',
-                                              opacity: table.status !== 'available' ? 0.6 : 1,
-                                            }}
-                                          >
-                                            <CardTable
-                                              tableId={table.id}
-                                              tableNumber={table.table_number}
-                                              seatCount={
-                                                table.table_type === '2_seats' ? 2 :
-                                                table.table_type === '4_seats' ? 4 :
-                                                table.table_type === '8_seats' ? 8 :
-                                                table.capacity || 4
-                                              }
-                                              status={table.status}
-                                              hideMenu={true}
-                                            />
-                                          </div>
-                                        );
-                                      })
-                                    )}
+                                    {tables.map(table => {
+                                      const isSelected = tempSelectedTables.some((t) => String(t.id) === String(table.id));
+                                      const isAllArea = selectedArea === 'selected';
+                                      const canClick = isAllArea || isSelected || table.status === 'available';
+                                      
+                                      return (
+                                        <div
+                                          key={table.id}
+                                          className={`table-card-wrapper ${isSelected ? "selected" : ""}`}
+                                          onClick={canClick ? () => handleTableToggle(String(table.id)) : undefined}
+                                          style={{
+                                            margin: 4,
+                                            flex: '0 0 auto',
+                                            cursor: canClick ? 'pointer' : 'not-allowed',
+                                            opacity: canClick ? 1 : 0.6,
+                                            border: isSelected ? '2px solid #007bff' : '1px solid #dee2e6',
+                                            backgroundColor: isSelected ? '#e3f0ff' : 'transparent',
+                                          }}
+                                        >
+                                          <CardTable
+                                            tableId={table.id}
+                                            tableNumber={table.table_number}
+                                            seatCount={
+                                              table.table_type === '2_seats' ? 2 :
+                                              table.table_type === '4_seats' ? 4 :
+                                              table.table_type === '8_seats' ? 8 :
+                                              table.capacity || 4
+                                            }
+                                            status={table.status}
+                                            hideMenu={true}
+                                          />
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               );
@@ -901,7 +1034,19 @@ const FormOrderUpdate = () => {
                         </div>
                       </ModalBody>
                       <ModalFooter>
-                        <Button color="primary" onClick={handleCloseTableModal}>
+                        <Button color="secondary" onClick={handleCloseTableModal}>
+                          Hủy
+                        </Button>
+                        <Button 
+                          color="primary" 
+                          onClick={() => {
+                            setSelectedTables([...tempSelectedTables]);
+                            setShowTableModal(false);
+                            setTempSelectedTables([]);
+                            setModalTableList([]);
+                            setActiveTableId(null);
+                          }}
+                        >
                           Xác nhận
                         </Button>
                       </ModalFooter>
@@ -955,38 +1100,6 @@ const FormOrderUpdate = () => {
                     <option value="Delivery">Giao hàng</option>
                   </Input>
                 </div>
-                {orderMethod === "Delivery" && (
-                  <div className="delivery-info py-2 mb-2">
-                    <Label className="order-sidebar-label mb-1">Thông tin giao hàng</Label>
-                    <Input
-                      type="text"
-                      placeholder="Địa chỉ giao hàng"
-                      value={deliveryAddress}
-                      onChange={(e) => setDeliveryAddress(e.target.value)}
-                      className="mb-2"
-                    />
-                    <Input
-                      type="text"
-                      placeholder="Tên người nhận"
-                      value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
-                      className="mb-2"
-                    />
-                    <Input
-                      type="email"
-                      placeholder="Email liên hệ"
-                      value={contactEmail}
-                      onChange={(e) => setContactEmail(e.target.value)}
-                      className="mb-2"
-                    />
-                    <Input
-                      type="tel"
-                      placeholder="Số điện thoại liên hệ"
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                    />
-                  </div>
-                )}
                 <div className="order-status-row py-2 mb-2">
                   <Label className="order-sidebar-label mb-1">
                     Trạng thái đơn hàng
@@ -1005,19 +1118,13 @@ const FormOrderUpdate = () => {
 
                       let shouldBeDisabled = false;
 
-                      // Rule 1: Always disable 'ready' or 'completed' for 'Dine In'
                       if (orderMethod === "Dine In" && (opt.value === "ready" || opt.value === "completed")) {
                           shouldBeDisabled = true;
-                      }
-                      // Rule 2: Handle 'cancelled' based on current status
-                      else if (opt.value === "cancelled") {
+                      } else if (opt.value === "cancelled") {
                           if (orderStatus !== "pending") {
                               shouldBeDisabled = true;
                           }
-                      }
-                      // Rule 3: For all other statuses (not 'cancelled', not 'ready/completed' for 'Dine In'),
-                      // follow the sequential progression (only current or next are enabled)
-                      else {
+                      } else {
                           shouldBeDisabled = !(isCurrent || isNext);
                       }
 
@@ -1080,7 +1187,7 @@ const FormOrderUpdate = () => {
                                       borderRadius: 8,
                                       marginTop: 4,
                                       display: 'inline-block',
-                                      border: `1.5px solid ${badge.color}`,
+                                      border: `1px solid ${badge.color}`,
                                     }}
                                   >
                                     {badge.label}
@@ -1176,9 +1283,6 @@ const FormOrderUpdate = () => {
                 orderMethod={orderMethod}
                 selectedTables={selectedTables}
                 tableAreas={tableAreas}
-                contactName={contactName}
-                contactPhone={contactPhone}
-                contactEmail={contactEmail}
                 selectedPaymentMethod={selectedPaymentMethod}
                 setSelectedPaymentMethod={setSelectedPaymentMethod}
                 fullUrl={fullUrl}

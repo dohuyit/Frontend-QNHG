@@ -41,6 +41,7 @@ import PageKitchenOrders from "@pages/admin/KitchenOrders/index";
 import AdminForgotPassword from "@pages/admin/Users/AdminForgotpassword.jsx";
 import AdminResetPassword from "@pages/admin/Users/ AdminResetPassword.jsx";
 import Forbidden403 from "@pages/admin/Users/403.jsx";
+import ChangePassword from "@pages/admin/Users/ChangePassword.jsx";
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard />, permission: "dashboard.view" },
 
@@ -96,9 +97,6 @@ const authProtectedRoutes = [
   { path: "/combos", component: <PageCombo />, permission: "combo.view" },
 
   { path: "/kitchen-orders", component: <PageKitchenOrders />, permission: "kitchen-order.view" },
-
-  // Hồ sơ
-  { path: "/profile", component: <UserProfile /> }, // không cần permission
 ];
 
 
@@ -119,4 +117,9 @@ const publicRoutes = [
   { path: "/payment-result", component: <PaymentResult /> },
 ];
 
-export { authProtectedRoutes, publicRoutes };
+
+const authOnlyRoutes = [
+  { path: "/profile", component: <UserProfile /> }, // Chỉ yêu cầu đăng nhập
+  { path: "/change-password", component: <ChangePassword /> },
+];
+export { authProtectedRoutes, publicRoutes,authOnlyRoutes };

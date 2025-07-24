@@ -50,3 +50,11 @@ export const blockUser = (id) => {
 export const unblockUser = (id) => {
     return apiClient.post(`/${id}/unblock`);
 };
+
+export const getUserDetail= (id) => {
+    return apiClient.get(`/${id}/detail`);
+};
+
+export const countUsersByStatus = () => {
+    return apiClient.get(`/count-by-status`);
+};
