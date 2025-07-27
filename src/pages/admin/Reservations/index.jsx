@@ -40,6 +40,8 @@ import {
 } from "@services/admin/reservationService";
 import Swal from "sweetalert2";
 import { toast } from 'react-toastify';
+import { FaEdit } from "react-icons/fa";
+import TableSelectModal from "@components/admin/Table/TableSelectModal";
 
 // Danh sách trạng thái đơn đặt bàn, khi bấm vào sẽ lọc theo trạng thái đó
 const bookingStatusOptions = [
@@ -74,6 +76,9 @@ const TableBookingIndex = () => {
         notes: "",
         special_requests: ""
     });
+
+    const [showTableSelect, setShowTableSelect] = useState(false);
+    const [selectedTables, setSelectedTables] = useState([]);
 
     // Lọc dữ liệu theo search và filter
     const filteredData = bookingData.items.filter((reservation) => {
@@ -232,8 +237,8 @@ const TableBookingIndex = () => {
                 toast.error("Vui lòng điền đầy đủ thông tin bắt buộc (tên và số điện thoại)");
                 return;
             }
-            if (!createForm.table_id || createForm.table_id === "" || Number(createForm.table_id) === 0) {
-                toast.error("Vui lòng chọn khu vực bàn.");
+            if (!createForm.tables || createForm.tables.length === 0) {
+                toast.error("Vui lòng chọn ít nhất một bàn.");
                 return;
             }
             if (!createForm.booking_date || !createForm.booking_time) {
@@ -249,7 +254,7 @@ const TableBookingIndex = () => {
                 reservation_date: createForm.booking_date,
                 reservation_time: createForm.booking_time,
                 number_of_guests: Number(createForm.number_of_guests) || 1,
-                table_id: Number(createForm.table_id),
+                table_id: createForm.tables.map(t => t.id), // Lưu ID các bàn đã chọn
                 notes: createForm.notes,
                 special_requests: createForm.special_requests,
                 status: "pending"
@@ -268,6 +273,7 @@ const TableBookingIndex = () => {
                 notes: "",
                 special_requests: ""
             });
+            setSelectedTables([]); // Đặt lại danh sách bàn đã chọn
             fetchReservations();
         } catch (error) {
             if (error.response && error.response.data && error.response.data.errors) {
@@ -943,20 +949,28 @@ const TableBookingIndex = () => {
                         <Row>
                             <Col md={6}>
                                 <FormGroup>
-                                    <Label for="table_id">Khu vực bàn</Label>
-                                    <Input
-                                        id="table_id"
-                                        type="select"
-                                        value={createForm.table_id}
-                                        onChange={e => setCreateForm({ ...createForm, table_id: e.target.value })}
-                                    >
-                                        <option value="">Chọn khu vực</option>
-                                        {areaData.map((area) => (
-                                            <option key={area.id} value={area.id}>
-                                                {area.name}
-                                            </option>
-                                        ))}
-                                    </Input>
+                                    <Label>Bàn</Label>
+                                    <div className="d-flex align-items-center justify-content-between">
+                                        <span>
+                                            {createForm.tables && createForm.tables.length > 0
+                                                ? createForm.tables.map(t => `Bàn ${t.table_number}`).join(", ")
+                                                : <span className="text-muted">Chưa chọn bàn nào</span>
+                                            }
+                                        </span>
+                                        <Button
+                                            color="link"
+                                            size="sm"
+                                            className="p-0 ms-2"
+                                            style={{ color: "#222" }}
+                                            title="Chọn bàn"
+                                            onClick={() => {
+                                                setSelectedTables(createForm.tables || []);
+                                                setShowTableSelect(true);
+                                            }}
+                                        >
+                                            <FaEdit size={18} />
+                                        </Button>
+                                    </div>
                                 </FormGroup>
                             </Col>
                         </Row>
@@ -992,6 +1006,17 @@ const TableBookingIndex = () => {
                     </Button>
                 </ModalFooter>
             </Modal>
+
+            {/* Modal Chọn bàn */}
+            <TableSelectModal
+                isOpen={showTableSelect}
+                onClose={() => setShowTableSelect(false)}
+                onConfirm={(tables) => {
+                    setShowTableSelect(false);
+                    setCreateForm(prev => ({ ...prev, tables }));
+                }}
+                initialSelectedTables={selectedTables}
+            />
         </div>
     );
 };

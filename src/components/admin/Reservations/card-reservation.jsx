@@ -17,6 +17,8 @@ import Badge from "../ui/Badge";
 import TableSelectModal from "../Orders/TableSelectModal";
 import { getTables } from "@services/admin/tableService";
 import { getTableAreas } from "@services/admin/tableAreaService";
+import { MdModeEdit, MdVisibility } from "react-icons/md";
+import { FaEdit, FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote } from "react-icons/fa";
 
 const ReservationCard = ({
     reservation,
@@ -261,6 +263,7 @@ const ReservationCard = ({
                                                 onStatusChangeLocal(reservation.id, "confirmed");
                                             }
                                         }
+
                                     }}
                                     title="Xác nhận"
                                 >

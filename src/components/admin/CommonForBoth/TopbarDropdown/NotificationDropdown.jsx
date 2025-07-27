@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Dropdown, DropdownToggle, DropdownMenu, Row, Col, Badge } from "reactstrap";
 import SimpleBar from "simplebar-react";
 import Pusher from "pusher-js";
+import axios from "axios";
 
 import { withTranslation } from "react-i18next";
 
@@ -14,6 +15,38 @@ const NotificationDropdown = (props) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    // Lấy danh sách notification từ API
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get("/api/admin/notifications/list?limit=10");
+        if (res.data && res.data.data) {
+          const notis = res.data.data.map(n => ({
+            id: n.id,
+            type: n.type,
+            title: getTitleByType(n.type),
+            message: n.message,
+            customer_name: n.customer_name,
+            customer_phone: n.customer_phone,
+            reservation_date: n.reservation_date,
+            reservation_time: n.reservation_time,
+            number_of_guests: n.number_of_guests,
+            old_status: n.old_status,
+            new_status: n.new_status,
+            order_code: n.order_code,
+            table_number: n.table_number,
+            dish_name: n.dish_name,
+            item_name: n.item_name,
+            bill_id: n.bill_id,
+            timestamp: new Date(n.created_at),
+            unread: !n.read_at,
+          }));
+          setNotifications(notis);
+          setUnreadCount(notis.filter(n => n.unread).length);
+        }
+      } catch {/* ignore */}
+    };
+    fetchNotifications();
+
     // Khởi tạo Pusher
     const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
       cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
@@ -28,99 +61,19 @@ const NotificationDropdown = (props) => {
     const kitchenOrderChannel = pusher.subscribe('kitchen-orders');
     // Subscribe to tables
     const tableChannel = pusher.subscribe('tables');
-    
-    // Listen for new reservation events
-    channel.bind('reservation.created', (data) => {
-      console.log('New reservation received:', data);
-      addNotification({
-        id: Date.now(),
-        type: 'reservation_created',
-        title: 'Đơn đặt bàn mới',
-        message: data.message,
-        customer_name: data.customer_name,
-        customer_phone: data.customer_phone,
-        reservation_date: data.reservation_date,
-        reservation_time: data.reservation_time,
-        number_of_guests: data.number_of_guests,
-        timestamp: new Date(data.created_at),
-        unread: true,
-      });
-    });
 
-    // Listen for status update events
-    channel.bind('reservation.status.updated', (data) => {
-      console.log('Reservation status updated:', data);
-      addNotification({
-        id: Date.now(),
-        type: 'reservation_status_updated',
-        title: 'Cập nhật trạng thái đơn đặt bàn',
-        message: data.message,
-        customer_name: data.customer_name,
-        old_status: data.old_status_label,
-        new_status: data.new_status_label,
-        timestamp: new Date(data.updated_at),
-        unread: true,
-      });
-    });
+    // Khi có notification realtime thì gọi lại API để đồng bộ
+    const refreshOnEvent = () => {
+      fetchNotifications();
+    };
+    channel.bind('reservation.created', refreshOnEvent);
+    channel.bind('reservation.status.updated', refreshOnEvent);
+    orderChannel.bind('order.created', refreshOnEvent);
+    orderChannel.bind('order.updated', refreshOnEvent);
+    kitchenOrderChannel.bind('orderitem.updated', refreshOnEvent);
+    tableChannel.bind('table.status.updated', refreshOnEvent);
 
-    // Listen for new order events
-    orderChannel.bind('order.created', (data) => {
-      console.log('New order created:', data);
-      addNotification({
-        id: Date.now(),
-        type: 'order_created',
-        title: 'Đơn hàng mới',
-        message: `Đơn hàng #${data.order_code} vừa được tạo từ xác nhận đặt bàn.`,
-        order_code: data.order_code,
-        timestamp: new Date(data.created_at),
-        unread: true,
-      });
-    });
-
-    // Listen for order update events
-    orderChannel.bind('order.updated', (data) => {
-      addNotification({
-        id: Date.now(),
-        type: 'order_updated',
-        title: 'Cập nhật đơn hàng',
-        message: `Đơn hàng #${data.order_code} đã cập nhật trạng thái: ${data.status}.`,
-        order_code: data.order_code,
-        new_status: data.status,
-        timestamp: new Date(data.updated_at || Date.now()),
-        unread: true,
-      });
-    });
-
-    // Listen for kitchen order item update events
-    kitchenOrderChannel.bind('orderitem.updated', (data) => {
-      addNotification({
-        id: Date.now(),
-        type: 'orderitem_updated',
-        title: 'Cập nhật món ăn',
-        message: `Món "${data.item_name}" trong đơn #${data.order_id} vừa cập nhật trạng thái: ${data.status}.`,
-        order_id: data.order_id,
-        item_name: data.item_name,
-        new_status: data.status,
-        timestamp: new Date(data.updated_at || Date.now()),
-        unread: true,
-      });
-    });
-
-    // Listen for table status update events
-    tableChannel.bind('table.status.updated', (data) => {
-      addNotification({
-        id: Date.now(),
-        type: 'table_status_updated',
-        title: 'Cập nhật trạng thái bàn',
-        message: `Bàn số ${data.table_number} vừa cập nhật trạng thái: ${data.status}.`,
-        table_number: data.table_number,
-        new_status: data.status,
-        timestamp: new Date(data.updated_at || Date.now()),
-        unread: true,
-      });
-    });
-
-    // Cleanup function
+    // Cleanup
     return () => {
       channel.unbind_all();
       pusher.unsubscribe('reservations');
@@ -134,19 +87,12 @@ const NotificationDropdown = (props) => {
     };
   }, []);
 
-  const addNotification = (notification) => {
-    setNotifications(prev => {
-      const newNotifications = [notification, ...prev.slice(0, 9)]; // Giữ tối đa 10 notifications
-      return newNotifications;
-    });
-    setUnreadCount(prev => prev + 1);
-  };
-
-  const markAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, unread: false }))
-    );
-    setUnreadCount(0);
+  const markAsRead = async () => {
+    try {
+      await axios.post("/api/admin/notifications/mark-all-read");
+      setNotifications(prev => prev.map(notif => ({ ...notif, unread: false })));
+      setUnreadCount(0);
+    } catch {/* ignore */}
   };
 
   const getNotificationIcon = (type) => {
@@ -200,6 +146,27 @@ const NotificationDropdown = (props) => {
     return `${days} ngày trước`;
   };
 
+  const getTitleByType = (type) => {
+    switch (type) {
+      case 'reservation':
+      case 'reservation_created':
+        return 'Đơn đặt bàn mới';
+      case 'reservation_status_updated':
+        return 'Cập nhật trạng thái đơn đặt bàn';
+      case 'order':
+      case 'order_created':
+        return 'Đơn hàng mới';
+      case 'order_updated':
+        return 'Cập nhật đơn hàng';
+      case 'orderitem_updated':
+        return 'Cập nhật món ăn';
+      case 'table_status_updated':
+        return 'Cập nhật trạng thái bàn';
+      default:
+        return 'Thông báo';
+    }
+  };
+
   return (
     <React.Fragment>
       <Dropdown
@@ -231,7 +198,7 @@ const NotificationDropdown = (props) => {
                 <h6 className="m-0"> {props.t("Notifications")} </h6>
               </Col>
               <div className="col-auto">
-                <a href="#!" className="small">
+                <a href="#" className="small">
                   {" "}
                   View All
                 </a>
@@ -263,28 +230,70 @@ const NotificationDropdown = (props) => {
                       </h6>
                       <div className="font-size-12 text-muted">
                         <p className="mb-1">{notification.message}</p>
-                        {notification.customer_name && (
-                          <p className="mb-1">
-                            <strong>Khách hàng:</strong> {notification.customer_name}
-                            {notification.customer_phone && ` (${notification.customer_phone})`}
-                          </p>
-                        )}
-                        {notification.reservation_date && (
-                          <p className="mb-1">
-                            <strong>Ngày đặt:</strong> {new Date(notification.reservation_date).toLocaleDateString('vi-VN')}
-                            {notification.reservation_time && ` - ${notification.reservation_time}`}
-                          </p>
-                        )}
-                        {notification.number_of_guests && (
-                          <p className="mb-1">
-                            <strong>Số khách:</strong> {notification.number_of_guests} người
-                          </p>
-                        )}
-                        {notification.old_status && notification.new_status && (
-                          <p className="mb-1">
-                            <strong>Trạng thái:</strong> {notification.old_status} → {notification.new_status}
-                          </p>
-                        )}
+                        {/* Hiển thị chi tiết hơn cho từng loại */}
+                        {notification.type === 'reservation' || notification.type === 'reservation_created' ? (
+                          <>
+                            {notification.customer_name && (
+                              <p className="mb-1"><strong>Khách hàng:</strong> {notification.customer_name}{notification.customer_phone && ` (${notification.customer_phone})`}</p>
+                            )}
+                            {notification.reservation_date && (
+                              <p className="mb-1"><strong>Ngày đặt:</strong> {new Date(notification.reservation_date).toLocaleDateString('vi-VN')}{notification.reservation_time && ` - ${notification.reservation_time}`}</p>
+                            )}
+                            {notification.number_of_guests && (
+                              <p className="mb-1"><strong>Số khách:</strong> {notification.number_of_guests} người</p>
+                            )}
+                          </>
+                        ) : null}
+                        {notification.type === 'reservation_status_updated' ? (
+                          <>
+                            {notification.customer_name && (
+                              <p className="mb-1"><strong>Khách hàng:</strong> {notification.customer_name}</p>
+                            )}
+                            {notification.old_status && notification.new_status && (
+                              <p className="mb-1"><strong>Trạng thái:</strong> {notification.old_status} → {notification.new_status}</p>
+                            )}
+                          </>
+                        ) : null}
+                        {notification.type === 'order' || notification.type === 'order_created' ? (
+                          <>
+                            {notification.order_code && (
+                              <p className="mb-1"><strong>Mã đơn hàng:</strong> {notification.order_code}</p>
+                            )}
+                          </>
+                        ) : null}
+                        {notification.type === 'order_updated' ? (
+                          <>
+                            {notification.order_code && (
+                              <p className="mb-1"><strong>Mã đơn hàng:</strong> {notification.order_code}</p>
+                            )}
+                            {notification.new_status && (
+                              <p className="mb-1"><strong>Trạng thái mới:</strong> {notification.new_status}</p>
+                            )}
+                          </>
+                        ) : null}
+                        {notification.type === 'orderitem_updated' ? (
+                          <>
+                            {notification.item_name && (
+                              <p className="mb-1"><strong>Món:</strong> {notification.item_name}</p>
+                            )}
+                            {notification.order_id && (
+                              <p className="mb-1"><strong>Đơn hàng:</strong> #{notification.order_id}</p>
+                            )}
+                            {notification.new_status && (
+                              <p className="mb-1"><strong>Trạng thái mới:</strong> {notification.new_status}</p>
+                            )}
+                          </>
+                        ) : null}
+                        {notification.type === 'table_status_updated' ? (
+                          <>
+                            {notification.table_number && (
+                              <p className="mb-1"><strong>Bàn số:</strong> {notification.table_number}</p>
+                            )}
+                            {notification.new_status && (
+                              <p className="mb-1"><strong>Trạng thái mới:</strong> {notification.new_status}</p>
+                            )}
+                          </>
+                        ) : null}
                         <p className="mb-0">
                           <i className="mdi mdi-clock-outline" />
                           {formatTimeAgo(notification.timestamp)}
@@ -302,7 +311,7 @@ const NotificationDropdown = (props) => {
               to="/admin/reservations"
             >
               <i className="mdi mdi-arrow-right-circle me-1"></i>{" "}
-              {props.t("View all")}{" "}
+              {props.t("View all")} {" "}
             </Link>
           </div>
         </DropdownMenu>
