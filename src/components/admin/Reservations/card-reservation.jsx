@@ -9,7 +9,7 @@ import {
     Input,
 } from "reactstrap";
 import { MdModeEdit, MdVisibility } from "react-icons/md";
-import { FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote } from "react-icons/fa";
 
 const ReservationCard = ({
     reservation,
@@ -140,6 +140,20 @@ const ReservationCard = ({
                         </div>
                         <div className="ms-4">
                             <strong>{reservation.number_of_guests || "N/A"} người</strong>
+                        </div>
+                    </div>
+
+                    {/* Thông tin bàn */}
+                    <div className="mb-3">
+                        <div className="d-flex align-items-center mb-2">
+                            <span className="text-muted me-2"><i className="mdi mdi-table-chair"></i></span>
+                            <small className="text-muted">Bàn:</small>
+                        </div>
+                        <div className="ms-4">
+                            {reservation.tables && reservation.tables.length > 0
+                                ? reservation.tables.map(t => `Bàn ${t.table_number}`).join(", ")
+                                : <span className="text-muted">Chưa chọn bàn nào</span>
+                            }
                         </div>
                     </div>
 

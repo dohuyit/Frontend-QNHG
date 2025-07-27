@@ -50,6 +50,7 @@
     "firebase": "^10.14.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.19.2",
+    "glob": "^11.0.3",
     "i18next": "^23.15.1",
     "i18next-browser-languagedetector": "^8.0.0",
     "laravel-echo": "^2.1.6",
