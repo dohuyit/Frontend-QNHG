@@ -10,6 +10,8 @@ import {
     Form,
     FormGroup,
     Label,
+    InputGroup,
+    InputGroupText,
 } from "reactstrap";
 import Swal from "sweetalert2";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
@@ -96,22 +98,39 @@ export default function ListPermission() {
             </div>
 
             <Card className="mb-4">
-                <CardHeader className="bg-white border-bottom-0 d-flex justify-content-between">
-                    <Input
-                        type="search"
-                        placeholder="Tìm kiếm quyền..."
-                        value={keyword}
-                        onChange={(e) => {
-                            setPage(1);
-                            setKeyword(e.target.value);
-                        }}
-                        style={{ maxWidth: 250 }}
-                    />
-                    <Button color="light" className="border" onClick={() => setShowFilter(true)}>
-                        <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
-                    </Button>
+                <CardHeader className="bg-white border-bottom-0">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        {/* Ô tìm kiếm quyền có icon */}
+                        <div style={{ width: 320 }}>
+                            <div className="input-group">
+          <span className="input-group-text">
+            <i className="bi bi-search" />
+          </span>
+                                <Input
+                                    type="search"
+                                    placeholder="Tìm kiếm quyền..."
+                                    value={keyword}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        setKeyword(e.target.value);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Nút lọc nâng cao */}
+                        <Button
+                            color="light"
+                            className="border"
+                            onClick={() => setShowFilter(true)}
+                            style={{ minWidth: 140 }}
+                        >
+                            <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                        </Button>
+                    </div>
                 </CardHeader>
             </Card>
+
 
             {loading ? (
                 <p>Đang tải dữ liệu...</p>
@@ -172,28 +191,67 @@ export default function ListPermission() {
                 </div>
             )}
 
-            {/* Pagination */}
-            {meta.total > meta.per_page && (
-                <div className="d-flex justify-content-end mt-3 align-items-center gap-2">
+            {meta.total > meta.perPage && (
+                <div className="d-flex justify-content-end mt-3 align-items-center gap-2 flex-wrap">
                     <Button
                         color="light"
-                        disabled={!meta.prev_page_url}
-                        onClick={() => setPage(meta.current_page - 1)}
+                        disabled={page === 1}
+                        onClick={() => setPage(1)}
+                    >
+                        &laquo;
+                    </Button>
+                    <Button
+                        color="light"
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
                     >
                         Trước
                     </Button>
-                    <span>
-                        Trang {meta.current_page} / {meta.last_page}
-                    </span>
+
+                    {(() => {
+                        const visiblePageCount = 3;
+                        const half = Math.floor(visiblePageCount / 2);
+                        let start = Math.max(1, page - half);
+                        let end = Math.min(meta.totalPage, start + visiblePageCount - 1);
+
+                        // đảm bảo luôn đủ 3 nút nếu có thể
+                        if (end - start < visiblePageCount - 1) {
+                            start = Math.max(1, end - visiblePageCount + 1);
+                        }
+
+                        const buttons = [];
+                        for (let i = start; i <= end; i++) {
+                            buttons.push(
+                                <Button
+                                    key={i}
+                                    color={page === i ? "primary" : "light"}
+                                    onClick={() => setPage(i)}
+                                >
+                                    {i}
+                                </Button>
+                            );
+                        }
+                        return buttons;
+                    })()}
+
+
                     <Button
                         color="light"
-                        disabled={!meta.next_page_url}
-                        onClick={() => setPage(meta.current_page + 1)}
+                        disabled={page === meta.totalPage}
+                        onClick={() => setPage(page + 1)}
                     >
                         Sau
                     </Button>
+                    <Button
+                        color="light"
+                        disabled={page === meta.totalPage}
+                        onClick={() => setPage(meta.totalPage)}
+                    >
+                        &raquo;
+                    </Button>
                 </div>
             )}
+
 
             {/* Bộ lọc nâng cao */}
             <Offcanvas

@@ -30,9 +30,9 @@ import { MdSearch, MdFilterList, MdDelete, MdRestore } from "react-icons/md";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import GridReservation from "@components/admin/Reservations/grid-reservation";
 import RealtimeReservationUpdater from "@components/admin/Reservations/RealtimeReservationUpdater";
-import { 
-    getReservations, 
-    getTableAreas, 
+import {
+    getReservations,
+    getTableAreas,
     createReservation,
     getTrashedReservations,
     restoreReservation,

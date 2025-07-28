@@ -28,14 +28,20 @@ import {
 import { useNavigate } from "react-router-dom";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import OrderGrid from "@components/admin/Orders/grid-order";
-import { getListOrders, createOrder, trackOrder } from "@services/admin/orderService";
+import { getListOrders, trackOrder } from "@services/admin/orderService";
 import Swal from "sweetalert2";
-import RealtimeOrderUpdater from '@components/admin/Orders/RealtimeOrderUpdater';
+import RealtimeOrderUpdater from "@components/admin/Orders/RealtimeOrderUpdater";
+import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
+import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 
 // Danh sách trạng thái đơn hàng
 const orderStatusOptions = [
   { label: "Tất cả", value: "all", badgeColor: "secondary" },
-  { label: "Chờ xác nhận", value: "pending_confirmation", badgeColor: "warning" },
+  {
+    label: "Chờ xác nhận",
+    value: "pending_confirmation",
+    badgeColor: "warning",
+  },
   { label: "Đã xác nhận", value: "confirmed", badgeColor: "info" },
   { label: "Đang chế biến", value: "preparing", badgeColor: "primary" },
   { label: "Sẵn sàng", value: "ready", badgeColor: "success" },
@@ -46,7 +52,6 @@ const orderStatusOptions = [
 
 const OrderIndex = () => {
   const [orderData, setOrderData] = useState({ items: [], meta: {} });
-  const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("1");
   const [showTrack, setShowTrack] = useState(false);
@@ -56,6 +61,8 @@ const OrderIndex = () => {
   const [trackCode, setTrackCode] = useState("");
   const [trackResult, setTrackResult] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderType, setOrderType] = useState("");
+  const [orderCode, setOrderCode] = useState("");
 
   const navigate = useNavigate();
 
@@ -67,7 +74,8 @@ const OrderIndex = () => {
         .includes(searchTerm.toLowerCase()) ||
       order.customer?.phone_number?.includes(searchTerm) ||
       order.order_code?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -77,8 +85,11 @@ const OrderIndex = () => {
       const params = {
         page,
         per_page: 10,
-        search: searchTerm || undefined,
+        order_type: orderType || undefined,
+        order_code: orderCode || undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
       };
+
       if (statusFilter !== "all") {
         params.status = statusFilter;
       }
@@ -108,23 +119,9 @@ const OrderIndex = () => {
     }
   };
 
-  const fetchMenuItems = async () => {
-    try {
-      // Implement fetch menu items API
-      setMenuItems([
-        { id: 1, name: "Phở bò", price: 50000 },
-        { id: 2, name: "Cơm tấm", price: 35000 },
-        { id: 3, name: "Bún chả", price: 40000 },
-      ]);
-    } catch (error) {
-      console.error("API ERROR:", error);
-    }
-  };
-
   useEffect(() => {
     fetchOrders(currentPage);
-    fetchMenuItems();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, orderType, orderCode, statusFilter]);
 
   const handleDelete = async (id) => {
     try {
@@ -134,27 +131,6 @@ const OrderIndex = () => {
       }));
     } catch (err) {
       console.error("Delete failed:", err);
-    }
-  };
-
-  const handleCreate = async (payload) => {
-    try {
-      await createOrder(payload);
-      fetchOrders(currentPage);
-      Swal.fire({
-        title: "Thành công!",
-        text: "Đã tạo đơn hàng thành công",
-        icon: "success",
-        confirmButtonText: "OK",
-      });
-    } catch (error) {
-      console.error("Error creating order:", error);
-      Swal.fire({
-        title: "Lỗi!",
-        text: error.response?.data?.message || error.message || "Không thể tạo đơn hàng",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
     }
   };
 
@@ -222,7 +198,10 @@ const OrderIndex = () => {
 
   return (
     <div className="page-content">
-      <Breadcrumbs title="Danh sách đơn hàng" breadcrumbItem="Quản lí đơn hàng" />
+      <Breadcrumbs
+        title="Danh sách đơn hàng"
+        breadcrumbItem="Quản lí đơn hàng"
+      />
 
       {/* Tabs */}
       <Card className="mb-4">
@@ -232,10 +211,13 @@ const OrderIndex = () => {
               <Nav tabs className="border-0">
                 <NavItem>
                   <NavLink
-                    className={`border-0 ${activeTab === "1" ? "active fw-bold" : "text-muted"}`}
+                    className={`border-0 ${
+                      activeTab === "1" ? "active fw-bold" : "text-muted"
+                    }`}
                     onClick={() => toggleTab("1")}
                     style={{
-                      borderBottom: activeTab === "1" ? "3px solid #556ee6" : "none",
+                      borderBottom:
+                        activeTab === "1" ? "3px solid #556ee6" : "none",
                       padding: "12px 20px",
                       cursor: "pointer",
                     }}
@@ -248,10 +230,13 @@ const OrderIndex = () => {
                 </NavItem>
                 <NavItem>
                   <NavLink
-                    className={`border-0 ${activeTab === "2" ? "active fw-bold" : "text-muted"}`}
+                    className={`border-0 ${
+                      activeTab === "2" ? "active fw-bold" : "text-muted"
+                    }`}
                     onClick={() => toggleTab("2")}
                     style={{
-                      borderBottom: activeTab === "2" ? "3px solid #556ee6" : "none",
+                      borderBottom:
+                        activeTab === "2" ? "3px solid #556ee6" : "none",
                       padding: "12px 20px",
                       cursor: "pointer",
                     }}
@@ -332,10 +317,12 @@ const OrderIndex = () => {
                           className="ms-2"
                           style={{ fontSize: 13, minWidth: 28 }}
                         >
-                          {filteredData.filter(
-                            (item) =>
-                              opt.value === "all" || item.status === opt.value
-                          ).length}
+                          {
+                            filteredData.filter(
+                              (item) =>
+                                opt.value === "all" || item.status === opt.value
+                            ).length
+                          }
                         </Badge>
                       </button>
                     ))}
@@ -348,54 +335,31 @@ const OrderIndex = () => {
           {/* Khối tìm kiếm và lọc nâng cao */}
           <Card className="mb-4">
             <CardBody>
-              <Row className="align-items-center">
-                <Col md={4}>
-                  <div className="input-group">
-                    <span className="input-group-text">Search</span>
-                    <Input
-                      type="text"
-                      placeholder="Tìm kiếm theo mã đơn hàng, tên, SĐT..."
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    />
-                  </div>
-                </Col>
-                <Col md={3}>
-                  <div className="input-group">
-                    <span className="input-group-text">Filter</span>
-                    <Input
-                      type="select"
-                      value={statusFilter}
-                      onChange={(e) => {
-                        setStatusFilter(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <option value="all">Tất cả trạng thái</option>
-                      <option value="pending_confirmation">Chờ xác nhận</option>
-                      <option value="confirmed">Đã xác nhận</option>
-                      <option value="preparing">Đang chế biến</option>
-                      <option value="ready">Sẵn sàng</option>
-                      <option value="delivered">Đã giao</option>
-                      <option value="cancelled">Đã hủy</option>
-                      <option value="completed">Hoàn thành</option>
-                    </Input>
-                  </div>
-                </Col>
-                <Col md={5} className="d-flex justify-content-md-end justify-content-start">
+              <SearchAndStatusFilterBar
+                searchValue={searchTerm}
+                onSearchChange={(val) => {
+                  setSearchTerm(val);
+                  setCurrentPage(1);
+                }}
+                statusValue={statusFilter}
+                onStatusChange={(val) => {
+                  setStatusFilter(val);
+                  setCurrentPage(1);
+                }}
+                statusOptions={orderStatusOptions}
+                searchPlaceholder="Tìm kiếm theo mã đơn hàng, tên, SĐT..."
+                statusPlaceholder="Tất cả trạng thái"
+                rightContent={
                   <Button
                     color="light"
                     className="border"
                     style={{ minWidth: 140 }}
                     onClick={() => setShowFilter(true)}
                   >
-                    <span className="me-1">Advanced Filter</span>
+                    <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
                   </Button>
-                </Col>
-              </Row>
+                }
+              />
             </CardBody>
           </Card>
 
@@ -410,7 +374,6 @@ const OrderIndex = () => {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               onEdit={handleEditOrder}
-              menuItems={menuItems}
               paginate={{
                 page: orderData.meta.current_page,
                 perPage: orderData.meta.per_page,
@@ -477,40 +440,70 @@ const OrderIndex = () => {
         </OffcanvasHeader>
         <OffcanvasBody>
           <Form>
-            <FormGroup>
-              <Label for="filterCustomerName">Tên khách hàng</Label>
+            <FormGroup className="mb-3">
+              <Label for="orderType">Loại đơn hàng</Label>
               <Input
-                id="filterCustomerName"
-                placeholder="Nhập tên khách hàng..."
-                disabled
+                type="select"
+                id="orderType"
+                value={orderType}
+                onChange={(e) => {
+                  setOrderType(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-100"
+              >
+                <option value="">Tất cả</option>
+                <option value="delivery">Giao hàng</option>
+                <option value="takeaway">Mang về</option>
+                <option value="pickup">Tại bàn</option>
+              </Input>
+            </FormGroup>
+
+            <FormGroup className="mb-3">
+              <Label for="orderCode">Mã đơn hàng</Label>
+              <Input
+                type="text"
+                id="orderCode"
+                value={orderCode}
+                onChange={(e) => {
+                  setOrderCode(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Nhập mã đơn"
+                className="w-100"
               />
             </FormGroup>
-            <FormGroup>
-              <Label for="filterPhone">Số điện thoại</Label>
+
+            <FormGroup className="mb-3">
+              <Label for="status">Trạng thái</Label>
               <Input
-                id="filterPhone"
-                placeholder="Nhập số điện thoại..."
-                disabled
-              />
+                type="select"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-100"
+              >
+                <option value="all">Tất cả</option>
+                <option value="pending_confirmation">Chờ xác nhận</option>
+                <option value="confirmed">Đã xác nhận</option>
+                <option value="preparing">Đang chế biến</option>
+                <option value="ready">Sẵn sàng</option>
+                <option value="delivered">Đã giao</option>
+                <option value="cancelled">Đã huỷ</option>
+                <option value="completed">Hoàn thành</option>
+              </Input>
             </FormGroup>
-            <FormGroup>
-              <Label for="filterDate">Ngày đặt</Label>
-              <Input
-                id="filterDate"
-                type="date"
-                disabled
-              />
-            </FormGroup>
-            <Button color="primary" className="mt-3" block disabled>
-              Áp dụng lọc
-            </Button>
           </Form>
         </OffcanvasBody>
       </Offcanvas>
 
       {/* Modal Theo dõi đơn hàng */}
       <Modal isOpen={showTrack} toggle={() => setShowTrack(false)}>
-        <ModalHeader toggle={() => setShowTrack(false)}>Theo dõi đơn hàng</ModalHeader>
+        <ModalHeader toggle={() => setShowTrack(false)}>
+          Theo dõi đơn hàng
+        </ModalHeader>
         <ModalBody>
           <FormGroup>
             <Label for="trackCodeModal">Mã đơn hàng</Label>

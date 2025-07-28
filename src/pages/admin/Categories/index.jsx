@@ -6,7 +6,6 @@ import {
   Row,
   Col,
   Spinner,
-  Input,
   Button,
   Badge,
   Nav,
@@ -14,16 +13,31 @@ import {
   NavLink,
   TabContent,
   TabPane,
+  Offcanvas,
+  OffcanvasHeader,
+  OffcanvasBody,
+  Form,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListCategory from "@components/admin/Categories/ListCategory";
 import ListTrashCategory from "@components/admin/Categories/ListTrashCategory";
 import ModalCategory from "@components/admin/Categories/ModalCategory";
+import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import "react-toastify/dist/ReactToastify.css";
 import "./Categories.scss";
-import { getCategories, createCategory, updateCategory, deleteSoftCategory, getCategory } from "@services/admin/categoryService";
-import Swal from "sweetalert2";
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteSoftCategory,
+  getCategory,
+} from "@services/admin/categoryService";
+import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 
 const CategoryIndex = () => {
   const [categories, setCategories] = useState([]);
@@ -50,6 +64,10 @@ const CategoryIndex = () => {
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
 
+  const [showFilter, setShowFilter] = useState(false); // Thêm state showFilter
+  const [filterName, setFilterName] = useState("");
+  const [filterParent, setFilterParent] = useState("");
+
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
     { value: "active", label: "Hoạt động", badgeColor: "success" },
@@ -64,6 +82,8 @@ const CategoryIndex = () => {
         per_page: 10,
         search: search || undefined,
         status: status !== "all" ? status : undefined,
+        name: filterName || undefined,
+        parent: filterParent || undefined,
       };
       const res = await getCategories(params);
       const items = res.data?.data?.items;
@@ -77,18 +97,10 @@ const CategoryIndex = () => {
         });
         setCurrentPage(res.data.data.meta.page || 1);
       } else {
-        console.error("API response structure is incorrect:", res.data);
         setCategories([]);
-        setMeta({
-          current_page: 1,
-          per_page: 10,
-          total: 0,
-          last_page: 1,
-        });
+        setMeta({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
       }
-    } catch (error) {
-      console.error("Error fetching categories:", error.response || error);
-      setCategories([]);
+    } catch {
       toast.error("Lỗi khi tải danh sách danh mục!");
     } finally {
       setLoadingCategories(false);
@@ -99,7 +111,8 @@ const CategoryIndex = () => {
     if (activeTab === "list") {
       fetchCategories(currentPage);
     }
-  }, [currentPage, search, status, activeTab]);
+  }, [currentPage, search, status, activeTab, filterName, filterParent]);
+
 
   const handleCategoryClick = async (categoryId) => {
     try {
@@ -116,20 +129,13 @@ const CategoryIndex = () => {
       setIsEdit(true);
       setModalOpen(true);
       setErrors({});
-    } catch (error) {
-      console.error("Error fetching category:", error.response || error);
+    } catch {
       toast.error("Không lấy được thông tin danh mục!");
     }
   };
 
   const handleStatusChange = (value) => {
     setStatus(value);
-    setCurrentPage(1);
-    fetchCategories(1);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
     setCurrentPage(1);
     fetchCategories(1);
   };
@@ -146,20 +152,18 @@ const CategoryIndex = () => {
     formData.append("name", newCategory.name || "");
     formData.append("description", newCategory.description || "");
     formData.append("is_active", newCategory.is_active ? "1" : "0");
-    if (newCategory.parent_id) {
+    if (newCategory.parent_id)
       formData.append("parent_id", newCategory.parent_id);
-    }
     if (newCategory.image instanceof File) {
       formData.append("image_url", newCategory.image);
     }
 
     try {
-      let response;
       if (isEdit) {
-        response = await updateCategory(editCategoryId, formData);
+        await updateCategory(editCategoryId, formData);
         toast.success("Cập nhật danh mục thành công!");
       } else {
-        response = await createCategory(formData);
+        await createCategory(formData);
         toast.success("Thêm danh mục thành công!");
       }
       setModalOpen(false);
@@ -167,9 +171,7 @@ const CategoryIndex = () => {
       fetchCategories(currentPage);
     } catch (error) {
       const apiErrors = error.response?.data?.errors;
-      if (apiErrors) {
-        setErrors(apiErrors);
-      }
+      if (apiErrors) setErrors(apiErrors);
       toast.error(error.response?.data?.message || "Lỗi khi lưu danh mục!");
     }
   };
@@ -191,8 +193,7 @@ const CategoryIndex = () => {
         await deleteSoftCategory(categoryId);
         toast.success("Xóa danh mục thành công!");
         fetchCategories(currentPage);
-      } catch (error) {
-        console.error("Error deleting category:", error.response || error);
+      } catch {
         toast.error("Lỗi khi xóa danh mục!");
       }
     }
@@ -223,7 +224,12 @@ const CategoryIndex = () => {
 
   return (
     <div className="page-content">
-      <Breadcrumbs title="Quản Lý Danh Mục" breadcrumbItem={activeTab === "list" ? "Danh sách danh mục" : "Thùng rác"} />
+      <Breadcrumbs
+        title="Quản Lý Danh Mục"
+        breadcrumbItem={
+          activeTab === "list" ? "Danh sách danh mục" : "Thùng rác"
+        }
+      />
 
       <Card className="mb-4">
         <CardHeader className="bg-white border-bottom-0">
@@ -250,47 +256,73 @@ const CategoryIndex = () => {
         </CardHeader>
       </Card>
 
+      {/* ✅ Offcanvas bộ lọc nâng cao */}
+      <Offcanvas
+        direction="end"
+        isOpen={showFilter}
+        toggle={() => setShowFilter(false)}
+      >
+        <OffcanvasHeader toggle={() => setShowFilter(false)}>
+          Bộ lọc nâng cao
+        </OffcanvasHeader>
+        <OffcanvasBody>
+          <Form>
+            <FormGroup>
+              <Label for="filterName">Tên danh mục</Label>
+              <Input
+                  id="filterName"
+                  value={filterName}
+                  onChange={(e) => setFilterName(e.target.value)}
+                  placeholder="Nhập tên danh mục..."
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="filterParent">Danh mục cha</Label>
+              <Input
+                  id="filterParent"
+                  value={filterParent}
+                  onChange={(e) => setFilterParent(e.target.value)}
+                  placeholder="Nhập danh mục cha..."
+              />
+            </FormGroup>
+
+          </Form>
+        </OffcanvasBody>
+      </Offcanvas>
+
       <TabContent activeTab={activeTab}>
         <TabPane tabId="list">
           <Card className="mb-4">
             <CardHeader className="bg-white border-bottom-0">
               <Row className="align-items-center">
-                <Col md={7} sm={12} className="mb-2 mb-md-0 d-flex align-items-center">
-                  <div style={{ display: "flex" }}>
-                    {statusOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => handleStatusChange(opt.value)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          padding: "8px 24px",
-                          fontWeight: status === opt.value ? 600 : 400,
-                          color: status === opt.value ? "#007bff" : "#333",
-                          borderBottom: status === opt.value ? "3px solid #007bff" : "3px solid transparent",
-                          fontSize: 16,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
-                      >
-                        {opt.label}
-                        <Badge
-                          color={opt.badgeColor}
-                          pill
-                          className="ms-2"
-                          style={{ fontSize: 13, minWidth: 28 }}
-                        >
-                          {opt.value === "all" ? meta.total : categories.filter(c => c.is_active === (opt.value === "active")).length}
-                        </Badge>
-                      </button>
-                    ))}
-                  </div>
+                <Col
+                  md={7}
+                  sm={12}
+                  className="mb-2 mb-md-0 d-flex align-items-center"
+                >
+                  <StatusFilterGroup
+                    options={statusOptions.map((opt) => ({
+                      ...opt,
+                      badgeCount:
+                        opt.value === "all"
+                          ? meta.total
+                          : categories.filter((c) =>
+                              opt.value === "active"
+                                ? c.is_active === true
+                                : opt.value === "inactive"
+                                ? c.is_active === false
+                                : false
+                            ).length,
+                    }))}
+                    value={status}
+                    onChange={handleStatusChange}
+                    style={{ gap: "1rem" }}
+                  />
                 </Col>
                 <Col
                   md={5}
                   sm={12}
-                  className="d-flex justify-content-md-end justify-content-start align-items-center gap-2"
+                  className="d-flex justify-content-md-end justify-content-start gap-2"
                 >
                   <Button
                     color="success"
@@ -299,7 +331,7 @@ const CategoryIndex = () => {
                       setModalOpen(true);
                     }}
                   >
-                    <i className="mdi mdi-plus"></i> Thêm mới danh mục
+                    <i className="mdi mdi-plus" /> Thêm mới danh mục
                   </Button>
                 </Col>
               </Row>
@@ -307,18 +339,27 @@ const CategoryIndex = () => {
           </Card>
 
           <Card className="mb-4">
-            <CardBody>
-              <Row className="align-items-center g-2">
-                <Col md={6} sm={12}>
-                  <Input
-                    type="search"
-                    placeholder="Tìm kiếm danh mục..."
-                    value={search}
-                    onChange={handleSearchChange}
-                  />
-                </Col>
-              </Row>
-            </CardBody>
+            <CardHeader className="bg-white border-bottom-0">
+              <SearchAndStatusFilterBar
+                searchValue={search}
+                onSearchChange={setSearch}
+                statusValue={status}
+                onStatusChange={handleStatusChange}
+                statusOptions={statusOptions}
+                searchPlaceholder="Tìm kiếm danh mục..."
+                statusPlaceholder="Tất cả trạng thái"
+                rightContent={
+                  <Button
+                    color="light"
+                    className="border"
+                    style={{ minWidth: 140 }}
+                    onClick={() => setShowFilter(true)}
+                  >
+                    <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                  </Button>
+                }
+              />
+            </CardHeader>
           </Card>
 
           <Card className="mb-4">

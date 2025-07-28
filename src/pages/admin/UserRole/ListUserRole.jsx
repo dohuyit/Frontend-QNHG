@@ -3,7 +3,9 @@ import {
     Button,
     Input,
     Card,
-    CardHeader
+    CardHeader,
+    InputGroup,
+    InputGroupText,
 } from "reactstrap";
 import Swal from "sweetalert2";
 import { getUserRoleList, deleteUserRole } from "@services/admin/userRoleService";
@@ -38,10 +40,19 @@ export default function ListUserRole() {
             confirmButtonText: "Xóa"
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteUserRole(id).then(() => {
-                    Swal.fire("Đã xóa!", "", "success");
-                    fetchUserRoles();
-                });
+                deleteUserRole(id)
+                    .then((res) => {
+                        if (res.data?.code === "SUCCESS") {
+                            Swal.fire("Đã xóa!", "", "success");
+                            fetchUserRoles();
+                        } else {
+                            Swal.fire("Không thể xóa", res.data?.message || "Đã xảy ra lỗi", "error");
+                        }
+                    })
+                    .catch((error) => {
+                        const message = error.response?.data?.message || "Lỗi kết nối hoặc server.";
+                        Swal.fire("Không thể xóa", message, "error");
+                    });
             }
         });
     };
@@ -60,16 +71,25 @@ export default function ListUserRole() {
             </div>
 
             <Card className="mb-4">
-                <CardHeader className="bg-white border-bottom-0 d-flex justify-content-between">
-                    <Input
-                        type="search"
-                        placeholder="Tìm theo username hoặc email..."
-                        value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
-                        style={{ maxWidth: 250 }}
-                    />
+                <CardHeader className="bg-white border-bottom-0">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div style={{ width: 320 }}>
+                            <div className="input-group">
+          <span className="input-group-text">
+            <i className="bi bi-search" />
+          </span>
+                                <Input
+                                    type="search"
+                                    placeholder="Tìm theo username hoặc email..."
+                                    value={keyword}
+                                    onChange={(e) => setKeyword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </CardHeader>
             </Card>
+
 
             {loading ? (
                 <p>Đang tải dữ liệu...</p>
