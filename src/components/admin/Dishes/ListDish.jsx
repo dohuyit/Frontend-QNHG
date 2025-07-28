@@ -11,6 +11,7 @@ import { MdModeEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import SwitchUI from "@components/admin/ui/SwitchUI";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
 
 const ROWS_PER_PAGE = 10;
 const fullUrl = `http://localhost:8000/storage/`;
@@ -80,7 +81,7 @@ const ListDish = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit, on
                           }}
                         >
                           {dish.original_price
-                            ? `${dish.original_price.toLocaleString()} VNĐ`
+                            ? formatPriceToVND(dish.original_price)
                             : "N/A"}
                         </span>
                       </div>
@@ -92,7 +93,7 @@ const ListDish = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit, on
                           }}
                         >
                           {dish.selling_price
-                            ? `${dish.selling_price.toLocaleString()} VNĐ`
+                            ? formatPriceToVND(dish.selling_price)
                             : "N/A"}
                         </strong>
                       </div>

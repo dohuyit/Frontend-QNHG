@@ -118,7 +118,7 @@ const DishIndex = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await getCategories();
+      const res = await getCategories({ parent_id: 1 });
       setCategories(res.data.data.items || []);
     } catch {
       toast.error("Lỗi khi tải danh sách danh mục!");
