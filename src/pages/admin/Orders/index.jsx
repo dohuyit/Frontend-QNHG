@@ -52,7 +52,6 @@ const orderStatusOptions = [
 
 const OrderIndex = () => {
   const [orderData, setOrderData] = useState({ items: [], meta: {} });
-  const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("1");
   const [showTrack, setShowTrack] = useState(false);
@@ -62,6 +61,8 @@ const OrderIndex = () => {
   const [trackCode, setTrackCode] = useState("");
   const [trackResult, setTrackResult] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderType, setOrderType] = useState("");
+  const [orderCode, setOrderCode] = useState("");
 
   const navigate = useNavigate();
 
@@ -84,8 +85,11 @@ const OrderIndex = () => {
       const params = {
         page,
         per_page: 10,
-        search: searchTerm || undefined,
+        order_type: orderType || undefined,
+        order_code: orderCode || undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
       };
+
       if (statusFilter !== "all") {
         params.status = statusFilter;
       }
@@ -115,23 +119,9 @@ const OrderIndex = () => {
     }
   };
 
-  const fetchMenuItems = async () => {
-    try {
-      // Implement fetch menu items API
-      setMenuItems([
-        { id: 1, name: "Phở bò", price: 50000 },
-        { id: 2, name: "Cơm tấm", price: 35000 },
-        { id: 3, name: "Bún chả", price: 40000 },
-      ]);
-    } catch (error) {
-      console.error("API ERROR:", error);
-    }
-  };
-
   useEffect(() => {
     fetchOrders(currentPage);
-    fetchMenuItems();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, orderType, orderCode, statusFilter]);
 
   const handleDelete = async (id) => {
     try {
@@ -384,7 +374,6 @@ const OrderIndex = () => {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               onEdit={handleEditOrder}
-              menuItems={menuItems}
               paginate={{
                 page: orderData.meta.current_page,
                 perPage: orderData.meta.per_page,
@@ -451,24 +440,61 @@ const OrderIndex = () => {
         </OffcanvasHeader>
         <OffcanvasBody>
           <Form>
-            <FormGroup>
-              <Label for="filterCustomerName">Tên khách hàng</Label>
+            <FormGroup className="mb-3">
+              <Label for="orderType">Loại đơn hàng</Label>
               <Input
-                id="filterCustomerName"
-                placeholder="Nhập tên khách hàng..."
+                type="select"
+                id="orderType"
+                value={orderType}
+                onChange={(e) => {
+                  setOrderType(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-100"
+              >
+                <option value="">Tất cả</option>
+                <option value="delivery">Giao hàng</option>
+                <option value="takeaway">Mang về</option>
+                <option value="pickup">Tại bàn</option>
+              </Input>
+            </FormGroup>
+
+            <FormGroup className="mb-3">
+              <Label for="orderCode">Mã đơn hàng</Label>
+              <Input
+                type="text"
+                id="orderCode"
+                value={orderCode}
+                onChange={(e) => {
+                  setOrderCode(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Nhập mã đơn"
+                className="w-100"
               />
             </FormGroup>
-            <FormGroup>
-              <Label for="filterPhone">Số điện thoại</Label>
-              <Input id="filterPhone" placeholder="Nhập số điện thoại..." />
+
+            <FormGroup className="mb-3">
+              <Label for="status">Trạng thái</Label>
+              <Input
+                type="select"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-100"
+              >
+                <option value="all">Tất cả</option>
+                <option value="pending_confirmation">Chờ xác nhận</option>
+                <option value="confirmed">Đã xác nhận</option>
+                <option value="preparing">Đang chế biến</option>
+                <option value="ready">Sẵn sàng</option>
+                <option value="delivered">Đã giao</option>
+                <option value="cancelled">Đã huỷ</option>
+                <option value="completed">Hoàn thành</option>
+              </Input>
             </FormGroup>
-            <FormGroup>
-              <Label for="filterDate">Ngày đặt</Label>
-              <Input id="filterDate" type="date" />
-            </FormGroup>
-            <Button color="primary" className="mt-3" block>
-              Áp dụng lọc
-            </Button>
           </Form>
         </OffcanvasBody>
       </Offcanvas>

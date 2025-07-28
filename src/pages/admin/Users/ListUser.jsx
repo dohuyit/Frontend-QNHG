@@ -64,6 +64,12 @@ export default function ListUser() {
     fetchUserStatusCounts();
   }, [keyword, filterStatus, currentPage]);
 
+  // Thêm useEffect để tự động lọc khi filterUsername hoặc filterEmail thay đổi
+  useEffect(() => {
+    fetchUsers(1);
+    setCurrentPage(1);
+  }, [filterUsername, filterEmail]);
+
   const fetchUsers = (page = 1) => {
     const params = { page, keyword };
 
@@ -356,18 +362,7 @@ export default function ListUser() {
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
             </FormGroup>
-            <Button
-              color="primary"
-              className="mt-3"
-              block
-              onClick={() => {
-                fetchUsers(1);
-                setCurrentPage(1);
-                setShowFilter(false);
-              }}
-            >
-              Áp dụng lọc
-            </Button>
+            {/* Xóa nút Áp dụng lọc */}
           </Form>
         </OffcanvasBody>
       </Offcanvas>

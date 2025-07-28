@@ -417,20 +417,34 @@ const KitchenOrdersPage = () => {
                 <OffcanvasBody>
                     <Form>
                         <FormGroup>
-                            <Label for="filterOrderId">Mã đơn</Label>
-                            <Input id="filterOrderId" name="order_id" value={filter.order_id || ""} onChange={handleFilterChange} placeholder="Nhập mã đơn..." />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="filterTable">Bàn</Label>
-                            <Input id="filterTable" name="table_number" value={filter.table_number || ""} onChange={handleFilterChange} placeholder="Nhập số bàn..." />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="filterItem">Món ăn</Label>
-                            <Input id="filterItem" name="item_name" value={filter.item_name || ""} onChange={handleFilterChange} placeholder="Nhập tên món..." />
+                            <Label for="filterItem">Tên món</Label>
+                            <Input
+                                id="filterItem"
+                                name="item_name"
+                                value={filter.item_name || ""}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const updatedFilter = { ...filter, item_name: value };
+                                    setFilter(updatedFilter);
+                                    fetchOrders(updatedFilter, filterDate);
+                                }}
+                                placeholder="Nhập tên món..."
+                            />
                         </FormGroup>
                         <FormGroup>
                             <Label for="filterStatus">Trạng thái</Label>
-                            <Input id="filterStatus" type="select" name="status" value={filter.status || ""} onChange={handleFilterChange}>
+                            <Input
+                                id="filterStatus"
+                                type="select"
+                                name="status"
+                                value={filter.status || ""}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const updatedFilter = { ...filter, status: value };
+                                    setFilter(updatedFilter);
+                                    fetchOrders(updatedFilter, filterDate);
+                                }}
+                            >
                                 <option value="">Tất cả</option>
                                 <option value="pending">Pending</option>
                                 <option value="preparing">In Progress</option>
@@ -438,33 +452,9 @@ const KitchenOrdersPage = () => {
                                 <option value="cancelled">Cancelled</option>
                             </Input>
                         </FormGroup>
-                        <FormGroup>
-                            <Label for="filterPriority">Ưu tiên</Label>
-                            <Input id="filterPriority" type="select" name="is_priority" value={filter.is_priority || ""} onChange={handleFilterChange}>
-                                <option value="">Tất cả</option>
-                                <option value="1">Ưu tiên</option>
-                                <option value="0">Thường</option>
-                            </Input>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="filterCreatedAt">Ngày tạo</Label>
-                            <Input id="filterCreatedAt" type="date" name="created_at" value={filter.created_at || ""} onChange={handleFilterChange} />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="filterDate">Lọc theo ngày</Label>
-                            <Input
-                                id="filterDate"
-                                type="date"
-                                value={filterDate}
-                                onChange={handleDateChange}
-                            />
-                        </FormGroup>
-                        <Button color="primary" className="mt-3" block onClick={() => fetchOrders(filter, filterDate)}>
-                            <i className="mdi mdi-filter-check me-1"></i>
-                            Áp dụng lọc
-                        </Button>
                     </Form>
                 </OffcanvasBody>
+
             </Offcanvas>
         </div>
     );

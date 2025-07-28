@@ -37,11 +37,13 @@ const customerStatusDropdownOptions = [
 const CustomerIndex = () => {
   const [customerData, setCustomerData] = useState({ items: [], meta: {} });
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("list");
+  const [view] = useState("list");
   const [showFilter, setShowFilter] = useState(false);
 
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [filterName, setFilterName] = useState("");
+  const [filterAddress, setFilterAddress] = useState("");
 
   const fetchCustomers = async (page = 1) => {
     setLoading(true);
@@ -50,6 +52,8 @@ const CustomerIndex = () => {
         page,
         keyword: searchKeyword,
         status: selectedStatus !== "all" ? selectedStatus : undefined,
+        full_name: filterName || undefined,
+        address: filterAddress || undefined,
       });
       setCustomerData({
         items: res.data.data.items,
@@ -62,9 +66,10 @@ const CustomerIndex = () => {
     }
   };
 
+
   useEffect(() => {
     fetchCustomers();
-  }, [searchKeyword, selectedStatus]);
+  }, [searchKeyword, selectedStatus, filterName, filterAddress]);
 
   const handleDelete = async (id) => {
     try {
@@ -79,130 +84,132 @@ const CustomerIndex = () => {
   };
 
   return (
-      <div className="page-content">
-        <Breadcrumbs
-            title="Danh sách khách hàng"
-            breadcrumbItem="Quản lí khách hàng"
-        />
+    <div className="page-content">
+      <Breadcrumbs
+        title="Danh sách khách hàng"
+        breadcrumbItem="Quản lí khách hàng"
+      />
 
-        {/* Offcanvas bộ lọc */}
-        <Offcanvas
-            direction="end"
-            isOpen={showFilter}
-            toggle={() => setShowFilter(false)}
-        >
-          <OffcanvasHeader toggle={() => setShowFilter(false)}>
-            Bộ lọc nâng cao
-          </OffcanvasHeader>
-          <OffcanvasBody>
-            <Form>
-              <FormGroup>
-                <Label for="filterName">Tên khách hàng</Label>
-                <Input
-                    id="filterName"
-                    placeholder="Nhập tên khách hàng..."
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label for="filterAddress">Địa chỉ</Label>
-                <Input
-                    id="filterAddress"
-                    placeholder="Nhập địa chỉ..."
-                />
-              </FormGroup>
-              <Button color="primary" className="mt-3" block>
-                Áp dụng lọc
-              </Button>
-            </Form>
-          </OffcanvasBody>
-        </Offcanvas>
+      {/* Offcanvas bộ lọc */}
+      <Offcanvas
+        direction="end"
+        isOpen={showFilter}
+        toggle={() => setShowFilter(false)}
+      >
+        <OffcanvasHeader toggle={() => setShowFilter(false)}>
+          Bộ lọc nâng cao
+        </OffcanvasHeader>
+        <OffcanvasBody>
+          <Form>
+            <FormGroup>
+              <Label for="filterName">Tên khách hàng</Label>
+              <Input
+                  id="filterName"
+                  value={filterName}
+                  onChange={(e) => setFilterName(e.target.value)}
+                  placeholder="Nhập tên khách hàng..."
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="filterAddress">Địa chỉ</Label>
+              <Input
+                  id="filterAddress"
+                  value={filterAddress}
+                  onChange={(e) => setFilterAddress(e.target.value)}
+                  placeholder="Nhập địa chỉ..."
+              />
+            </FormGroup>
 
-        {/* Switch view dạng list / grid */}
-        <Card className="mb-4">
-          <CardHeader className="bg-white border-bottom-0">
-            <div className="d-flex flex-wrap gap-2 mb-3">
-              {customerStatusFilterButtons.map((opt) => (
-                  <Button
-                      key={opt.value}
-                      color={selectedStatus === opt.value ? "primary" : "light"}
-                      onClick={() => setSelectedStatus(opt.value)}
-                      style={{
-                        fontWeight: 500,
-                        borderColor: "#ddd",
-                        color: selectedStatus === opt.value ? "#fff" : "#333",
-                      }}
-                  >
-                    {opt.label}
-                    <Badge
-                        color={opt.badgeColor}
-                        pill
-                        className="ms-2"
-                        style={{ fontSize: 13, minWidth: 28 }}
-                    >
-                      0
-                    </Badge>
-                  </Button>
-              ))}
-            </div>
+          </Form>
+        </OffcanvasBody>
+      </Offcanvas>
 
-            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-5">
-              <div className="d-flex flex-wrap gap-2">
-                <InputGroup style={{ width: 320 }}>
-                  <InputGroupText>
-                    <i className="mdi mdi-magnify" />
-                  </InputGroupText>
-                  <Input
-                      type="text"
-                      placeholder="Tìm kiếm khách hàng..."
-                      value={searchKeyword}
-                      onChange={(e) => setSearchKeyword(e.target.value)}
-                  />
-                </InputGroup>
-                <InputGroup style={{ width: 220 }}>
-                  <InputGroupText>
-                    <i className="mdi mdi-filter-variant" />
-                  </InputGroupText>
-                  <Input
-                      type="select"
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                  >
-                    {customerStatusDropdownOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                    ))}
-                  </Input>
-                </InputGroup>
-              </div>
+      {/* Switch view dạng list / grid */}
+      <Card className="mb-4">
+        <CardHeader className="bg-white border-bottom-0">
+          <div className="d-flex flex-wrap gap-2 mb-3">
+            {customerStatusFilterButtons.map((opt) => (
               <Button
-                  color="light"
-                  className="border"
-                  style={{ minWidth: 140 }}
-                  onClick={() => setShowFilter(true)}
+                key={opt.value}
+                color={selectedStatus === opt.value ? "primary" : "light"}
+                onClick={() => setSelectedStatus(opt.value)}
+                style={{
+                  fontWeight: 500,
+                  borderColor: "#ddd",
+                  color: selectedStatus === opt.value ? "#fff" : "#333",
+                }}
               >
-                <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                {opt.label}
+                <Badge
+                  color={opt.badgeColor}
+                  pill
+                  className="ms-2"
+                  style={{ fontSize: 13, minWidth: 28 }}
+                >
+                  0
+                </Badge>
               </Button>
-            </div>
-          </CardHeader>
-        </Card>
+            ))}
+          </div>
 
-        {/* Danh sách hoặc lưới khách hàng */}
-        {loading ? (
-            <div className="text-center my-5">
-              <Spinner color="primary" />
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-5">
+            <div className="d-flex flex-wrap gap-2">
+              <InputGroup style={{ width: 320 }}>
+                <InputGroupText>
+                  <i className="mdi mdi-magnify" />
+                </InputGroupText>
+                <Input
+                  type="text"
+                  placeholder="Tìm kiếm khách hàng..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                />
+              </InputGroup>
+              <InputGroup style={{ width: 220 }}>
+                <InputGroupText>
+                  <i className="mdi mdi-filter-variant" />
+                </InputGroupText>
+                <Input
+                  type="select"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                  {customerStatusDropdownOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Input>
+              </InputGroup>
             </div>
-        ) : view === "list" ? (
-            <ListCustomer
-                paginate={customerData.meta}
-                data={customerData.items}
-                onDelete={handleDelete}
-                onPageChange={(page) => fetchCustomers(page)}
-            />
-        ) : (
-            <GridCustomer data={customerData.items} />
-        )}
-      </div>
+            <Button
+              color="light"
+              className="border"
+              style={{ minWidth: 140 }}
+              onClick={() => setShowFilter(true)}
+            >
+              <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Danh sách hoặc lưới khách hàng */}
+      {loading ? (
+        <div className="text-center my-5">
+          <Spinner color="primary" />
+        </div>
+      ) : view === "list" ? (
+        <ListCustomer
+          paginate={customerData.meta}
+          data={customerData.items}
+          onDelete={handleDelete}
+          onPageChange={(page) => fetchCustomers(page)}
+        />
+      ) : (
+        <GridCustomer data={customerData.items} />
+      )}
+    </div>
   );
 };
 

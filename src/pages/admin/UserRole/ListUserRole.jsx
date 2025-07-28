@@ -40,10 +40,19 @@ export default function ListUserRole() {
             confirmButtonText: "Xóa"
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteUserRole(id).then(() => {
-                    Swal.fire("Đã xóa!", "", "success");
-                    fetchUserRoles();
-                });
+                deleteUserRole(id)
+                    .then((res) => {
+                        if (res.data?.code === "SUCCESS") {
+                            Swal.fire("Đã xóa!", "", "success");
+                            fetchUserRoles();
+                        } else {
+                            Swal.fire("Không thể xóa", res.data?.message || "Đã xảy ra lỗi", "error");
+                        }
+                    })
+                    .catch((error) => {
+                        const message = error.response?.data?.message || "Lỗi kết nối hoặc server.";
+                        Swal.fire("Không thể xóa", message, "error");
+                    });
             }
         });
     };

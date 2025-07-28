@@ -74,6 +74,9 @@ const DishIndex = () => {
   const [deleteDishId, setDeleteDishId] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [priceFrom, setPriceFrom] = useState("");
+  const [priceTo, setPriceTo] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
 
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
@@ -96,7 +99,17 @@ const DishIndex = () => {
 
   useEffect(() => {
     if (activeTab === "list") fetchDishes(currentPage);
-  }, [currentPage, search, status, categoryFilter, activeTab]);
+  }, [
+    currentPage,
+    search,
+    status,
+    categoryFilter,
+    activeTab,
+    priceFrom,
+    priceTo,
+    nameFilter,
+  ]);
+
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus);
     setCurrentPage(1);
@@ -119,10 +132,13 @@ const DishIndex = () => {
       const params = {
         page,
         per_page: 10,
-        search: search || undefined,
+        name: nameFilter || undefined,
         category_id: categoryFilter || undefined,
         status: status !== "all" ? status : undefined,
+        price_from: priceFrom || undefined,
+        price_to: priceTo || undefined,
       };
+
       const res = await getDishes(params);
       const items = res.data?.data?.items;
       if (Array.isArray(items)) {
@@ -393,31 +409,35 @@ const DishIndex = () => {
           Lọc nâng cao
         </OffcanvasHeader>
         <OffcanvasBody>
-          {/* Tùy biến nội dung lọc nâng cao ở đây */}
           <div>
             <h6>Lọc theo giá:</h6>
-            <Input type="number" placeholder="Giá từ..." className="mb-2" />
-            <Input type="number" placeholder="...đến" className="mb-3" />
+            <Input
+                type="number"
+                placeholder="Giá từ..."
+                className="mb-2"
+                value={priceFrom}
+                onChange={(e) => setPriceFrom(e.target.value)}
+            />
+            <Input
+                type="number"
+                placeholder="...đến"
+                className="mb-3"
+                value={priceTo}
+                onChange={(e) => setPriceTo(e.target.value)}
+            />
 
-            <h6>Lọc theo đơn vị:</h6>
-            <Input type="select" className="mb-3">
-              <option value="">Tất cả</option>
-              {unitOptions.map((u) => (
-                <option key={u.value} value={u.value}>
-                  {u.label}
-                </option>
-              ))}
-            </Input>
+            <h6>Lọc theo tên món ăn:</h6>
+            <Input
+                type="text"
+                className="mb-3"
+                placeholder="Nhập tên món ăn..."
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+            />
 
-            <Button
-              color="primary"
-              block
-              onClick={() => setShowAdvancedFilter(false)}
-            >
-              Áp dụng
-            </Button>
           </div>
         </OffcanvasBody>
+
       </Offcanvas>
 
       <ModalDish

@@ -65,6 +65,8 @@ const CategoryIndex = () => {
   const [activeTab, setActiveTab] = useState("list");
 
   const [showFilter, setShowFilter] = useState(false); // Thêm state showFilter
+  const [filterName, setFilterName] = useState("");
+  const [filterParent, setFilterParent] = useState("");
 
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
@@ -80,6 +82,8 @@ const CategoryIndex = () => {
         per_page: 10,
         search: search || undefined,
         status: status !== "all" ? status : undefined,
+        name: filterName || undefined,
+        parent: filterParent || undefined,
       };
       const res = await getCategories(params);
       const items = res.data?.data?.items;
@@ -107,7 +111,8 @@ const CategoryIndex = () => {
     if (activeTab === "list") {
       fetchCategories(currentPage);
     }
-  }, [currentPage, search, status, activeTab]);
+  }, [currentPage, search, status, activeTab, filterName, filterParent]);
+
 
   const handleCategoryClick = async (categoryId) => {
     try {
@@ -264,15 +269,23 @@ const CategoryIndex = () => {
           <Form>
             <FormGroup>
               <Label for="filterName">Tên danh mục</Label>
-              <Input id="filterName" placeholder="Nhập tên danh mục..." />
+              <Input
+                  id="filterName"
+                  value={filterName}
+                  onChange={(e) => setFilterName(e.target.value)}
+                  placeholder="Nhập tên danh mục..."
+              />
             </FormGroup>
             <FormGroup>
               <Label for="filterParent">Danh mục cha</Label>
-              <Input id="filterParent" placeholder="Nhập danh mục cha..." />
+              <Input
+                  id="filterParent"
+                  value={filterParent}
+                  onChange={(e) => setFilterParent(e.target.value)}
+                  placeholder="Nhập danh mục cha..."
+              />
             </FormGroup>
-            <Button color="primary" className="mt-3" block>
-              Áp dụng lọc
-            </Button>
+
           </Form>
         </OffcanvasBody>
       </Offcanvas>
