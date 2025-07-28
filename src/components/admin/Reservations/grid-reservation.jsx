@@ -27,6 +27,7 @@ import {
 } from "@services/admin/reservationService";
 import "./grid-reservation.css";
 import TableSelectModal from "@components/admin/Table/TableSelectModal";
+import { FaEdit } from "react-icons/fa";
 
 const ReservationGrid = ({
     paginate = {},
@@ -34,7 +35,6 @@ const ReservationGrid = ({
     onDelete,
     onPageChange,
     onUpdate,
-    tableAreas = [],
     onStatusChangeLocal,
 }) => {
     const [showDelete, setShowDelete] = useState(false);
@@ -47,7 +47,6 @@ const ReservationGrid = ({
     const [isConfirmingReservation, setIsConfirmingReservation] = useState(false);
     const [showTableSelect, setShowTableSelect] = useState(false);
     const [selectedTables, setSelectedTables] = useState([]);
-    const [reservationToConfirm, setReservationToConfirm] = useState(null);
 
     const currentPage = paginate.page || 1;
     const totalPages = paginate.totalPage || 1;
@@ -132,9 +131,6 @@ const ReservationGrid = ({
 
                 timeValue = `${hours24.toString().padStart(2, '0')}:${minutes}`;
             }
-
-            // Combine date and time into datetime format (KHÔNG cần cho reservation_time)
-            // const combinedDateTime = `${editForm.reservation_date} ${timeValue}:00`;
 
             const payload = {
                 customer_id: selectedItem.customer_id || 1, // Add customer_id
@@ -238,40 +234,9 @@ const ReservationGrid = ({
 
     // Thay vì gọi handleStatusChange trực tiếp khi xác nhận, ta mở modal chọn bàn
     const handleConfirmReservation = (reservation) => {
-      setReservationToConfirm(reservation);
       // Nếu reservation đã có bàn, truyền vào initialSelectedTables
       setSelectedTables(reservation.tables || []);
       setShowTableSelect(true);
-    };
-
-    // Callback khi chọn bàn xong
-    const handleTableSelectConfirm = async (tables) => {
-      setShowTableSelect(false);
-      if (!reservationToConfirm) return;
-      try {
-        // Tạo payload cập nhật trạng thái và gán bàn
-        const payload = {
-          customer_id: reservationToConfirm.customer_id || reservationToConfirm.customer?.id || 1,
-          customer_name: reservationToConfirm.customer_name,
-          customer_phone: reservationToConfirm.customer_phone || reservationToConfirm.phone_number,
-          customer_email: reservationToConfirm.customer_email || reservationToConfirm.email,
-          reservation_time: reservationToConfirm.reservation_time || reservationToConfirm.booking_time,
-          reservation_date: reservationToConfirm.reservation_date || reservationToConfirm.booking_date,
-          number_of_guests: reservationToConfirm.number_of_guests,
-          table_ids: tables.map(t => t.id), // tuỳ backend, có thể là table_id hoặc table_ids
-          notes: reservationToConfirm.notes || reservationToConfirm.special_requests || '',
-          status: "confirmed",
-          user_id: reservationToConfirm.user_id || 2,
-        };
-        await updateReservation(reservationToConfirm.id, payload);
-        toast.success("Đã xác nhận và gán bàn thành công");
-        if (onUpdate) onUpdate();
-      } catch (error) {
-        toast.error(error.response?.data?.message || "Lỗi khi xác nhận và gán bàn");
-      } finally {
-        setReservationToConfirm(null);
-        setSelectedTables([]);
-      }
     };
 
     return (
@@ -293,7 +258,12 @@ const ReservationGrid = ({
                                     onDelete={handleCardDelete}
                                     onStatusChange={handleStatusChange}
                                     onStatusChangeLocal={onStatusChangeLocal}
-                                    onConfirmReservation={handleConfirmReservation} // thêm dòng này nếu CardReservation hỗ trợ
+                                    onConfirmReservation={handleConfirmReservation}
+                                    onEditTable={() => {
+                                        setSelectedItem(reservation);
+                                        setSelectedTables(reservation.tables || []);
+                                        setShowTableSelect(true);
+                                    }}
                                 />
                             </Col>
                         ))}
@@ -505,25 +475,34 @@ const ReservationGrid = ({
                             </Row>
                             <Row>
                                 <Col md={6}>
-                                    <FormGroup>
-                                        <Label for="table_area_id">Khu vực bàn</Label>
-                                        <Input
-                                            id="table_area_id"
-                                            type="select"
-                                            value={editForm.table_area_id || selectedItem.table_area_id || ''}
-                                            onChange={(e) =>
-                                                setEditForm({ ...editForm, table_area_id: e.target.value })
+                                {/* Thông tin bàn */}
+                                <div className="mb-3">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <span className="text-muted me-2"><i className="mdi mdi-table-chair"></i></span>
+                                        <small className="text-muted">Bàn:</small>
+                                    </div>
+                                    <div className="ms-4 d-flex align-items-center justify-content-between">
+                                        <span>
+                                            {editForm.tables && editForm.tables.length > 0
+                                                ? editForm.tables.map(t => `Bàn ${t.table_number}`).join(", ")
+                                                : <span className="text-muted">Chưa chọn bàn nào</span>
                                             }
+                                        </span>
+                                        <Button
+                                            color="link"
+                                            size="sm"
+                                            className="p-0 ms-2"
+                                            style={{ color: "#222" }}
+                                            title="Chọn bàn"
+                                            onClick={() => {
+                                                setSelectedTables(editForm.tables || []);
+                                                setShowTableSelect(true);
+                                            }}
                                         >
-                                            <option value="">Chọn khu vực bàn</option>
-                                            {tableAreas && tableAreas.map((area) => (
-                                                <option key={area.id} value={area.id}>
-                                                    {area.name}
-                                                </option>
-                                            ))}
-                                        </Input>
-                                        {getFieldError('table_area_id')}
-                                    </FormGroup>
+                                            <FaEdit size={18} />
+                                        </Button>
+                                    </div>
+                                    </div>
                                 </Col>
                                 <Col md={6}>
                                     <FormGroup>
@@ -772,7 +751,10 @@ const ReservationGrid = ({
             <TableSelectModal
               isOpen={showTableSelect}
               onClose={() => setShowTableSelect(false)}
-              onConfirm={handleTableSelectConfirm}
+              onConfirm={(tables) => {
+                setShowTableSelect(false);
+                setEditForm(prev => ({ ...prev, tables }));
+              }}
               initialSelectedTables={selectedTables}
             />
         </>

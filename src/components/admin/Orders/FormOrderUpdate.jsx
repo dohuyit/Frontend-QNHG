@@ -120,6 +120,14 @@ const FormOrderUpdate = () => {
     ],
   };
 
+  const kitchenStatusTabs = [
+    { key: 'pending', label: 'Chờ bếp' },
+    { key: 'preparing', label: 'Đang chuẩn bị' },
+    { key: 'ready', label: 'Sẵn sàng' },
+    { key: 'cancelled', label: 'Đã hủy' },
+  ];
+  const [activeKitchenTab, setActiveKitchenTab] = useState('pending');
+
   useEffect(() => {
     if (orderId) {
       setLoadingOrder(true);
@@ -290,8 +298,43 @@ const FormOrderUpdate = () => {
 
   const addToOrder = (item, isCombo = false) => {
     setOrderItems((prevItems) => {
-      const existingIndex = prevItems.findIndex((i) =>
+      const sameIdItems = prevItems.filter((i) =>
         isCombo ? i.combo_id === item.id : (i.dish_id?.id || i.id) === item.id && !i.combo_id
+      );
+      const hasPending = sameIdItems.some(i => i.kitchen_status === 'pending');
+      if (sameIdItems.length > 0 && !hasPending) {
+        return [
+          ...prevItems,
+          {
+            ...item,
+            quantity: 1,
+            price: item.selling_price ?? item.price ?? 0,
+            combo_id: isCombo ? item.id : null,
+            kitchen_status: 'pending',
+            is_additional: 1,
+            name: (item.name || (isCombo ? 'Combo không tên' : 'Món ăn không tên')) + ' (bổ sung)',
+          },
+        ];
+      }
+      // Nếu có item đang ở trạng thái 'preparing', không cộng dồn mà tạo mới với label bổ sung và trạng thái pending
+      const hasPreparing = sameIdItems.some(i => i.kitchen_status === 'preparing');
+      if (hasPreparing) {
+        return [
+          ...prevItems,
+          {
+            ...item,
+            quantity: 1,
+            price: item.selling_price ?? item.price ?? 0,
+            combo_id: isCombo ? item.id : null,
+            kitchen_status: 'pending',
+            is_additional: 1,
+            name: (item.name || (isCombo ? 'Combo không tên' : 'Món ăn không tên')) + ' (bổ sung)',
+          },
+        ];
+      }
+      // Nếu đã có item cùng id và trạng thái bếp (pending), cộng dồn số lượng
+      const existingIndex = prevItems.findIndex((i) =>
+        isCombo ? (i.combo_id === item.id && i.kitchen_status === 'pending') : ((i.dish_id?.id || i.id) === item.id && !i.combo_id && i.kitchen_status === 'pending')
       );
       if (existingIndex !== -1) {
         const updatedItems = [...prevItems];
@@ -305,17 +348,20 @@ const FormOrderUpdate = () => {
             quantity: 1,
             price: item.selling_price ?? item.price ?? 0,
             combo_id: isCombo ? item.id : null,
+            kitchen_status: 'pending',
           },
         ];
       }
     });
   };
 
-  const updateQuantity = (id, quantity, comboId = null) => {
+  const updateQuantity = (id, quantity, comboId = null, order_item_id = null) => {
     setOrderItems((prevItems) => {
       if (quantity <= 0) {
         const removed = prevItems.find((item) =>
-          comboId ? item.combo_id === comboId : (item.dish_id?.id || item.id) === id && !item.combo_id
+          order_item_id ? item.order_item_id === order_item_id : (
+            comboId ? item.combo_id === comboId : (item.dish_id?.id || item.id) === id && !item.combo_id
+          )
         );
         if (removed) {
           setRemovedItems((prev) => [
@@ -324,17 +370,19 @@ const FormOrderUpdate = () => {
           ]);
         }
         return prevItems.filter((item) =>
-          comboId ? item.combo_id !== comboId : (item.dish_id?.id || item.id) !== id && !item.combo_id
+          order_item_id ? item.order_item_id !== order_item_id : (
+            comboId ? item.combo_id !== comboId : (item.dish_id?.id || item.id) !== id && !item.combo_id
+          )
         );
       }
       return prevItems.map((item) =>
-        comboId
-          ? item.combo_id === comboId
-            ? { ...item, quantity }
-            : item
-          : (item.dish_id?.id || item.id) === id && !item.combo_id
-          ? { ...item, quantity }
-          : item
+        order_item_id
+          ? (item.order_item_id === order_item_id ? { ...item, quantity } : item)
+          : (
+            comboId
+              ? (item.combo_id === comboId ? { ...item, quantity } : item)
+              : ((item.dish_id?.id || item.id) === id && !item.combo_id ? { ...item, quantity } : item)
+          )
       );
     });
   };
@@ -597,6 +645,7 @@ const FormOrderUpdate = () => {
           combo_id: item.combo_id ? Number(item.combo_id) : null,
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price || item.price),
+          is_additional: item.is_additional ? 1 : 0,
         })),
       };
 
@@ -1145,17 +1194,32 @@ const FormOrderUpdate = () => {
                 <div className="fw-bold mb-3 px-3" style={{ fontSize: "1.1rem" }}>
                   Chi tiết đơn hàng ({orderItems.length} món)
                 </div>
+                {/* Tabs kitchen status */}
+                <div className="order-kitchen-status-tabs d-flex gap-2 px-2 mb-2">
+                  {kitchenStatusTabs.map(tab => (
+                    <Button
+                      key={tab.key}
+                      color={activeKitchenTab === tab.key ? 'primary' : 'light'}
+                      size="sm"
+                      className={activeKitchenTab === tab.key ? '' : 'border'}
+                      onClick={() => setActiveKitchenTab(tab.key)}
+                      style={{ fontWeight: 500 }}
+                    >
+                      {tab.label}
+                    </Button>
+                  ))}
+                </div>
                 <div className="order-items-list">
-                  {orderItems.length === 0 ? (
+                  {orderItems.filter(item => item.kitchen_status === activeKitchenTab).length === 0 ? (
                     <div className="text-muted text-center py-4">
                       <FaShoppingCart size={32} className="mb-2 text-secondary" />
-                      <div>Chưa có món nào trong đơn hàng.</div>
+                      <div>Chưa có món nào trong trạng thái này.</div>
                     </div>
                   ) : (
-                    orderItems.map((item) => (
+                    orderItems.filter(item => item.kitchen_status === activeKitchenTab).map((item) => (
                       <div
                         className="order-item-row d-flex align-items-center"
-                        key={item.combo_id ? `combo-${item.combo_id}` : item.dish_id?.id || item.id}
+                        key={item.combo_id ? `combo-${item.combo_id}-${item.kitchen_status}-${item.is_additional ? 'add' : ''}` : (item.dish_id?.id || item.id) + '-' + item.kitchen_status + (item.is_additional ? '-add' : '')}
                       >
                         <div className="order-item-img-block me-3">
                           <img
@@ -1195,39 +1259,44 @@ const FormOrderUpdate = () => {
                                 );
                               })()
                             )}
+                            {(item.is_additional === 1) && <span className="badge bg-success ms-2">Món bổ sung</span>}
                           </div>
                           <div className="d-flex align-items-center gap-2 ms-3">
-                            <Button
-                              color="light"
-                              size="sm"
-                              className="border order-item-qty-btn"
-                              onClick={() =>
-                                updateQuantity(
-                                  item.combo_id ? null : (item.dish_id?.id || item.id),
-                                  item.quantity - 1,
-                                  item.combo_id ? item.combo_id : null
-                                )
-                              }
-                              disabled={typeof item.kitchen_status !== 'undefined' && item.kitchen_status !== 'pending'}
-                            >
-                              -
-                            </Button>
-                            <span className="mx-2 order-item-qty">{item.quantity}</span>
-                            <Button
-                              color="light"
-                              size="sm"
-                              className="border order-item-qty-btn"
-                              onClick={() =>
-                                updateQuantity(
-                                  item.combo_id ? null : (item.dish_id?.id || item.id),
-                                  item.quantity + 1,
-                                  item.combo_id ? item.combo_id : null
-                                )
-                              }
-                              disabled={typeof item.kitchen_status !== 'undefined' && item.kitchen_status !== 'pending'}
-                            >
-                              +
-                            </Button>
+                            {item.kitchen_status === 'pending' && (
+                              <>
+                                <Button
+                                  color="light"
+                                  size="sm"
+                                  className="border order-item-qty-btn"
+                                  onClick={() =>
+                                    updateQuantity(
+                                      item.combo_id ? null : (item.dish_id?.id || item.id),
+                                      item.quantity - 1,
+                                      item.combo_id ? item.combo_id : null,
+                                      item.order_item_id
+                                    )
+                                  }
+                                >
+                                  -
+                                </Button>
+                                <span className="mx-2 order-item-qty">{item.quantity}</span>
+                                <Button
+                                  color="light"
+                                  size="sm"
+                                  className="border order-item-qty-btn"
+                                  onClick={() =>
+                                    updateQuantity(
+                                      item.combo_id ? null : (item.dish_id?.id || item.id),
+                                      item.quantity + 1,
+                                      item.combo_id ? item.combo_id : null,
+                                      item.order_item_id
+                                    )
+                                  }
+                                >
+                                  +
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Row, Col, Spinner, Button, Offcanvas, OffcanvasHeader, OffcanvasBody, Form, FormGroup, Label, Input, Card, CardHeader, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Badge } from "reactstrap";
 import KanbanColumn from "@components/admin/KitchenOrders/KanbanColumn";
 import FilterBar from "@components/admin/KitchenOrders/FilterBar";
-import { getListKitchenOrders, updateKitchenOrderStatus, cancelKitchenOrder } from "@services/admin/kitchenOrderService";
+import { getListKitchenOrders, updateKitchenOrderStatus } from "@services/admin/kitchenOrderService";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
@@ -119,7 +119,8 @@ const KitchenOrdersPage = () => {
         });
         if (result.isConfirmed) {
             try {
-                const res = await cancelKitchenOrder(orderId);
+                // Gọi API cập nhật trạng thái sang cancelled
+                const res = await updateKitchenOrderStatus(orderId, { status: 'cancelled' });
                 // Nếu API trả về message lỗi, hiển thị message đó
                 if (res?.data?.message && res?.data?.success === false) {
                     toast.error(res.data.message);
