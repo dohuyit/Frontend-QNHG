@@ -201,11 +201,11 @@ const BillDetailModal = ({
                     <div className="d-flex align-items-center">
                       <img
                         src={item.menu_item?.image_url ? `${fullUrl}${item.menu_item.image_url}` : dishDefaultImg}
-                        alt={item.menu_item.name || item.combo.name}
+                        alt={item.menu_item?.name || item.combo?.name || ""}
                         className="order-item-img"
                       />
                       <div>
-                        <div className="bill-item-name">{item.menu_item.name || item.combo.name || 'N/A'}</div>
+                        <div className="bill-item-name">{item.menu_item?.name || item.combo?.name || 'N/A'}</div>
                         {item.notes && <small className="text-muted">({item.notes})</small>}
                       </div>
                     </div>
