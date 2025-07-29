@@ -37,3 +37,8 @@ export const getTableStatus = (tableNumber) =>
     apiClient.get(`/get-by-status`, {
       params: { table_number: tableNumber },
     });
+
+// ===== COUNT BÀN THEO TRẠNG THÁI =====
+export const countTable = () => {
+    return apiClient.get(`/count-by-status`);
+};

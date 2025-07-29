@@ -20,6 +20,8 @@ import {
   FormGroup,
   Label,
   Input,
+  InputGroup,
+  InputGroupText,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListCategory from "@components/admin/Categories/ListCategory";
@@ -36,6 +38,7 @@ import {
   updateCategory,
   deleteSoftCategory,
   getCategory,
+  countCategory,
 } from "@services/admin/categoryService";
 import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 
@@ -67,6 +70,12 @@ const CategoryIndex = () => {
   const [showFilter, setShowFilter] = useState(false); // Thêm state showFilter
   const [filterName, setFilterName] = useState("");
   const [filterParent, setFilterParent] = useState("");
+
+  const [categoryStatusCounts, setCategoryStatusCounts] = useState({
+    active: 0,
+    inactive: 0,
+    all: 0,
+  });
 
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
@@ -107,12 +116,21 @@ const CategoryIndex = () => {
     }
   };
 
+  const fetchCategoryStatusCounts = async () => {
+    try {
+      const res = await countCategory();
+      setCategoryStatusCounts(res.data.data || {});
+    } catch {
+      setCategoryStatusCounts({ active: 0, inactive: 0, all: 0 });
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "list") {
       fetchCategories(currentPage);
+      fetchCategoryStatusCounts();
     }
   }, [currentPage, search, status, activeTab, filterName, filterParent]);
-
 
   const handleCategoryClick = async (categoryId) => {
     try {
@@ -263,29 +281,47 @@ const CategoryIndex = () => {
         toggle={() => setShowFilter(false)}
       >
         <OffcanvasHeader toggle={() => setShowFilter(false)}>
-          Bộ lọc nâng cao
+          <span>Bộ lọc nâng cao</span>
+          <Button
+            color="light"
+            size="sm"
+            style={{
+              position: "absolute",
+              right: 48,
+              top: 12,
+              boxShadow: "none",
+              zIndex: 1,
+            }}
+            onClick={() => {
+              setFilterName("");
+              setFilterParent("");
+              fetchCategories();
+            }}
+            title="Làm mới bộ lọc"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+          </Button>
         </OffcanvasHeader>
         <OffcanvasBody>
           <Form>
             <FormGroup>
               <Label for="filterName">Tên danh mục</Label>
               <Input
-                  id="filterName"
-                  value={filterName}
-                  onChange={(e) => setFilterName(e.target.value)}
-                  placeholder="Nhập tên danh mục..."
+                id="filterName"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                placeholder="Nhập tên danh mục..."
               />
             </FormGroup>
             <FormGroup>
               <Label for="filterParent">Danh mục cha</Label>
               <Input
-                  id="filterParent"
-                  value={filterParent}
-                  onChange={(e) => setFilterParent(e.target.value)}
-                  placeholder="Nhập danh mục cha..."
+                id="filterParent"
+                value={filterParent}
+                onChange={(e) => setFilterParent(e.target.value)}
+                placeholder="Nhập danh mục cha..."
               />
             </FormGroup>
-
           </Form>
         </OffcanvasBody>
       </Offcanvas>
@@ -305,14 +341,9 @@ const CategoryIndex = () => {
                       ...opt,
                       badgeCount:
                         opt.value === "all"
-                          ? meta.total
-                          : categories.filter((c) =>
-                              opt.value === "active"
-                                ? c.is_active === true
-                                : opt.value === "inactive"
-                                ? c.is_active === false
-                                : false
-                            ).length,
+                          ? (categoryStatusCounts.active || 0) +
+                            (categoryStatusCounts.inactive || 0)
+                          : categoryStatusCounts[opt.value] || 0,
                     }))}
                     value={status}
                     onChange={handleStatusChange}

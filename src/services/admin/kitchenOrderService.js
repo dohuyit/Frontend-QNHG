@@ -40,4 +40,8 @@ export const updateKitchenOrderStatus = (id, data) => {
 // Đếm số lượng đơn bếp theo trạng thái
 export const countKitchenOrdersByStatus = () => {
     return apiClient.get(`/kitchen-orders/count-by-status`);
-}; 
+};
+
+export const countKitchenOrder = () => {
+    return apiClient.get(`/count-by-status`);
+};

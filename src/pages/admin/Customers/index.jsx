@@ -18,7 +18,11 @@ import {
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import GridCustomer from "@components/admin/Customers/grid-customer";
 import ListCustomer from "@components/admin/Customers/list-customer";
-import { getCustomers, deleteCustomer } from "@services/admin/customerService";
+import {
+  getCustomers,
+  deleteCustomer,
+  countCustomer,
+} from "@services/admin/customerService";
 
 // Nút trạng thái phía trên
 const customerStatusFilterButtons = [
@@ -44,6 +48,11 @@ const CustomerIndex = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [filterName, setFilterName] = useState("");
   const [filterAddress, setFilterAddress] = useState("");
+  const [customerStatusCounts, setCustomerStatusCounts] = useState({
+    active: 0,
+    inactive: 0,
+    all: 0,
+  });
 
   const fetchCustomers = async (page = 1) => {
     setLoading(true);
@@ -66,9 +75,18 @@ const CustomerIndex = () => {
     }
   };
 
+  const fetchCustomerStatusCounts = async () => {
+    try {
+      const res = await countCustomer();
+      setCustomerStatusCounts(res.data.data || {});
+    } catch {
+      setCustomerStatusCounts({ active: 0, inactive: 0, all: 0 });
+    }
+  };
 
   useEffect(() => {
     fetchCustomers();
+    fetchCustomerStatusCounts();
   }, [searchKeyword, selectedStatus, filterName, filterAddress]);
 
   const handleDelete = async (id) => {
@@ -97,29 +115,47 @@ const CustomerIndex = () => {
         toggle={() => setShowFilter(false)}
       >
         <OffcanvasHeader toggle={() => setShowFilter(false)}>
-          Bộ lọc nâng cao
+          <span>Bộ lọc nâng cao</span>
+          <Button
+            color="light"
+            size="sm"
+            style={{
+              position: "absolute",
+              right: 48,
+              top: 12,
+              boxShadow: "none",
+              zIndex: 1,
+            }}
+            onClick={() => {
+              setFilterName("");
+              setFilterAddress("");
+              fetchCustomers();
+            }}
+            title="Làm mới bộ lọc"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+          </Button>
         </OffcanvasHeader>
         <OffcanvasBody>
           <Form>
             <FormGroup>
               <Label for="filterName">Tên khách hàng</Label>
               <Input
-                  id="filterName"
-                  value={filterName}
-                  onChange={(e) => setFilterName(e.target.value)}
-                  placeholder="Nhập tên khách hàng..."
+                id="filterName"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                placeholder="Nhập tên khách hàng..."
               />
             </FormGroup>
             <FormGroup>
               <Label for="filterAddress">Địa chỉ</Label>
               <Input
-                  id="filterAddress"
-                  value={filterAddress}
-                  onChange={(e) => setFilterAddress(e.target.value)}
-                  placeholder="Nhập địa chỉ..."
+                id="filterAddress"
+                value={filterAddress}
+                onChange={(e) => setFilterAddress(e.target.value)}
+                placeholder="Nhập địa chỉ..."
               />
             </FormGroup>
-
           </Form>
         </OffcanvasBody>
       </Offcanvas>
@@ -146,7 +182,10 @@ const CustomerIndex = () => {
                   className="ms-2"
                   style={{ fontSize: 13, minWidth: 28 }}
                 >
-                  0
+                  {opt.value === "all"
+                    ? (customerStatusCounts.active || 0) +
+                      (customerStatusCounts.inactive || 0)
+                    : customerStatusCounts[opt.value] || 0}
                 </Badge>
               </Button>
             ))}

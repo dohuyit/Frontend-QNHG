@@ -68,3 +68,7 @@ export const paymentOrder = (id, data) => {
 export const getBillDetails = (id) => {
     return apiClient.get(`/bills/${id}/detail`);
 };
+
+export const countOrder = () => {
+    return apiClient.get(`/orders/count-by-status`);
+};
