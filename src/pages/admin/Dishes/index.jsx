@@ -417,32 +417,30 @@ const DishIndex = () => {
           <div>
             <h6>Lọc theo giá:</h6>
             <Input
-                type="number"
-                placeholder="Giá từ..."
-                className="mb-2"
-                value={priceFrom}
-                onChange={(e) => setPriceFrom(e.target.value)}
+              type="number"
+              placeholder="Giá từ..."
+              className="mb-2"
+              value={priceFrom}
+              onChange={(e) => setPriceFrom(e.target.value)}
             />
             <Input
-                type="number"
-                placeholder="...đến"
-                className="mb-3"
-                value={priceTo}
-                onChange={(e) => setPriceTo(e.target.value)}
+              type="number"
+              placeholder="...đến"
+              className="mb-3"
+              value={priceTo}
+              onChange={(e) => setPriceTo(e.target.value)}
             />
 
             <h6>Lọc theo tên món ăn:</h6>
             <Input
-                type="text"
-                className="mb-3"
-                placeholder="Nhập tên món ăn..."
-                value={nameFilter}
-                onChange={(e) => setNameFilter(e.target.value)}
+              type="text"
+              className="mb-3"
+              placeholder="Nhập tên món ăn..."
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
             />
-
           </div>
         </OffcanvasBody>
-
       </Offcanvas>
 
       <ModalDish

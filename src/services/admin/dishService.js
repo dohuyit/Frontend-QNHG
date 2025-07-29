@@ -41,3 +41,6 @@ export const updateDish = (id, data) => apiClient.post(`/${id}/update`, data);
 export const deleteSoftDish = (id) => apiClient.delete(`/${id}/soft/delete`);
 export const deleteForceDish = (id) => apiClient.delete(`/${id}/force/delete`);
 export const restoreDish = (id) => apiClient.post(`/${id}/restore`);
+export const countDishes = () => {
+    return apiClient.get(`/count-by-status`);
+};

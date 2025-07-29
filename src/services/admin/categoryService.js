@@ -38,3 +38,6 @@ export const updateCategory = (id, data) => apiClient.post(`/${id}/update`, data
 export const deleteSoftCategory = (id) => apiClient.delete(`/${id}/soft/delete`);
 export const deleteForceCategory = (id) => apiClient.delete(`/${id}/force/delete`);
 export const restoreCategory = (id) => apiClient.post(`/${id}/restore`);
+export const countCategory = () => {
+    return apiClient.get(`/count-by-status`);
+};
