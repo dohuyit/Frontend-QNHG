@@ -14,7 +14,6 @@ const apiClient = axios.create({
     baseURL: API_URL,
     headers: {
         "Accept": "application/json",
-        "Content-Type": "application/json",
     },
 });
 
@@ -24,25 +23,31 @@ apiClient.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    // Đảm bảo Content-Type là multipart/form-data khi gửi FormData
+    if (config.data instanceof FormData) {
+        config.headers["Content-Type"] = "multipart/form-data";
+    } else {
+        config.headers["Content-Type"] = "application/json";
+    }
     return config;
 });
 
 // Lấy danh sách chi nhánh (có thể truyền params filter/search)
 export const getCustomers = (params) => {
-  return apiClient.get(`/list`, { params });
+    return apiClient.get(`/list`, { params });
 };
 
 // Lấy chi tiết 1 chi nhánh
 export const getCustomerDetail = (id) => {
-  return apiClient.get(`/${id}/detail`);
+    return apiClient.get(`/${id}/detail`);
 };
 
-// Cập nhật chi nhánh
+// Cập nhật chi nhánh (hỗ trợ upload ảnh)
 export const updateCustomer = (id, data) => {
-  return apiClient.post(`/${id}/update`, data);
+    return apiClient.post(`/${id}/update`, data);
 };
 
 // Xóa chi nhánh
 export const deleteCustomer = (id) => {
-  return apiClient.delete(`/${id}/soft/delete`);
+    return apiClient.delete(`/${id}/soft/delete`);
 };

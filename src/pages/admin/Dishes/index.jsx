@@ -186,18 +186,22 @@ const DishIndex = () => {
     setErrors({});
     const formData = new FormData();
     Object.entries(newDish).forEach(([k, v]) => {
+      console.log(`Key: ${k}, Value: ${v}, Type: ${typeof v}`); // Debug log
       if (k === "tags") {
         v.split(",")
           .map((tag) => tag.trim())
           .filter(Boolean)
           .forEach((tag) => formData.append("tags[]", tag));
       } else if (k === "image" && v instanceof File) {
-        formData.append("image_url", v);
-      } else {
+        formData.append("image_url", v); // Sử dụng key 'image_url' thay vì 'image'
+        console.log("File appended:", v.name); // Debug file
+      } else if (k === "is_featured") {
+        formData.append(k, v ? 1 : 0); // Boolean to 1/0
+      } else if (k !== "image_url") { // Tránh append image_url nếu là File
         formData.append(k, v);
       }
     });
-
+  
     try {
       isEdit
         ? await updateDish(editDishId, formData)
@@ -211,6 +215,7 @@ const DishIndex = () => {
     } catch (e) {
       const apiErrors = e.response?.data?.errors;
       if (apiErrors) setErrors(apiErrors);
+      console.error("API Error:", e.response?.data); // Debug error
       toast.error(e.response?.data?.message || "Lỗi khi lưu món ăn!");
     }
   };

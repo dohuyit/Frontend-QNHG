@@ -14,7 +14,6 @@ const apiClient = axios.create({
     baseURL: API_URL,
     headers: {
         "Accept": "application/json",
-        "Content-Type": "application/json",
     },
 });
 
@@ -23,6 +22,12 @@ apiClient.interceptors.request.use((config) => {
     const token = getToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Đảm bảo Content-Type là multipart/form-data cho các request có file
+    if (config.data instanceof FormData) {
+        config.headers["Content-Type"] = "multipart/form-data";
+    } else {
+        config.headers["Content-Type"] = "application/json";
     }
     return config;
 });

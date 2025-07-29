@@ -27,7 +27,7 @@ const ModalCombo = ({
   onSave,
 }) => {
   const [previewImage, setPreviewImage] = useState(null);
-  const [ setDishList] = useState([]);
+  const [dishList, setDishList] = useState([]);
   const [showAddDishModal, setShowAddDishModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -35,9 +35,9 @@ const ModalCombo = ({
   useEffect(() => {
     if (combo.items && combo.items.length > 0) {
       const total = combo.items.reduce((sum, item) => sum + (item.selling_price || 0) * (item.quantity || 1), 0);
-      setCombo({ ...combo, original_total_price: total });
+      setCombo((prev) => ({ ...prev, original_total_price: total }));
     } else {
-      setCombo({ ...combo, original_total_price: 0 });
+      setCombo((prev) => ({ ...prev, original_total_price: 0 }));
     }
     // eslint-disable-next-line
   }, [combo.items]);
@@ -45,7 +45,7 @@ const ModalCombo = ({
   useEffect(() => {
     if (modalOpen) {
       const fullImageUrl = "http://localhost:8000/storage/";
-      if (combo.image_url && typeof combo.image_url === "string") {
+      if (isEdit && combo.image_url && typeof combo.image_url === "string") {
         setPreviewImage(`${fullImageUrl}${combo.image_url}`);
       } else {
         setPreviewImage(null);
@@ -53,14 +53,14 @@ const ModalCombo = ({
       fetchDishList();
     }
     // eslint-disable-next-line
-  }, [modalOpen, combo.image_url, isEdit]);
+  }, [modalOpen, isEdit]);
 
   const fetchDishList = async () => {
     try {
       const res = await getDishes();
       const dishList = res.data.data.items || [];
-      const items = (combo.items || []).map(item => {
-        const dish = dishList.find(d => Number(d.id) === Number(item.dish_id || item.id));
+      const items = (combo.items || []).map((item) => {
+        const dish = dishList.find((d) => Number(d.id) === Number(item.dish_id || item.id));
         return {
           ...item,
           id: Number(item.dish_id || item.id),
@@ -73,8 +73,8 @@ const ModalCombo = ({
         };
       });
       setDishList(dishList);
-      setCombo({ ...combo, items });
-    } catch  {
+      setCombo((prev) => ({ ...prev, items }));
+    } catch {
       if (isEdit && (!combo.items || combo.items.length === 0)) {
         toast.error("Không lấy được danh sách món ăn!");
       }
@@ -93,35 +93,30 @@ const ModalCombo = ({
         toast.error("Hình ảnh quá lớn! Vui lòng chọn tệp dưới 5MB.");
         return;
       }
-      setCombo({ ...combo, image: file });
+      setCombo((prev) => ({ ...prev, image: file, image_url: "" })); // Cập nhật image và clear image_url
       setPreviewImage(URL.createObjectURL(file));
     }
   };
 
-  // Hàm lưu combo (tạo mới)
   const handleSave = async () => {
     setErrors({});
-    // Log danh sách món ăn hiện tại trong combo
-    console.log("[LOG] Danh sách combo.items hiện tại:", combo.items);
     const formData = new FormData();
     formData.append("name", combo.name || "");
     formData.append("description", combo.description || "");
     formData.append("original_total_price", combo.original_total_price || 0);
-    formData.append("selling_price", combo.selling_price);
-    formData.append("is_active", combo.is_active ?? 1);
+    formData.append("selling_price", combo.selling_price || "");
+    formData.append("is_active", combo.is_active === 0 ? 0 : 1);
     if (combo.image instanceof File) {
-      formData.append("image_url", combo.image);
+      formData.append("image_url", combo.image); // Sử dụng key 'image_url' cho file
     }
-    // Thêm danh sách món ăn vào combo (nếu có)
     if (combo.items && combo.items.length > 0) {
-      const itemsArray = combo.items.map(item => ({
+      const itemsArray = combo.items.map((item) => ({
         dish_id: Number(item.dish_id || item.id),
         quantity: Number(item.quantity) || 1,
       }));
-      // Log dữ liệu items sẽ gửi lên API
-      console.log("[LOG] Dữ liệu items gửi lên API:", itemsArray);
       formData.append("items", JSON.stringify(itemsArray));
     }
+
     // Debug: In ra dữ liệu gửi lên
     for (let pair of formData.entries()) {
       console.log(pair[0] + ', ' + pair[1]);
@@ -143,7 +138,6 @@ const ModalCombo = ({
       toast.error(error.response?.data?.message || "Lỗi khi lưu combo!");
     }
   };
-
 
   return (
     <Modal isOpen={modalOpen} toggle={() => setModalOpen(!modalOpen)} size="xl" centered>
@@ -256,18 +250,15 @@ const ModalCombo = ({
                   }
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Nếu value là rỗng thì cho phép xóa
                     if (value === "") {
                       setCombo({ ...combo, selling_price: "" });
                       return;
                     }
-                    // Kiểm tra nếu là số nguyên dương
                     if (/^\d+$/.test(value)) {
                       setCombo({ ...combo, selling_price: Number(value) });
                     }
                   }}
                   onKeyDown={(e) => {
-                    // Chỉ cho phép phím số, phím điều hướng, backspace, delete
                     if (
                       !(
                         (e.key >= "0" && e.key <= "9") ||
@@ -387,7 +378,7 @@ const ModalCombo = ({
                             style={{ borderRadius: 8, minWidth: 32, minHeight: 32, fontWeight: 700, fontSize: 18, border: "1px solid #ddd" }}
                             onClick={() => {
                               let newItems = combo.items ? [...combo.items] : [];
-                              const itemIndex = newItems.findIndex(i => i.id === item.id);
+                              const itemIndex = newItems.findIndex((i) => i.id === item.id);
                               if (itemIndex > -1) {
                                 newItems[itemIndex].quantity -= 1;
                                 if (newItems[itemIndex].quantity <= 0) {
@@ -406,7 +397,7 @@ const ModalCombo = ({
                             style={{ borderRadius: 8, minWidth: 32, minHeight: 32, fontWeight: 700, fontSize: 18, background: "#ff6600", border: "none" }}
                             onClick={() => {
                               let newItems = combo.items ? [...combo.items] : [];
-                              const itemIndex = newItems.findIndex(i => i.id === item.id);
+                              const itemIndex = newItems.findIndex((i) => i.id === item.id);
                               if (itemIndex > -1) {
                                 newItems[itemIndex].quantity += 1;
                                 setCombo({ ...combo, items: newItems });
@@ -433,11 +424,11 @@ const ModalCombo = ({
                           transition: "box-shadow 0.2s, background 0.2s"
                         }}
                         onClick={() => setShowAddDishModal(true)}
-                        onMouseOver={e => {
+                        onMouseOver={(e) => {
                           e.currentTarget.style.background = "#f5f5f5";
                           e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.16)";
                         }}
-                        onMouseOut={e => {
+                        onMouseOut={(e) => {
                           e.currentTarget.style.background = "#fff";
                           e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
                         }}
@@ -462,11 +453,11 @@ const ModalCombo = ({
                         transition: "box-shadow 0.2s, background 0.2s"
                       }}
                       onClick={() => setShowAddDishModal(true)}
-                      onMouseOver={e => {
+                      onMouseOver={(e) => {
                         e.currentTarget.style.background = "#f5f5f5";
                         e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.16)";
                       }}
-                      onMouseOut={e => {
+                      onMouseOut={(e) => {
                         e.currentTarget.style.background = "#fff";
                         e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
                       }}
@@ -488,9 +479,9 @@ const ModalCombo = ({
           onSuccess={(selectedDishes) => {
             const oldItems = combo.items || [];
             const merged = [...oldItems];
-            selectedDishes.forEach(newItem => {
+            selectedDishes.forEach((newItem) => {
               const id = Number(newItem.dish_id || newItem.id);
-              const idx = merged.findIndex(i => Number(i.dish_id || i.id) === id);
+              const idx = merged.findIndex((i) => Number(i.dish_id || i.id) === id);
               if (idx > -1) {
                 merged[idx].quantity += newItem.quantity;
                 merged[idx].selling_price = newItem.selling_price;
@@ -508,7 +499,7 @@ const ModalCombo = ({
                 });
               }
             });
-            setCombo({ ...combo, items: merged });
+            setCombo((prev) => ({ ...prev, items: merged }));
             toast.success("Đã thêm món ăn vào combo!");
           }}
         />

@@ -14,7 +14,6 @@ const apiClient = axios.create({
     baseURL: API_URL,
     headers: {
         "Accept": "application/json",
-        "Content-Type": "application/json",
     },
 });
 
@@ -23,6 +22,12 @@ apiClient.interceptors.request.use((config) => {
     const token = getToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Đảm bảo Content-Type là multipart/form-data khi gửi FormData
+    if (config.data instanceof FormData) {
+        config.headers["Content-Type"] = "multipart/form-data";
+    } else {
+        config.headers["Content-Type"] = "application/json";
     }
     return config;
 });
@@ -39,7 +44,7 @@ export const createCombo = (data) => {
     return apiClient.post(`/combos/create`, data);
 };
 
-// Hàm cập nhật combo (bỏ header vì có ảnh)
+// Hàm cập nhật combo
 export const updateCombo = (id, data) => {
     return apiClient.post(`/combos/${id}/update`, data);
 };
@@ -66,4 +71,4 @@ export const addItemToCombo = (id, data) => {
 
 export const updateItemQuantity = (comboId, dishId, data) => {
     return apiClient.post(`/combos/${comboId}/${dishId}/update-quantity`, data);
-}; 
+};
