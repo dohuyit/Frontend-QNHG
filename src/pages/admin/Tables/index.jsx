@@ -8,6 +8,13 @@ import {
   Spinner,
   Button,
   Badge,
+  Offcanvas,
+  OffcanvasHeader,
+  OffcanvasBody,
+  Form,
+  FormGroup,
+  Label,
+  Input,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import TableCard from "@components/admin/Table/CardTable";
@@ -24,6 +31,7 @@ import {
   updateTable,
   deleteTable,
   getTable,
+  countTable,
 } from "@services/admin/tableService";
 import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 
@@ -56,6 +64,21 @@ const TableIndex = () => {
   const [editTableId, setEditTableId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTableId, setDeleteTableId] = useState(null);
+  const [showFilter, setShowFilter] = useState(false);
+  
+  // Advanced filter states
+  const [filterTableNumber, setFilterTableNumber] = useState("");
+  const [filterTableType, setFilterTableType] = useState("");
+  const [filterTableArea, setFilterTableArea] = useState("");
+  
+  // Table status counts
+  const [tableStatusCounts, setTableStatusCounts] = useState({
+    available: 0,
+    occupied: 0,
+    reserved: 0,
+    cleaning: 0,
+    out_of_service: 0,
+  });
 
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
@@ -74,6 +97,15 @@ const TableIndex = () => {
         search: search || undefined,
         status: status !== "all" ? status : undefined,
       };
+      
+      // Add advanced filter params
+      if (filterTableNumber) params.table_number = filterTableNumber;
+      if (filterTableType) params.table_type = filterTableType;
+      if (filterTableArea) params.table_area_id = filterTableArea;
+      
+      // Debug: log parameters being sent
+      console.log('API Parameters:', params);
+      
       const res = await getTables(params);
       setTables(res.data.data.items || []);
       setMeta(res.data.data.meta || {});
@@ -84,9 +116,25 @@ const TableIndex = () => {
     }
   };
 
+  const fetchTableStatusCounts = async () => {
+    try {
+      const res = await countTable();
+      setTableStatusCounts(res.data.data || {});
+    } catch (error) {
+      console.error('Error fetching table status counts:', error);
+    }
+  };
+
   useEffect(() => {
     fetchTables();
+    fetchTableStatusCounts();
   }, [currentPage, search, status]);
+
+  // Auto filter when advanced filter values change
+  useEffect(() => {
+    fetchTables();
+    setCurrentPage(1);
+  }, [filterTableNumber, filterTableType, filterTableArea]);
 
   const handleStatusChange = (value) => {
     setStatus(value);
@@ -124,6 +172,7 @@ const TableIndex = () => {
         table_area_id: "",
       });
       fetchTables();
+      fetchTableStatusCounts();
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || "Lỗi khi lưu bàn, vui lòng thử lại!";
@@ -168,6 +217,7 @@ const TableIndex = () => {
       setDeleteModalOpen(false);
       setDeleteTableId(null);
       fetchTables();
+      fetchTableStatusCounts();
     } catch {
       toast.error("Lỗi khi xóa bàn!");
       setDeleteModalOpen(false);
@@ -196,8 +246,8 @@ const TableIndex = () => {
                   ...opt,
                   badgeCount:
                     opt.value === "all"
-                      ? meta.total
-                      : tables.filter((t) => t.status === opt.value).length,
+                      ? Object.values(tableStatusCounts).reduce((a, b) => a + b, 0)
+                      : tableStatusCounts[opt.value] || 0,
                 }))}
                 value={status}
                 onChange={handleStatusChange}
@@ -243,21 +293,12 @@ const TableIndex = () => {
             statusPlaceholder="Tất cả trạng thái"
             rightContent={
               <Button
-                color="success"
-                onClick={() => {
-                  setNewTable({
-                    table_number: "",
-                    description: "",
-                    table_type: "",
-                    tags: "",
-                    table_area_id: "",
-                  });
-                  setIsEdit(false);
-                  setModalOpen(true);
-                  setErrors({});
-                }}
+                color="light"
+                className="border"
+                onClick={() => setShowFilter(true)}
+                style={{ minWidth: 140 }}
               >
-                <i className="mdi mdi-plus"></i> Thêm mới bàn
+                <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
               </Button>
             }
           />
@@ -334,6 +375,80 @@ const TableIndex = () => {
         table={selectedTable}
         tableAreas={[]}
       />
+
+      {/* Bộ lọc nâng cao */}
+      <Offcanvas
+        direction="end"
+        isOpen={showFilter}
+        toggle={() => setShowFilter(false)}
+      >
+        <OffcanvasHeader toggle={() => setShowFilter(false)}>
+          <span>Bộ lọc nâng cao</span>
+          <Button
+            color="light"
+            size="sm"
+            style={{
+              position: "absolute",
+              right: 48,
+              top: 12,
+              boxShadow: "none",
+              zIndex: 1,
+            }}
+            onClick={() => {
+              setFilterTableNumber("");
+              setFilterTableType("");
+              setFilterTableArea("");
+              setCurrentPage(1);
+            }}
+            title="Làm mới bộ lọc"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+          </Button>
+        </OffcanvasHeader>
+        <OffcanvasBody>
+          <Form>
+            <FormGroup>
+              <Label for="filterTableNumber">Số bàn</Label>
+              <Input
+                id="filterTableNumber"
+                value={filterTableNumber}
+                onChange={(e) => setFilterTableNumber(e.target.value)}
+                placeholder="Nhập số bàn..."
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label for="filterTableType">Loại bàn</Label>
+              <Input
+                type="select"
+                id="filterTableType"
+                value={filterTableType}
+                onChange={(e) => setFilterTableType(e.target.value)}
+              >
+                <option value="">Tất cả loại bàn</option>
+                <option value="2_seats">Bàn 2 chỗ</option>
+                <option value="4_seats">Bàn 4 chỗ</option>
+                <option value="6_seats">Bàn 6 chỗ</option>
+                <option value="8_seats">Bàn 8 chỗ</option>
+              </Input>
+            </FormGroup>
+            <FormGroup>
+              <Label for="filterTableArea">Khu vực</Label>
+              <Input
+                type="select"
+                id="filterTableArea"
+                value={filterTableArea}
+                onChange={(e) => setFilterTableArea(e.target.value)}
+              >
+                <option value="">Tất cả khu vực</option>
+                <option value="1">Tầng 1</option>
+                <option value="2">Tầng 2</option>
+                <option value="3">Sân thượng</option>
+                <option value="4">Phòng VIP</option>
+              </Input>
+            </FormGroup>
+          </Form>
+        </OffcanvasBody>
+      </Offcanvas>
     </div>
   );
 };

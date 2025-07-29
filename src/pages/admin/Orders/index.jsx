@@ -24,11 +24,17 @@ import {
   OffcanvasBody,
   Form,
   Button,
+  InputGroup,
+  InputGroupText,
 } from "reactstrap";
 import { useNavigate } from "react-router-dom";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import OrderGrid from "@components/admin/Orders/grid-order";
-import { getListOrders, trackOrder } from "@services/admin/orderService";
+import {
+  getListOrders,
+  trackOrder,
+  countOrder,
+} from "@services/admin/orderService";
 import Swal from "sweetalert2";
 import RealtimeOrderUpdater from "@components/admin/Orders/RealtimeOrderUpdater";
 import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
@@ -37,17 +43,14 @@ import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilter
 // Danh sách trạng thái đơn hàng
 const orderStatusOptions = [
   { label: "Tất cả", value: "all", badgeColor: "secondary" },
-  {
-    label: "Chờ xác nhận",
-    value: "pending_confirmation",
-    badgeColor: "warning",
-  },
+  { label: "Chờ xử lý", value: "pending", badgeColor: "warning" },
   { label: "Đã xác nhận", value: "confirmed", badgeColor: "info" },
   { label: "Đang chế biến", value: "preparing", badgeColor: "primary" },
   { label: "Sẵn sàng", value: "ready", badgeColor: "success" },
-  { label: "Đã giao", value: "delivered", badgeColor: "success" },
-  { label: "Đã hủy", value: "cancelled", badgeColor: "danger" },
-  { label: "Hoàn thành", value: "completed", badgeColor: "info" },
+  { label: "Đã phục vụ", value: "served", badgeColor: "dark" },
+  { label: "Đang giao", value: "delivering", badgeColor: "info" },
+  { label: "Hoàn thành", value: "completed", badgeColor: "success" },
+  { label: "Đã huỷ", value: "cancelled", badgeColor: "danger" },
 ];
 
 const OrderIndex = () => {
@@ -63,6 +66,7 @@ const OrderIndex = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [orderType, setOrderType] = useState("");
   const [orderCode, setOrderCode] = useState("");
+  const [orderStatusCounts, setOrderStatusCounts] = useState({});
 
   const navigate = useNavigate();
 
@@ -119,8 +123,20 @@ const OrderIndex = () => {
     }
   };
 
+  const fetchOrderStatusCounts = async () => {
+    try {
+      const res = await countOrder();
+      // Thử lấy counts nếu có, nếu không lấy data trực tiếp
+      const counts = res.data.data?.counts || res.data.data || {};
+      setOrderStatusCounts(counts);
+    } catch {
+      setOrderStatusCounts({});
+    }
+  };
+
   useEffect(() => {
     fetchOrders(currentPage);
+    fetchOrderStatusCounts();
   }, [currentPage, orderType, orderCode, statusFilter]);
 
   const handleDelete = async (id) => {
@@ -286,47 +302,20 @@ const OrderIndex = () => {
                   sm="12"
                   className="mb-2 mb-md-0 d-flex align-items-center"
                 >
-                  <div style={{ display: "flex" }}>
-                    {orderStatusOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          padding: "8px 24px",
-                          fontWeight: 400,
-                          color: "#333",
-                          borderBottom:
-                            statusFilter === opt.value
-                              ? `3px solid #${opt.badgeColor}`
-                              : "3px solid transparent",
-                          fontSize: 16,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
-                        onClick={() => {
-                          setStatusFilter(opt.value);
-                          setCurrentPage(1);
-                        }}
-                      >
-                        {opt.label}
-                        <Badge
-                          color={opt.badgeColor}
-                          pill
-                          className="ms-2"
-                          style={{ fontSize: 13, minWidth: 28 }}
-                        >
-                          {
-                            filteredData.filter(
-                              (item) =>
-                                opt.value === "all" || item.status === opt.value
-                            ).length
-                          }
-                        </Badge>
-                      </button>
-                    ))}
-                  </div>
+                  <StatusFilterGroup
+  options={orderStatusOptions.map(opt => ({
+    ...opt,
+    badgeCount: opt.value === "all"
+      ? Object.values(orderStatusCounts).reduce((a, b) => a + b, 0)
+      : orderStatusCounts[opt.value] || 0
+  }))}
+  value={statusFilter}
+  onChange={val => {
+    setStatusFilter(val);
+    setCurrentPage(1);
+  }}
+  className="mb-2"
+/>
                 </Col>
               </Row>
             </CardHeader>
@@ -436,7 +425,28 @@ const OrderIndex = () => {
         toggle={() => setShowFilter(false)}
       >
         <OffcanvasHeader toggle={() => setShowFilter(false)}>
-          Bộ lọc nâng cao
+          <span>Bộ lọc nâng cao</span>
+          <Button
+            color="light"
+            size="sm"
+            style={{
+              position: "absolute",
+              right: 48,
+              top: 12,
+              boxShadow: "none",
+              zIndex: 1,
+            }}
+            onClick={() => {
+              setOrderType("");
+              setOrderCode("");
+              setStatusFilter("all");
+              setCurrentPage(1);
+              fetchOrders(1);
+            }}
+            title="Làm mới bộ lọc"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+          </Button>
         </OffcanvasHeader>
         <OffcanvasBody>
           <Form>
@@ -477,24 +487,26 @@ const OrderIndex = () => {
             <FormGroup className="mb-3">
               <Label for="status">Trạng thái</Label>
               <Input
-                type="select"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-100"
+                  type="select"
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-100"
               >
                 <option value="all">Tất cả</option>
-                <option value="pending_confirmation">Chờ xác nhận</option>
+                <option value="pending">Chờ xử lý</option>
                 <option value="confirmed">Đã xác nhận</option>
                 <option value="preparing">Đang chế biến</option>
                 <option value="ready">Sẵn sàng</option>
-                <option value="delivered">Đã giao</option>
-                <option value="cancelled">Đã huỷ</option>
+                <option value="served">Đã phục vụ</option>
+                <option value="delivering">Đang giao</option>
                 <option value="completed">Hoàn thành</option>
+                <option value="cancelled">Đã huỷ</option>
               </Input>
             </FormGroup>
+
           </Form>
         </OffcanvasBody>
       </Offcanvas>

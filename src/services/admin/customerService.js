@@ -46,3 +46,7 @@ export const updateCustomer = (id, data) => {
 export const deleteCustomer = (id) => {
   return apiClient.delete(`/${id}/soft/delete`);
 };
+
+export const countCustomer = () => {
+    return apiClient.get(`/count-by-status`);
+};

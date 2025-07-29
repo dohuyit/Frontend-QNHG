@@ -11,6 +11,8 @@ import {
   FormGroup,
   Label,
   Input,
+  InputGroup,
+  InputGroupText,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import CreateUser from "./CreateUser";
@@ -19,8 +21,6 @@ import { Modal } from "reactstrap";
 import {
   getUsers,
   deleteUser,
-  blockUser,
-  unblockUser,
   countUsersByStatus,
 } from "@services/admin/userService";
 import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
@@ -31,7 +31,6 @@ const userStatusOptions = [
   { label: "Tất cả", value: "all", badgeColor: "secondary" },
   { label: "Đang hoạt động", value: "active", badgeColor: "success" },
   { label: "Dừng hoạt động", value: "inactive", badgeColor: "secondary" },
-  { label: "Đã khóa", value: "blocked", badgeColor: "danger" },
 ];
 
 export default function ListUser() {
@@ -104,20 +103,6 @@ export default function ListUser() {
   const handleDeleteConfirm = (id) => {
     setUserToDelete(id);
     setShowDeleteModal(true);
-  };
-
-  const handleBlock = (id) => {
-    blockUser(id).then(() => {
-      fetchUsers(currentPage);
-      fetchUserStatusCounts();
-    });
-  };
-
-  const handleUnblock = (id) => {
-    unblockUser(id).then(() => {
-      fetchUsers(currentPage);
-      fetchUserStatusCounts();
-    });
   };
 
   const renderPagination = () => {
@@ -306,23 +291,6 @@ export default function ListUser() {
                       >
                         <i className="bi bi-trash"></i>
                       </Button>
-                      {user.status === "blocked" ? (
-                        <Button
-                          size="sm"
-                          color="success"
-                          onClick={() => handleUnblock(user.id)}
-                        >
-                          <i className="bi bi-unlock"></i>
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          color="light"
-                          onClick={() => handleBlock(user.id)}
-                        >
-                          <i className="bi bi-lock"></i>
-                        </Button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -342,7 +310,27 @@ export default function ListUser() {
         toggle={() => setShowFilter(false)}
       >
         <OffcanvasHeader toggle={() => setShowFilter(false)}>
-          Bộ lọc nâng cao
+          <span>Bộ lọc nâng cao</span>
+          <Button
+            color="light"
+            size="sm"
+            style={{
+              position: "absolute",
+              right: 48,
+              top: 12,
+              boxShadow: "none",
+              zIndex: 1,
+            }}
+            onClick={() => {
+              setFilterUsername("");
+              setFilterEmail("");
+              setCurrentPage(1);
+              fetchUsers(1);
+            }}
+            title="Làm mới bộ lọc"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+          </Button>
         </OffcanvasHeader>
         <OffcanvasBody>
           <Form>
@@ -362,7 +350,6 @@ export default function ListUser() {
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
             </FormGroup>
-            {/* Xóa nút Áp dụng lọc */}
           </Form>
         </OffcanvasBody>
       </Offcanvas>

@@ -12,13 +12,13 @@ import {
     DropdownItem,
 } from "reactstrap";
 import { MdModeEdit, MdVisibility, MdMoreVert, MdTableRestaurant } from "react-icons/md";
-import { FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote, FaChair } from "react-icons/fa";
+// import { FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote, FaChair } from "react-icons/fa";
 import Badge from "../ui/Badge";
 import TableSelectModal from "../Orders/TableSelectModal";
 import { getTables } from "@services/admin/tableService";
 import { getTableAreas } from "@services/admin/tableAreaService";
-import { MdModeEdit, MdVisibility } from "react-icons/md";
-import { FaEdit, FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote } from "react-icons/fa";
+// import { MdModeEdit, MdVisibility } from "react-icons/md";
+import { FaEdit, FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNote ,FaChair} from "react-icons/fa";
 
 const ReservationCard = ({
     reservation,
