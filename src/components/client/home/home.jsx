@@ -16,13 +16,13 @@ import HeroBanner from "./HeroBanner";
 import { useCart } from "../cart/cartContext";
 import CartSummary from "../cart/cart";
 import CartModal from "../cart/cartModal";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
 
 export default function Home() {
   const [showDetail, setShowDetail] = useState(false);
   const [selectedDish, setSelectedDish] = useState(null);
   const [showBooking, setShowBooking] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
   const [dishes, setDishes] = useState([]);
   const [showCart, setShowCart] = useState(false);
 
@@ -55,26 +55,6 @@ export default function Home() {
     };
     fetchDishes();
   }, []);
-
-  // Hàm xử lý khi click nút đặt món
-  const handleOrderClick = (dish) => {
-    // Tạo item cho giỏ hàng
-    const cartItem = {
-      id: dish.id,
-      name: dish.name,
-      price: dish.selling_price,
-      quantity: 1,
-      image: dish.image_url && dish.image_url.trim() !== "" 
-        ? `${fullUrl}${dish.image_url}` 
-        : dishDefault
-    };
-    
-    // Thêm vào giỏ hàng
-    setCartItems([cartItem]);
-    
-    // Mở modal thanh toán
-    setShowOrderModal(true);
-  };
 
   return (
     <>
@@ -139,7 +119,7 @@ export default function Home() {
                         {d.name}
                       </h3>
                       <p className="price">
-                        {d.selling_price.toLocaleString()}đ
+                        {formatPriceToVND(d.selling_price)}
                       </p>
                       <button
                         className="btn-order"
@@ -290,7 +270,7 @@ export default function Home() {
       <OrderModal
         isOpen={showOrderModal}
         onClose={() => setShowOrderModal(false)}
-        cartItems={cartItems}
+        cartItems={[]}
       />
     </>
   );

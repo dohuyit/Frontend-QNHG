@@ -56,7 +56,7 @@ const ModalDish = ({
         toast.error("Hình ảnh quá lớn! Vui lòng chọn tệp dưới 5MB.");
         return;
       }
-      setNewDish({ ...newDish, image: file });
+      setNewDish((prev) => ({ ...prev, image: file, image_url: "" })); // Cập nhật image và clear image_url
       setPreviewImage(URL.createObjectURL(file));
     }
   };
