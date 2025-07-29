@@ -302,7 +302,7 @@ const TableBookingIndex = () => {
                 item.id === id ? { ...item, status: newStatus } : item
             )
         }));
-        toast.success('Đã xác nhận đơn đặt bàn!');
+        // toast.success('Đã xác nhận đơn đặt bàn!');
     };
 
     const handlePageChange = (page) => {
