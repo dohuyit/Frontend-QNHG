@@ -16,6 +16,7 @@ import PaymentModal from "./PaymentModal";
 import Badge from "../ui/Badge";
 import { toast } from "react-toastify";
 import { BASE_URL } from "@services/admin/orderService";
+import BillDetailModal from "./BillDetailModal";
 
 const OrderCard = ({ order, onEdit, onDelete }) => {
   const [isOpen, setIsOpen] = useState(false);
