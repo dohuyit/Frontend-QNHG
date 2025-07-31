@@ -14,7 +14,7 @@ import {
   FormFeedback,
   InputGroup,
 } from "reactstrap";
-import SwitchUI from "@components/admin/ui/SwitchUI";
+import Switch from "react-switch";
 import { toast } from "react-toastify";
 import { convertTagsToString } from "@helpers/admin/api_helper";
 
@@ -308,12 +308,24 @@ const ModalDish = ({
                       Món ăn sẽ được ưu tiên hiển thị.
                     </p>
                   </div>
-                  <SwitchUI
+                  <Switch
                     id="is_featured_switch"
                     checked={!!newDish.is_featured}
-                    onChange={(e) => {
-                      setNewDish({ ...newDish, is_featured: e.target.checked });
+                    onChange={(checked) => {
+                      setNewDish({ ...newDish, is_featured: checked });
                     }}
+                    onColor="#28a745"
+                    offColor="#ccc"
+                    onHandleColor="#fff"
+                    offHandleColor="#fff"
+                    handleDiameter={20}
+                    uncheckedIcon={false}
+                    checkedIcon={false}
+                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                    activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                    height={24}
+                    width={48}
+                    className="react-switch"
                   />
                 </div>
               </FormGroup>

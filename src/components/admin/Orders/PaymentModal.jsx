@@ -94,8 +94,6 @@ const PaymentModal = ({
     }
   };
 
-console.log(tableAreas);
-
   // Logic to display contact info with fallback
   const displayContactName = contactName || "Khách hàng chưa nhập";
   const displayContactPhone = contactPhone || "Chưa có số điện thoại";

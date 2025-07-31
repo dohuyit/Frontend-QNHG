@@ -33,6 +33,8 @@ import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import CardTable from "../Table/CardTable";
 import { getCombos } from "@services/admin/comboService";
+import Switch from "react-switch";
+import { Tooltip } from "reactstrap";
 
 const FormOrderCreate = () => {
   const [orderItems, setOrderItems] = useState([]);
@@ -73,6 +75,8 @@ const FormOrderCreate = () => {
   const [comboMeta, setComboMeta] = useState({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
   const [comboCurrentPage, setComboCurrentPage] = useState(1);
   const [selectedAreaIdFromTables, setSelectedAreaIdFromTables] = useState(null);
+  const [priority, setPriority] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -315,6 +319,7 @@ const FormOrderCreate = () => {
       contact_name: contactName || "",
       contact_email: contactEmail || "",
       contact_phone: contactPhone || "",
+      priority: priority ? 1 : 0,
       items: orderItems.map((item) => ({
         dish_id: item.combo_id ? null : Number(item.id),
         combo_id: item.combo_id ? Number(item.combo_id) : null,
@@ -781,7 +786,46 @@ const FormOrderCreate = () => {
             </div>
             {/* Danh sách món ăn */}
             <div className="order-items-detail-box mb-3">
-              <div className="fw-bold mb-3 px-3" style={{fontSize: '1.1rem'}}>Chi tiết đơn hàng ({orderItems.length} món)</div>
+              <div className="fw-bold mb-3 px-3 d-flex align-items-center justify-content-between" style={{fontSize: '1.1rem'}}>
+                <span>Chi tiết đơn hàng ({orderItems.length} món)</span>
+                <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex align-items-center">
+                    <Switch
+                      id="priority-switch"
+                      checked={priority}
+                      onChange={setPriority}
+                      onColor="#28a745"
+                      offColor="#ccc"
+                      onHandleColor="#fff"
+                      offHandleColor="#fff"
+                      handleDiameter={20}
+                      uncheckedIcon={false}
+                      checkedIcon={false}
+                      boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                      activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                      height={24}
+                      width={48}
+                      className="react-switch"
+                      aria-hidden="true"
+                      style={{
+                        verticalAlign: 'middle',
+                        marginLeft: '4px'
+                      }}
+                    />
+                  </div>
+                  <span id="priority-tooltip" style={{ cursor: 'pointer' }}>
+                    <i className="fa fa-info-circle text-secondary" />
+                  </span>
+                  <Tooltip
+                    placement="top"
+                    isOpen={tooltipOpen}
+                    target="priority-tooltip"
+                    toggle={() => setTooltipOpen(!tooltipOpen)}
+                  >
+                    Bật để đánh dấu đơn hàng này là ưu tiên (priority).
+                  </Tooltip>
+                </div>
+              </div>
               <div className="order-items-list">
                 {orderItems.length === 0 ? (
                   <div className="text-muted text-center py-4">

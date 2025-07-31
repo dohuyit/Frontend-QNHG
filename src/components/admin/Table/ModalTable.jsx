@@ -162,7 +162,7 @@ const TableModal = ({
                 <Input
                   id="table_area_id"
                   type="select"
-                  value={newTable.table_area_id || ""} // Ensure value is controlled
+                  value={String(newTable.table_area_id || "")} // Convert to string for comparison
                   onChange={(e) =>
                     setNewTable({ ...newTable, table_area_id: e.target.value })
                   }
@@ -174,7 +174,7 @@ const TableModal = ({
                     <option disabled>Đang tải...</option>
                   ) : Array.isArray(tableAreas) && tableAreas.length > 0 ? (
                     tableAreas.map((area) => (
-                      <option key={area.id} value={area.id}>
+                      <option key={area.id} value={String(area.id)}>
                         {area.name}
                       </option>
                     ))

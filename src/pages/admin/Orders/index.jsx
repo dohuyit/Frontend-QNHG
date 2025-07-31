@@ -43,14 +43,12 @@ import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilter
 // Danh sách trạng thái đơn hàng
 const orderStatusOptions = [
   { label: "Tất cả", value: "all", badgeColor: "secondary" },
-  { label: "Chờ xử lý", value: "pending", badgeColor: "warning" },
+  { label: "Chờ xác nhận", value: "pending", badgeColor: "warning" },
   { label: "Đã xác nhận", value: "confirmed", badgeColor: "info" },
-  { label: "Đang chế biến", value: "preparing", badgeColor: "primary" },
+  { label: "Đang chuẩn bị", value: "preparing", badgeColor: "primary" },
   { label: "Sẵn sàng", value: "ready", badgeColor: "success" },
-  { label: "Đã phục vụ", value: "served", badgeColor: "dark" },
-  { label: "Đang giao", value: "delivering", badgeColor: "info" },
-  { label: "Hoàn thành", value: "completed", badgeColor: "success" },
-  { label: "Đã huỷ", value: "cancelled", badgeColor: "danger" },
+  { label: "Hoàn tất", value: "completed", badgeColor: "success" },
+  { label: "Đã hủy", value: "cancelled", badgeColor: "danger" },
 ];
 
 const OrderIndex = () => {
@@ -273,15 +271,7 @@ const OrderIndex = () => {
                 className="d-flex align-items-center"
                 size="sm"
               >
-                <span className="me-1">Receipt</span> Tạo đơn hàng
-              </Button>
-              <Button
-                color="info"
-                onClick={() => setShowTrack(true)}
-                className="d-flex align-items-center"
-                size="sm"
-              >
-                <span className="me-1">Search</span> Theo dõi
+                <span className="me-1">Tạo mới đơn hàng</span> 
               </Button>
             </Col>
           </Row>
@@ -298,7 +288,7 @@ const OrderIndex = () => {
             <CardHeader className="bg-white border-bottom-0">
               <Row className="align-items-center">
                 <Col
-                  md="7"
+                  md="12"
                   sm="12"
                   className="mb-2 mb-md-0 d-flex align-items-center"
                 >
@@ -496,14 +486,12 @@ const OrderIndex = () => {
                   className="w-100"
               >
                 <option value="all">Tất cả</option>
-                <option value="pending">Chờ xử lý</option>
+                <option value="pending">Chờ xác nhận</option>
                 <option value="confirmed">Đã xác nhận</option>
-                <option value="preparing">Đang chế biến</option>
+                <option value="preparing">Đang chuẩn bị</option>
                 <option value="ready">Sẵn sàng</option>
-                <option value="served">Đã phục vụ</option>
-                <option value="delivering">Đang giao</option>
-                <option value="completed">Hoàn thành</option>
-                <option value="cancelled">Đã huỷ</option>
+                <option value="completed">Hoàn tất</option>
+                <option value="cancelled">Đã hủy</option>
               </Input>
             </FormGroup>
 

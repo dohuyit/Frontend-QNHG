@@ -449,8 +449,8 @@
 }
 
 .order-item-img {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
   border-radius: 8px;
   display: block;
@@ -935,4 +935,11 @@
       color: #66bb6a;
     }
   }
+}
+
+.react-switch {
+  input[type="checkbox"] {
+    display: none !important;
+  }
+  display: block !important;
 }

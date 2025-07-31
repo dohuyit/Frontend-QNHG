@@ -27,7 +27,7 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
     const statusConfig = {
       pending: { color: "warning", text: "Chờ xác nhận" },
       confirmed: { color: "info", text: "Đã xác nhận" },
-      preparing: { color: "primary", text: "Đang chế biến" },
+      preparing: { color: "primary", text: "Đang chuẩn bị" },
       ready: { color: "success", text: "Sẵn sàng" },
       delivered: { color: "success", text: "Đã giao" },
       cancelled: { color: "danger", text: "Đã hủy" },
@@ -145,9 +145,9 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
                 </Button>
               )}
 
-              {onEdit && order.status !== 'completed' && (
+              {onEdit && order.status !== 'completed' && order.status !== 'cancelled' && (
                 <Button
-                  color="secondary"
+                  color="warning"
                   className="w-100 border"
                   onClick={() => onEdit(order)}
                 >
@@ -165,11 +165,11 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
               )}
             </div>
             {/* Nút thanh toán nếu trạng thái là ready */}
-            {order.status === 'ready' && (
+            {/* {order.status === 'ready' && (
               <Button color="success" className="w-100 mt-2" onClick={() => setShowPaymentModal(true)}>
                 Thanh toán
               </Button>
-            )}
+            )} */}
           </div>
         </CardBody>
       </Card>
