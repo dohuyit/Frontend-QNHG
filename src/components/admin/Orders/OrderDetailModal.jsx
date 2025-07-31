@@ -42,8 +42,8 @@ const getOrderTypeInfo = (type) => {
 const OrderDetailModal = ({ isOpen, toggle, order }) => {
   const [showLog, setShowLog] = React.useState(false);
   if (!order) return null;
-  const customerName = order.customer?.full_name || "Không có thông tin";
-  const customerPhone = order.customer?.phone_number || "-";
+  const customerName = order.contact_name || "Không có thông tin";
+  const customerPhone = order.contact_phone || "-";
   const orderTime = order.order_time || order.created_at;
   const items = order.items || [];
   const totalQuantity = items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0);
@@ -51,13 +51,13 @@ const OrderDetailModal = ({ isOpen, toggle, order }) => {
   const vat = order.vat || 0;
   const total = order.final_amount || order.total_amount || subtotal;
   const tableNames = Array.isArray(order.tables) && order.tables.length > 0
-    ? order.tables.map(t => t.table_number ? `T${t.table_number}` : (t.id ? `T${t.id}` : "")).join(", ")
-    : (order.table_id ? `T${order.table_id}` : "-");
+    ? order.tables.map(t => t.table_number ? `${t.table_number}` : (t.id ? `${t.id}` : "")).join(", ")
+    : (order.table_id ? `${order.table_id}` : "-");
 
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="lg" centered className="order-detail-modal">
       <ModalHeader toggle={toggle} className="order-detail-modal-header p-3">
-        <h4 className="modal-title mb-0 fw-bold">Order Details #{order.order_code}</h4>
+        <h4 className="modal-title mb-0 fw-bold">Chi tiết đơn hàng #{order.order_code}</h4>
       </ModalHeader>
       <ModalBody className="order-detail-modal-body p-0">
         <Row className="g-0">
@@ -72,10 +72,9 @@ const OrderDetailModal = ({ isOpen, toggle, order }) => {
                 </div>
                 <div className="d-flex justify-content-between mb-2"><span className="text-muted">Ngày tạo:</span><span>{orderTime ? new Date(orderTime).toLocaleString("vi-VN") : "-"}</span></div>
                 <div className="d-flex justify-content-between mb-2"><span className="text-muted">Loại đơn:</span><span>{getOrderTypeInfo(order.order_type)}</span></div>
-                <div className="d-flex justify-content-between mb-2"><span className="text-muted">Trạng thái thanh toán:</span><span>{order.payment_status || "-"}</span></div>
                 <div className="d-flex justify-content-between mb-2"><span className="text-muted">Bàn:</span><span>{tableNames}</span></div>
                 <div className="d-flex justify-content-between mb-2"><span className="text-muted">Số người:</span><span>{order.number_of_people || 1}</span></div>
-                <div className="d-flex justify-content-between mb-2"><span className="text-muted">Ghi chú:</span><span>{order.notes || "-"}</span></div>
+                <div className="d-flex justify-content-between mb-2"><span className="text-muted">Ghi chú:</span><span>{order.notes || "Không có ghi chú"}</span></div>
                 <hr className="my-3" />
                 <h6 className="fw-bold mb-2">Thông tin khách hàng</h6>
                 <div className="d-flex justify-content-between mb-2"><span className="text-muted">Tên:</span><span>{customerName}</span></div>
