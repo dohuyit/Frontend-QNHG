@@ -39,7 +39,10 @@ const KanbanCard = ({ order, index, onChangeStatus, onCancel, status }) => {
             </div>
           </div>
           <div className="mb-1">
-            <b>Bàn:</b> {order.table_number ? `Bàn ${order.table_number}` : "Chưa có bàn"}
+            <b>Bàn:</b> {Array.isArray(order.table_numbers) && order.table_numbers.length > 0
+  ? order.table_numbers.join(', ')
+  : (order.table_number ? `Bàn ${order.table_number}` : "Chưa có bàn")
+}
           </div>
           <div className="mb-1">
             <b>Món:</b> {order.item_name} <span className="badge bg-light text-dark ms-1">x{order.quantity}</span>

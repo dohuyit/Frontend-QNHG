@@ -279,6 +279,8 @@ const TableBookingIndex = () => {
             if (error.response && error.response.data && error.response.data.errors) {
                 setApiErrors(error.response.data.errors);
                 toast.error("Vui lòng kiểm tra lại thông tin!");
+            } else if (error.response && error.response.data && error.response.data.message) {
+                toast.error(error.response.data.message);
             } else {
                 toast.error(error.response?.data?.message || error.message || "Không thể tạo đơn đặt bàn");
             }
@@ -947,42 +949,9 @@ const TableBookingIndex = () => {
                             </Col>
                         </Row>
                         <Row>
-                            <Col md={6}>
-                                <FormGroup>
-                                    <Label>Bàn</Label>
-                                    <div className="d-flex align-items-center justify-content-between">
-                                        <span>
-                                            {createForm.tables && createForm.tables.length > 0
-                                                ? createForm.tables.map(t => `Bàn ${t.table_number}`).join(", ")
-                                                : <span className="text-muted">Chưa chọn bàn nào</span>
-                                            }
-                                        </span>
-                                        <Button
-                                            color="link"
-                                            size="sm"
-                                            className="p-0 ms-2"
-                                            style={{ color: "#222" }}
-                                            title="Chọn bàn"
-                                            onClick={() => {
-                                                setSelectedTables(createForm.tables || []);
-                                                setShowTableSelect(true);
-                                            }}
-                                        >
-                                            <FaEdit size={18} />
-                                        </Button>
-                                    </div>
-                                </FormGroup>
-                            </Col>
+                            
                         </Row>
-                        <FormGroup>
-                            <Label for="special_requests">Yêu cầu đặc biệt</Label>
-                            <Input
-                                id="special_requests"
-                                type="textarea"
-                                value={createForm.special_requests}
-                                onChange={e => setCreateForm({ ...createForm, special_requests: e.target.value })}
-                            />
-                        </FormGroup>
+                       
                         <FormGroup>
                             <Label for="notes">Ghi chú</Label>
                             <Input
