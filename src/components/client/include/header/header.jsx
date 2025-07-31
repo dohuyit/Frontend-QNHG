@@ -3,9 +3,8 @@ import "./header.scss";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import logo from "@assets/client/images/header/logo.png";
 import BookingPopup from "./BookingPopup";
-import HeaderService from "@services/client/HeaderService"; 
 import { FaPhoneAlt, FaRegClock, FaGift, FaUser, FaUserPlus } from "react-icons/fa";
-import InforPage from "./inforPage";
+// import InforPage from "./inforPage";
 
 const Header = () => {
   const [showNoti, setShowNoti] = useState(true);
@@ -207,7 +206,7 @@ const Header = () => {
         <BookingPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       )}
       {/* Hiển thị InforPage nếu không phải trang chủ */}
-      {location.pathname !== "/" && (
+      {/* {location.pathname !== "/" && (
         <InforPage
           category={
             location.pathname.includes("menu-page") ? "menu" :
@@ -215,7 +214,7 @@ const Header = () => {
             "menu"
           }
         />
-      )}
+      )} */}
     </header>
   );
 };

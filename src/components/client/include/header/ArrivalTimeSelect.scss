@@ -1,30 +1,33 @@
 .arrival-time-select {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
   label {
     font-size: 13px;
     font-weight: 600;
-    color: #174229;
+    color: #666; // Match other labels
+    margin-bottom: 4px; // Match other labels
   }
 
   .arrival-toggle {
     width: 100%;
+    height: 42px; // Set consistent height
     background-color: #fff;
     border: 1px solid #ccc;
     font-size: 13.5px;
     color: #333;
-    border-radius: 6px;
+    border-radius: 6px; // Match other inputs
     text-align: left;
+    padding: 10px 12px; // Match other inputs
+    transition: border 0.2s; // Match other inputs
+    box-sizing: border-box; // Add this to ensure consistent sizing
+    display: flex;
+    align-items: center; // Center content vertically
 
-     &:hover,
-  &:focus {
-    background-color: #145d33; // Màu xanh hover
-    border-color: #f39c12;
-    color: #fff;
-    box-shadow: none;
-  }
+    &:hover,
+    &:focus {
+      border-color: #174229; // Match other inputs focus
+      background-color: #fff; // Keep white background
+      color: #333; // Keep dark text
+      box-shadow: none;
+    }
   }
 
   .arrival-menu {
@@ -40,8 +43,9 @@
     background-color: #f39c12;
     color: white;
   }
+  
   .disabled-time {
-  color: #ccc !important;
-  pointer-events: none;
-}
+    color: #ccc !important;
+    pointer-events: none;
+  }
 }
