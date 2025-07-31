@@ -87,6 +87,11 @@ export const confirmReservation = (id) => {
     return apiClient.post(`/reservations/${id}/confirm`);
 };
 
+// Lấy lịch sử thay đổi đơn đặt bàn
+export const getReservationChangeLogs = (id) => {
+    return apiClient.get(`/reservations/${id}/change-logs`);
+};
+
 // Khu vực bàn
 export const getListTableArea = () => apiClient.get("/table-areas/list");
 export const getTableAreaDetail = (id) => apiClient.get(`/table-areas/${id}/detail`);

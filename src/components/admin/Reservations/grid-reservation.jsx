@@ -54,7 +54,6 @@ const ReservationGrid = ({
     const handleDelete = async () => {
         try {
             await deleteReservation(selectedItem.id);
-            toast.success("Đã xóa đơn đặt bàn thành công");
             if (onDelete) onDelete(selectedItem.id);
         } catch (error) {
             console.error("API Error:", error.response?.data || error.message);
@@ -106,7 +105,11 @@ const ReservationGrid = ({
             if (onUpdate) onUpdate();
         } catch (error) {
             console.error("API Error:", error.response?.data || error.message);
-            toast.error(error.response?.data?.message || "Không thể cập nhật trạng thái");
+            if (error.response?.data?.message === "Không thể hủy đơn đặt bàn vì đã có món trong đơn hàng. Vui lòng kiểm tra lại!") {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error(error.response?.data?.message || "Không thể cập nhật trạng thái");
+            }
         }
     };
 
@@ -164,6 +167,8 @@ const ReservationGrid = ({
                 }
                 setApiErrors(formattedErrors);
                 toast.error("Có lỗi xảy ra trong quá trình cập nhật. Vui lòng kiểm tra lại thông tin.");
+            } else if (error.response?.data?.message === "Không thể hủy đơn đặt bàn vì đã có món trong đơn hàng. Vui lòng kiểm tra lại!") {
+                toast.error(error.response.data.message);
             } else {
                 toast.error(error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.");
             }
@@ -255,7 +260,7 @@ const ReservationGrid = ({
                                     reservation={reservation}
                                     onEdit={openEditModal}
                                     onView={openViewModal}
-                                    onDelete={handleCardDelete}
+                                    onDelete={() => handleCardDelete(reservation)}
                                     onStatusChange={handleStatusChange}
                                     onStatusChangeLocal={onStatusChangeLocal}
                                     onConfirmReservation={handleConfirmReservation}
@@ -336,7 +341,18 @@ const ReservationGrid = ({
                 <ModalHeader toggle={() => {
                     setShowEdit(false);
                     setIsConfirmingReservation(false);
-                }}>
+                    setEditForm({
+                        customer_name: selectedItem.customer_name || '',
+                        customer_phone: selectedItem.customer_phone || selectedItem.phone_number || '',
+                        customer_email: selectedItem.customer_email || selectedItem.email || '',
+                        reservation_date: selectedItem.reservation_date || selectedItem.booking_date || '',
+                        reservation_time: extractTime(selectedItem.reservation_time || selectedItem.booking_time || ''),
+                        number_of_guests: selectedItem.number_of_guests || '',
+                        table_area_id: selectedItem.table_area_id || selectedItem.table_id || '',
+                        notes: selectedItem.notes || selectedItem.special_requests || '',
+                        status: selectedItem.status || 'pending',
+                    });
+                }} className="border-0 pb-0">
                     {isConfirmingReservation ? "Xác nhận đơn đặt bàn" : "Chỉnh sửa đơn đặt bàn"}
                 </ModalHeader>
                 <ModalBody>
@@ -413,6 +429,7 @@ const ReservationGrid = ({
                                         <Input
                                             id="reservation_date"
                                             type="date"
+                                            min={new Date().toISOString().slice(0, 10)}
                                             value={
                                                 // Ưu tiên editForm, sau đó selectedItem.reservation_date, cuối cùng là ''
                                                 editForm.reservation_date !== undefined
@@ -474,36 +491,7 @@ const ReservationGrid = ({
                                 </Col>
                             </Row>
                             <Row>
-                                <Col md={6}>
-                                {/* Thông tin bàn */}
-                                <div className="mb-3">
-                                    <div className="d-flex align-items-center mb-2">
-                                        <span className="text-muted me-2"><i className="mdi mdi-table-chair"></i></span>
-                                        <small className="text-muted">Bàn:</small>
-                                    </div>
-                                    <div className="ms-4 d-flex align-items-center justify-content-between">
-                                        <span>
-                                            {editForm.tables && editForm.tables.length > 0
-                                                ? editForm.tables.map(t => `Bàn ${t.table_number}`).join(", ")
-                                                : <span className="text-muted">Chưa chọn bàn nào</span>
-                                            }
-                                        </span>
-                                        <Button
-                                            color="link"
-                                            size="sm"
-                                            className="p-0 ms-2"
-                                            style={{ color: "#222" }}
-                                            title="Chọn bàn"
-                                            onClick={() => {
-                                                setSelectedTables(editForm.tables || []);
-                                                setShowTableSelect(true);
-                                            }}
-                                        >
-                                            <FaEdit size={18} />
-                                        </Button>
-                                    </div>
-                                    </div>
-                                </Col>
+                                            
                                 <Col md={6}>
                                     <FormGroup>
                                         <Label for="statuses">Trạng thái</Label>
@@ -511,13 +499,9 @@ const ReservationGrid = ({
                                             const currentStatus = editForm.status || selectedItem.status || 'pending';
                                             let options = [];
                                             // Nếu đã hủy thì chỉ cho chọn "Đã hủy"
-                                            if (currentStatus === "cancelled") {
-                                                options = [
-                                                    { value: "cancelled", label: "Đã hủy" }
-                                                ];
-                                            }
+                                                
                                             // Nếu đang chờ xác nhận thì chỉ cho chọn "Chờ xác nhận", "Đã xác nhận", "Đã hủy"
-                                            else if (currentStatus === "pending") {
+                                            if (currentStatus === "pending") {
                                                 options = [
                                                     { value: "pending", label: "Chờ xác nhận" },
                                                     { value: "confirmed", label: "Đã xác nhận" },
@@ -530,8 +514,6 @@ const ReservationGrid = ({
                                                     { value: "confirmed", label: "Đã xác nhận" },
                                                     { value: "completed", label: "Hoàn thành" },
                                                     { value: "cancelled", label: "Đã hủy" },
-                                                    { value: "no_show", label: "Không đến" },
-                                                    { value: "seated", label: "Đã ngồi" }
                                                 ];
                                             }
                                             // Nếu đã ngồi thì chỉ cho chọn "Đã ngồi", "Hoàn thành"
@@ -542,11 +524,7 @@ const ReservationGrid = ({
                                                 ];
                                             }
                                             // Nếu hoàn thành, không đến thì chỉ cho giữ nguyên trạng thái
-                                            else if (currentStatus === "completed" || currentStatus === "no_show") {
-                                                options = [
-                                                    { value: currentStatus, label: currentStatus === "completed" ? "Hoàn thành" : "Không đến" }
-                                                ];
-                                            }
+                                           
                                             // fallback: cho tất cả
                                             else {
                                                 options = [
@@ -554,12 +532,11 @@ const ReservationGrid = ({
                                                     { value: "confirmed", label: "Đã xác nhận" },
                                                     { value: "cancelled", label: "Đã hủy" },
                                                     { value: "completed", label: "Hoàn thành" },
-                                                    { value: "no_show", label: "Không đến" },
-                                                    { value: "seated", label: "Đã ngồi" }
+                                                   
                                                 ];
                                             }
                                             // Nếu trạng thái là cancelled, completed, no_show thì disable select
-                                            const isDisabled = ["cancelled", "completed", "no_show"].includes(currentStatus);
+                                            const isDisabled = ["cancelled", "completed", "no_show"].includes(selectedItem.status);
                                             return (
                                                 <>
                                                     <Input
@@ -575,17 +552,13 @@ const ReservationGrid = ({
                                                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                         ))}
                                                     </Input>
-                                                    {currentStatus === "cancelled" && (
-                                                        <div className="text-danger mt-1" style={{ fontSize: 13 }}>
-                                                            Đơn đặt bàn đã bị hủy, không thể thay đổi trạng thái khác.
-                                                        </div>
-                                                    )}
-                                                    {currentStatus === "completed" && (
+                                                   
+                                                    {selectedItem.status === "completed" && (
                                                         <div className="text-info mt-1" style={{ fontSize: 13 }}>
                                                             Đơn đặt bàn đã hoàn thành, không thể thay đổi trạng thái khác.
                                                         </div>
                                                     )}
-                                                    {currentStatus === "no_show" && (
+                                                    {selectedItem.status === "no_show" && (
                                                         <div className="text-warning mt-1" style={{ fontSize: 13 }}>
                                                             Đơn đặt bàn đã chuyển sang trạng thái "Không đến", không thể thay đổi trạng thái khác.
                                                         </div>
@@ -621,6 +594,18 @@ const ReservationGrid = ({
                     <Button color="secondary" onClick={() => {
                         setShowEdit(false);
                         setIsConfirmingReservation(false);
+                        // Reset lại form về dữ liệu gốc
+                        setEditForm({
+                            customer_name: selectedItem.customer_name || '',
+                            customer_phone: selectedItem.customer_phone || selectedItem.phone_number || '',
+                            customer_email: selectedItem.customer_email || selectedItem.email || '',
+                            reservation_date: selectedItem.reservation_date || selectedItem.booking_date || '',
+                            reservation_time: extractTime(selectedItem.reservation_time || selectedItem.booking_time || ''),
+                            number_of_guests: selectedItem.number_of_guests || '',
+                            table_area_id: selectedItem.table_area_id || selectedItem.table_id || '',
+                            notes: selectedItem.notes || selectedItem.special_requests || '',
+                            status: selectedItem.status || 'pending',
+                        });
                     }}>
                         Hủy
                     </Button>
@@ -633,7 +618,7 @@ const ReservationGrid = ({
             {/* Modal Xem chi tiết */}
             <Modal isOpen={showView} toggle={() => setShowView(false)} size="lg" centered>
                 <ModalHeader toggle={() => setShowView(false)} className="border-0 pb-0">
-                    <span className="fw-bold fs-4">Reservation Details</span>
+                    <span className="fw-bold fs-4">Chi tiết đơn đặt bàn</span>
                 </ModalHeader>
                 <ModalBody className="pt-0">
                     {selectedItem && (
@@ -656,8 +641,6 @@ const ReservationGrid = ({
                                             confirmed: { color: "success", text: "Đã xác nhận" },
                                             cancelled: { color: "danger", text: "Đã hủy" },
                                             completed: { color: "info", text: "Hoàn thành" },
-                                            no_show: { color: "secondary", text: "Không đến" },
-                                            seated: { color: "primary", text: "Đã ngồi" },
                                         };
                                         const config = statusMap[selectedItem.status] || { color: "secondary", text: "Không xác định" };
                                         return <span className={`badge bg-${config.color} px-3 py-2`} style={{ fontSize: 14 }}>{config.text}</span>;
@@ -667,27 +650,27 @@ const ReservationGrid = ({
 
                             {/* Reservation Details */}
                             <div className="mb-4">
-                                <div className="fw-semibold mb-2" style={{ fontSize: 16 }}>Reservation Details</div>
+                                <div className="fw-semibold mb-2" style={{ fontSize: 16 }}>Thông tin đặt bàn</div>
                                 <Row className="gy-2">
                                     <Col md={4} xs={12} className="d-flex align-items-center">
                                         <span className="me-2 text-primary"><i className="mdi mdi-calendar"></i></span>
                                         <span>
-                                            <div className="text-muted" style={{ fontSize: 13 }}>Date</div>
+                                            <div className="text-muted" style={{ fontSize: 13 }}>Ngày đặt</div>
                                             <div className="fw-bold">{selectedItem.booking_date || selectedItem.reservation_date}</div>
                                         </span>
                                     </Col>
                                     <Col md={4} xs={12} className="d-flex align-items-center">
                                         <span className="me-2 text-primary"><i className="mdi mdi-clock-outline"></i></span>
                                         <span>
-                                            <div className="text-muted" style={{ fontSize: 13 }}>Time</div>
+                                            <div className="text-muted" style={{ fontSize: 13 }}>Giờ đến</div>
                                             <div className="fw-bold">{selectedItem.booking_time || selectedItem.reservation_time}</div>
                                         </span>
                                     </Col>
                                     <Col md={4} xs={12} className="d-flex align-items-center">
                                         <span className="me-2 text-primary"><i className="mdi mdi-account-group-outline"></i></span>
                                         <span>
-                                            <div className="text-muted" style={{ fontSize: 13 }}>Party Size</div>
-                                            <div className="fw-bold">{selectedItem.number_of_guests} guests</div>
+                                            <div className="text-muted" style={{ fontSize: 13 }}>Số lượng khách</div>
+                                            <div className="fw-bold">{selectedItem.number_of_guests} khách</div>
                                         </span>
                                     </Col>
                                 </Row>
@@ -695,7 +678,7 @@ const ReservationGrid = ({
                                     <div className="mt-3 d-flex align-items-center">
                                         <span className="me-2 text-primary"><i className="mdi mdi-note-text-outline"></i></span>
                                         <span>
-                                            <div className="text-muted" style={{ fontSize: 13 }}>Note</div>
+                                            <div className="text-muted" style={{ fontSize: 13 }}>Ghi chú</div>
                                             <div>{selectedItem.notes || selectedItem.special_requests}</div>
                                         </span>
                                     </div>
@@ -704,12 +687,12 @@ const ReservationGrid = ({
 
                             {/* Customer Information */}
                             <div className="mb-4">
-                                <div className="fw-semibold mb-2 text-primary" style={{ fontSize: 16 }}>Customer Information</div>
+                                <div className="fw-semibold mb-2 text-primary" style={{ fontSize: 16 }}>Thông tin khách hàng</div>
                                 <Row>
                                     <Col md={6} xs={12} className="d-flex align-items-center mb-2">
                                         <span className="me-2 text-secondary"><i className="mdi mdi-phone"></i></span>
                                         <span>
-                                            <div className="text-muted" style={{ fontSize: 13 }}>Phone</div>
+                                            <div className="text-muted" style={{ fontSize: 13 }}>Số điện thoại</div>
                                             <div className="fw-bold">{selectedItem.customer_phone || selectedItem.phone_number}</div>
                                         </span>
                                     </Col>
@@ -725,14 +708,14 @@ const ReservationGrid = ({
 
                             {/* System Information */}
                             <div className="mb-2">
-                                <div className="fw-semibold mb-2 text-dark" style={{ fontSize: 16 }}>System Information</div>
+                                <div className="fw-semibold mb-2 text-dark" style={{ fontSize: 16 }}>Thông tin hệ thống</div>
                                 <Row>
                                     <Col md={6} xs={12}>
-                                        <div className="text-muted" style={{ fontSize: 13 }}>Created</div>
+                                        <div className="text-muted" style={{ fontSize: 13 }}>Ngày tạo</div>
                                         <div>{selectedItem.created_at}</div>
                                     </Col>
                                     <Col md={6} xs={12}>
-                                        <div className="text-muted" style={{ fontSize: 13 }}>Last Updated</div>
+                                        <div className="text-muted" style={{ fontSize: 13 }}>Cập nhật lần cuối</div>
                                         <div>{selectedItem.updated_at || selectedItem.created_at}</div>
                                     </Col>
                                 </Row>
@@ -742,7 +725,7 @@ const ReservationGrid = ({
                 </ModalBody>
                 <ModalFooter className="border-0 pt-0">
                     <Button color="secondary" onClick={() => setShowView(false)}>
-                        Close
+                        Đóng
                     </Button>
                 </ModalFooter>
             </Modal>
