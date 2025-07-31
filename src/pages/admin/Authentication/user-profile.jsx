@@ -9,11 +9,14 @@ import {
   Button,
   Spinner,
   Alert,
+  ListGroup,
+  ListGroupItem,
 } from "reactstrap";
 import { getUserDetail } from "@services/admin/userService";
 import avatarDefault from "@assets/admin/images/users/avatar-1.jpg";
 import Breadcrumb from "@components/admin/ui/Breadcrumb";
 import { Link } from "react-router-dom";
+import permissionLabels from "@services/admin/key.js";
 
 const UserProfile = () => {
   const [userData, setUserData] = useState(null);
@@ -61,6 +64,36 @@ const UserProfile = () => {
   return (
       <div className="page-content">
         <Container fluid>
+          <style>
+            {`
+            .permission-list {
+              max-height: 300px;
+              overflow-y: auto;
+            }
+
+            .permission-item {
+              transition: all 0.2s ease;
+            }
+
+            .permission-item:hover {
+              background-color: #f1f3f5 !important;
+              transform: translateX(5px);
+            }
+
+            .permission-list::-webkit-scrollbar {
+              width: 6px;
+            }
+
+            .permission-list::-webkit-scrollbar-thumb {
+              background-color: #c1c1c1;
+              border-radius: 3px;
+            }
+
+            .permission-list::-webkit-scrollbar-track {
+              background-color: #f1f1f1;
+            }
+          `}
+          </style>
           <Breadcrumb title="Tài khoản" breadcrumbItem="Hồ sơ người dùng" />
           <Row className="justify-content-center">
             <Col md={10} lg={8}>
@@ -101,39 +134,45 @@ const UserProfile = () => {
                     <Col sm={6} className="mt-2">
                       <strong>Trạng thái:</strong>{" "}
                       <Badge
-                          color={
-                            user.status === "active" ? "success" : "secondary"
-                          }
+                          color={user.status === "active" ? "success" : "secondary"}
                       >
-                        {user.status === "active"
-                            ? "Đang hoạt động"
-                            : "Không hoạt động"}
+                        {user.status === "active" ? "Đang hoạt động" : "Không hoạt động"}
                       </Badge>
                     </Col>
                   </Row>
 
-                  <div>
-                    <strong>Danh sách quyền:</strong>
-                    <div className="mt-2 d-flex flex-wrap gap-2">
-                      {permissions.length > 0 ? (
-                          permissions.map((p, idx) => (
-                              <Badge color="primary" key={idx}>
-                                {p}
-                              </Badge>
-                          ))
-                      ) : (
-                          <span className="text-muted">Không có quyền</span>
-                      )}
-                    </div>
+                  <div className="mt-4">
+                    <strong className="d-block mb-2">Danh sách quyền:</strong>
+                    {permissions.length > 0 ? (
+                        <ListGroup className="permission-list">
+                          {permissions
+                              .sort()
+                              .map((p, idx) => (
+                                  <ListGroupItem
+                                      key={idx}
+                                      className="d-flex align-items-center border-0 py-1 px-3 mb-1 rounded bg-light permission-item"
+                                  >
+                                    <span className="text-success me-2">✔</span>
+                                    <Badge
+                                        color="primary"
+                                        className="py-2 px-3 flex-grow-1 text-start"
+                                        style={{ fontSize: "0.9rem" }}
+                                    >
+                                      {permissionLabels[p] || p}
+                                    </Badge>
+                                  </ListGroupItem>
+                              ))}
+                        </ListGroup>
+                    ) : (
+                        <span className="text-muted">Không có quyền</span>
+                    )}
                   </div>
 
                   <div className="text-end mt-4 d-flex justify-content-end gap-2">
                     <Link to="/change-password">
                       <Button color="secondary">Đổi mật khẩu</Button>
                     </Link>
-                    <Button color="danger">Chỉnh sửa hồ sơ</Button>
                   </div>
-
                 </CardBody>
               </Card>
             </Col>

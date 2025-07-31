@@ -28,6 +28,21 @@ apiClient.interceptors.request.use((config) => {
     return config;
 });
 
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (
+            error.response &&
+            error.response.status === 403 &&
+            error.response.data?.code === "ACCOUNT_INACTIVE"
+        ) {
+            localStorage.removeItem("admin_token");
+            window.location.href = "http://localhost:5173/admin/login";
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const login = (data) => {
     return apiClient.post(`/login`, data, { headers: { "Authorization": undefined } }); // Login does not need a token
 };
