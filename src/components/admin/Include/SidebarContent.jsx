@@ -193,6 +193,11 @@ const SidebarContent = (props) => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/reservations/history">
+                    {props.t("Lịch sử đơn đặt bàn")}
+                  </Link>
+                </li>
+                <li>
                   <Link to="/table-areas">{props.t("Khu vực bàn")}</Link>
                 </li>
               </ul>
@@ -261,11 +266,16 @@ const SidebarContent = (props) => {
                 </li>
                 <li>
                   <Link to="/orders/track">{props.t("Theo Dõi Đơn Hàng")}</Link>
-                </li>
+                  </li>
+                  <li>
+                    <Link to="/orders/history">
+                      <span>Lịch sử đơn hàng</span>
+                    </Link>
+                  </li>
               </ul>
             </li>
             )} 
-
+            
             {hasPermission("customer.view") && (
             <li>
               <Link to="/#" className="has-arrow ">

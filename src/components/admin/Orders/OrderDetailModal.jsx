@@ -14,6 +14,7 @@ import {
 import { MdPrint, MdModeEdit } from "react-icons/md";
 import "./OrderDetailModal.scss";
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
+import OrderChangeLogModal from "./OrderChangeLogModal";
 
 const getStatusInfo = (status) => {
   const statusConfig = {
@@ -39,6 +40,7 @@ const getOrderTypeInfo = (type) => {
 };
 
 const OrderDetailModal = ({ isOpen, toggle, order }) => {
+  const [showLog, setShowLog] = React.useState(false);
   if (!order) return null;
   const customerName = order.customer?.full_name || "Không có thông tin";
   const customerPhone = order.customer?.phone_number || "-";
@@ -108,8 +110,12 @@ const OrderDetailModal = ({ isOpen, toggle, order }) => {
         </Row>
       </ModalBody>
       <ModalFooter className="order-detail-modal-footer p-3">
+        <Button color="info" outline onClick={() => setShowLog(true)}>
+          Xem lịch sử thay đổi
+        </Button>
         <Button color="secondary" onClick={toggle}>Đóng</Button>
       </ModalFooter>
+      <OrderChangeLogModal isOpen={showLog} toggle={() => setShowLog(false)} orderId={order.id} />
     </Modal>
   );
 };

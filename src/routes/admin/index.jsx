@@ -33,6 +33,8 @@ import PageTable from "@pages/admin/Tables/index";
 import PageReservation from "@pages/admin/Reservations/index";
 import PageTableArea from "@pages/admin/TableAreas/index";
 import PageOrder from "@pages/admin/Orders/index";
+import OrderChangeLogPage from "@pages/admin/Orders/OrderChangeLogPage";
+import OrderHistoryPage from "@pages/admin/Orders/OrderHistoryPage";
 import FormOrderCreate from "@components/admin/Orders/FormOrderCreate";
 import FormOrderUpdate from "@components/admin/Orders/FormOrderUpdate";
 import PageCombo from "@pages/admin/Combos/index";
@@ -42,6 +44,7 @@ import AdminForgotPassword from "@pages/admin/Users/AdminForgotpassword.jsx";
 import AdminResetPassword from "@pages/admin/Users/ AdminResetPassword.jsx";
 import Forbidden403 from "@pages/admin/Users/403.jsx";
 import ChangePassword from "@pages/admin/Users/ChangePassword.jsx";
+import ReservationHistory from "@pages/admin/Reservations/History";
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard />, permission: "dashboard.view" },
 
@@ -67,6 +70,7 @@ const authProtectedRoutes = [
   { path: "/reservations/create", component: <PageReservation />, permission: "reservation.create" },
   { path: "/reservations/:id/edit", component: <PageReservation />, permission: "reservation.update" },
   { path: "/reservations/trash", component: <PageReservation />, permission: "reservation.view" },
+  { path: "/reservations/history", component: <ReservationHistory />, permission: "reservation.view" },
 
   // Khu vực bàn
   { path: "/table-areas", component: <PageTableArea />, permission: "table-area.view" },
@@ -89,6 +93,8 @@ const authProtectedRoutes = [
   { path: "/orders/create", component: <PageOrder />, permission: "order.create" },
   { path: "/orders/:id/edit", component: <PageOrder />, permission: "order.update" },
   { path: "/orders/track", component: <PageOrder />, permission: "order.view" },
+  { path: "/orders/history", component: <OrderHistoryPage />, permission: "order.view" },
+  { path: "/orders/change-logs", component: <OrderChangeLogPage />, permission: "order.view" },
 
   // Món ăn
   { path: "/dishes", component: <PageDishes />, permission: "dish.view" },

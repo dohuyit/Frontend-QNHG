@@ -29,6 +29,17 @@ apiClient.interceptors.request.use((config) => {
 
 // Các hàm gọi API
 
+// Lấy toàn bộ lịch sử thay đổi đơn hàng
+export const getOrderChangeLogs = async (orderId) => {
+    if (!orderId) return [];
+    const res = await apiClient.get(`/orders/${orderId}/change-logs`);
+    return res.data.data || res.data;
+};
+
+export const getOrders = (params) => {
+    return apiClient.get("/orders/list", { params });
+};
+
 export const getListOrders = (params) => {
     return apiClient.get("/orders/list", { params });
 };
