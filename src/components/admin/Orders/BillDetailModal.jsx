@@ -19,30 +19,14 @@ import {
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import { getBillDetails } from "@services/admin/orderService";
 import { toast } from "react-toastify";
-import { 
-  FaUser, 
-  FaShoppingCart, 
-  FaMoneyBillWave, 
-  FaClipboardList, 
-  FaPhone, 
-  FaEnvelope, 
-  FaMapMarkerAlt, 
-  FaCalendarAlt, 
-  FaTag, 
-  FaHandshake, 
-  FaBarcode, 
-  FaRegStickyNote, 
-  FaClock, 
-  FaInfoCircle, 
-  FaBoxOpen 
-} from "react-icons/fa";
+import { FaInfoCircle, FaBoxOpen, FaUser, FaMoneyBillWave, FaClipboardList, FaHandshake } from "react-icons/fa";
 import dishDefaultImg from "@assets/admin/images/dish/dish-default.webp";
 import "./BillDetailModal.scss";
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   const d = new Date(dateStr);
-  return d.toLocaleDateString('vi-VN');
+  return d.toLocaleDateString("vi-VN");
 };
 
 const BillDetailModal = ({
@@ -56,7 +40,7 @@ const BillDetailModal = ({
   const [orderData, setOrderData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
     const fetchBillDetails = async () => {
@@ -84,7 +68,9 @@ const BillDetailModal = ({
           setPaymentData(payment);
           setOrderData(order);
         } else {
-          throw new Error(response.data.message || "Không thể lấy chi tiết hóa đơn.");
+          throw new Error(
+            response.data.message || "Không thể lấy chi tiết hóa đơn."
+          );
         }
       } catch (err) {
         console.error("Lỗi khi lấy chi tiết hóa đơn:", err.response || err);
@@ -98,12 +84,12 @@ const BillDetailModal = ({
     if (isOpen && orderId) {
       fetchBillDetails();
     } else if (!isOpen) {
-        // Reset state when modal is closed to ensure fresh data on next open
-        setBillData(null);
-        setPaymentData(null);
-        setOrderData(null);
-        setIsLoading(true); // Reset to true for next load
-        setError(null);
+      // Reset state when modal is closed to ensure fresh data on next open
+      setBillData(null);
+      setPaymentData(null);
+      setOrderData(null);
+      setIsLoading(true); // Reset to true for next load
+      setError(null);
     }
   }, [isOpen, orderId]);
 
@@ -125,7 +111,9 @@ const BillDetailModal = ({
         <ModalHeader toggle={toggle}>Lỗi tải dữ liệu</ModalHeader>
         <ModalBody className="text-center">
           <p className="text-danger">{error}</p>
-          <Button color="secondary" onClick={toggle}>Đóng</Button>
+          <Button color="secondary" onClick={toggle}>
+            Đóng
+          </Button>
         </ModalBody>
       </Modal>
     );
@@ -139,16 +127,21 @@ const BillDetailModal = ({
   console.log(order);
 
   // Hiển thị tên người đặt ưu tiên contact_name, sau đó đến customer.full_name, cuối cùng là Guest
-  const customerName = order.contact_name || order.customer?.full_name || "Guest";
+  const customerName =
+    order.contact_name || order.customer?.full_name || "Guest";
 
   // Đếm tổng số lượng items (tổng quantity)
   const totalQuantity = Array.isArray(order.items)
-    ? order.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0)
+    ? order.items.reduce(
+        (sum, item) => sum + (parseInt(item.quantity, 10) || 0),
+        0
+      )
     : 0;
 
-  const tableInfo = order.order_tables && order.order_tables.length > 0
-    ? order.order_tables.map(t => t.table_item.table_number).join(", ")
-    : "Chưa chọn bàn";
+  const tableInfo =
+    order.order_tables && order.order_tables.length > 0
+      ? order.order_tables.map((t) => t.table_item.table_number).join(", ")
+      : "Chưa chọn bàn";
 
   const getOrderType = (type) => {
     if (type === "dine-in") return "Ăn tại chỗ";
@@ -158,7 +151,13 @@ const BillDetailModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} size="xl" centered className="bill-detail-modal">
+    <Modal
+      isOpen={isOpen}
+      toggle={toggle}
+      size="xl"
+      centered
+      className="bill-detail-modal"
+    >
       <div className="bill-modal-header-custom">
         <div className="bill-modal-header-content">
           <div className="bill-modal-header-title">
@@ -167,25 +166,30 @@ const BillDetailModal = ({
           </div>
           <div className="bill-modal-header-code">#{bill.bill_code}</div>
         </div>
-        <button type="button" className="btn-close" aria-label="Close" onClick={toggle}></button>
+        <button
+          type="button"
+          className="btn-close"
+          aria-label="Close"
+          onClick={toggle}
+        ></button>
       </div>
       <ModalBody className="pt-0">
         <div className="bill-tabs-wrapper">
           <Nav tabs className="bill-tabs mb-4">
             <NavItem>
               <NavLink
-                className={activeTab === 'info' ? 'active' : ''}
-                onClick={() => setActiveTab('info')}
-                style={{ cursor: 'pointer', fontWeight: 600 }}
+                className={activeTab === "info" ? "active" : ""}
+                onClick={() => setActiveTab("info")}
+                style={{ cursor: "pointer", fontWeight: 600 }}
               >
                 Thông Tin Tổng Quan
               </NavLink>
             </NavItem>
             <NavItem>
               <NavLink
-                className={activeTab === 'items' ? 'active' : ''}
-                onClick={() => setActiveTab('items')}
-                style={{ cursor: 'pointer', fontWeight: 600 }}
+                className={activeTab === "items" ? "active" : ""}
+                onClick={() => setActiveTab("items")}
+                style={{ cursor: "pointer", fontWeight: 600 }}
               >
                 Chi Tiết Món Ăn
               </NavLink>
@@ -195,56 +199,149 @@ const BillDetailModal = ({
         <TabContent activeTab={activeTab}>
           <TabPane tabId="info">
             <Row className="g-4">
-              <Col md={6} lg={4}>
-                <div className="bill-info-box bill-info-order">
-                  <div className="bill-info-box-title"><FaBoxOpen className="me-2" />Thông Tin Đơn Hàng</div>
+              <Col md={6}>
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaClipboardList className="me-2" />
+                    Thông Tin Đơn Hàng
+                  </div>
                   <div className="bill-info-list">
-                    <div className="bill-info-row"><span>Mã đơn hàng:</span> <span className="fw-semibold">{order.order_code}</span></div>
-                    <div className="bill-info-row"><span>Loại đơn hàng:</span> <span>{getOrderType(order.order_type)}</span></div>
-                    <div className="bill-info-row"><span>Tổng số món:</span> <span>{totalQuantity}</span></div>
+                    <div className="bill-info-row">
+                      <span>Mã đơn hàng:</span> <span>{order.order_code}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Loại:</span>{" "}
+                      <span>{getOrderType(order.order_type)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Số món:</span> <span>{totalQuantity}</span>
+                    </div>
                     {order.order_type === "dine-in" && (
-                      <div className="bill-info-row"><span>Số bàn:</span> <span>{tableInfo}</span></div>
+                      <div className="bill-info-row">
+                        <span>Bàn:</span> <span>{tableInfo}</span>
+                      </div>
                     )}
-                    <div className="bill-info-row"><span>Ngày đặt:</span> <span>{formatDate(order.created_at)}</span></div>
-                    <div className="bill-info-row bill-info-row-note">
-                      <span>Ghi chú đơn hàng:</span>
-                      <Input type="textarea" value={order.notes || 'Không có'} readOnly className="bill-note-input" rows={2} />
+                    <div className="bill-info-row">
+                      <span>Ngày đặt:</span>{" "}
+                      <span>{formatDate(order.created_at)}</span>
+                    </div>
+                    {order.notes && (
+                      <div className="bill-info-row bill-info-row-note">
+                        <span>Ghi chú:</span>
+                        <Input
+                          type="textarea"
+                          readOnly
+                          rows={2}
+                          value={order.notes}
+                          className="bill-note-input"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaMoneyBillWave className="me-2" />
+                    Thông Tin Thanh Toán
+                  </div>
+                  <div className="bill-info-list">
+                    <div className="bill-info-row">
+                      <span>Mã hóa đơn:</span> <span>{bill.bill_code}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Phụ:</span>{" "}
+                      <span>{formatPriceToVND(bill.sub_total)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Giảm:</span>{" "}
+                      <span>{formatPriceToVND(bill.discount_amount)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Phí ship:</span>{" "}
+                      <span>{formatPriceToVND(bill.delivery_fee)}</span>
+                    </div>
+                    <div className="bill-info-row bill-final-amount-row">
+                      <span>Tổng tiền:</span>{" "}
+                      <span>{formatPriceToVND(bill.final_amount)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Trạng thái:</span>
+                      <span className={`bill-status-badge ${bill.status}`}>
+                        {bill.status === "paid" ? "Đã Thanh Toán" : bill.status}
+                      </span>
                     </div>
                   </div>
                 </div>
               </Col>
-              <Col md={6} lg={4}>
-                <div className="bill-info-box bill-info-customer">
-                  <div className="bill-info-box-title"><i className="fa fa-user me-2" />Thông Tin Khách Hàng</div>
+
+              <Col md={6}>
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaUser className="me-2" />
+                    Thông Tin Khách Hàng
+                  </div>
                   <div className="bill-info-list">
-                    <div className="bill-info-row"><span>Tên:</span> <span>{customerName}</span></div>
-                    <div className="bill-info-row"><span>SĐT:</span> <span>{order.contact_phone || 'N/A'}</span></div>
-                    <div className="bill-info-row"><span>Email:</span> <span>{order.contact_email || 'N/A'}</span></div>
+                    <div className="bill-info-row">
+                      <span>Tên:</span> <span>{customerName}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>SĐT:</span>{" "}
+                      <span>{order.contact_phone || "N/A"}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Email:</span>{" "}
+                      <span>{order.contact_email || "N/A"}</span>
+                    </div>
                   </div>
                 </div>
-              </Col>
-              <Col md={12} lg={4}>
-                <div className="bill-info-box bill-info-payment">
-                  <div className="bill-info-box-title"><i className="fa fa-credit-card me-2" />Thông Tin Thanh Toán</div>
-                  <div className="bill-info-list">
-                    <div className="bill-info-row"><span>Mã hóa đơn:</span> <span>{bill.bill_code}</span></div>
-                    <div className="bill-info-row"><span>Tổng phụ:</span> <span>{formatPriceToVND(bill.sub_total)}</span></div>
-                    <div className="bill-info-row"><span>Giảm giá:</span> <span>{formatPriceToVND(bill.discount_amount)}</span></div>
-                    <div className="bill-info-row"><span>Phí giao hàng:</span> <span>{formatPriceToVND(bill.delivery_fee)}</span></div>
-                    <div className="bill-info-row bill-final-amount-row"><span>Tổng tiền:</span> <span className="bill-final-amount">{formatPriceToVND(bill.final_amount)}</span></div>
-                    <div className="bill-info-row"><span>Trạng thái:</span> <span className={`bill-status-badge ${bill.status}`}>{bill.status === 'paid' ? 'Đã Thanh Toán' : bill.status}</span></div>
+
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaHandshake className="me-2" />
+                    Chi Tiết Thanh Toán
                   </div>
-                  <div className="bill-info-list mt-3 pt-2 border-top">
-                    <div className="bill-info-row"><span>Ngày phát hành:</span> <span>{formatDate(bill.issued_at)}</span></div>
-                    <div className="bill-info-row"><span>Người phụ trách:</span> <span>{bill.user?.full_name || 'N/A'}</span></div>
-                    <div className="bill-info-row"><span>Phương thức:</span> <span>{payment.payment_method === 'cash' ? 'Tiền mặt' : payment.payment_method}</span></div>
-                    <div className="bill-info-row"><span>Số tiền đã thanh toán:</span> <span className="text-success fw-bold">{formatPriceToVND(payment.amount_paid)}</span></div>
-                    <div className="bill-info-row"><span>Thời gian thanh toán:</span> <span>{formatDate(payment.payment_time)}</span></div>
-                    <div className="bill-info-row"><span>Mã giao dịch:</span> <span>{payment.transaction_ref || 'N/A'}</span></div>
-                    <div className="bill-info-row bill-info-row-note">
-                      <span>Ghi chú thanh toán:</span>
-                      <Input type="textarea" value={payment.notes || 'Không có'} readOnly className="bill-note-input" rows={2} />
+                  <div className="bill-info-list">
+                    <div className="bill-info-row">
+                      <span>Ngày phát hành:</span>{" "}
+                      <span>{formatDate(bill.issued_at)}</span>
                     </div>
+                    <div className="bill-info-row">
+                      <span>Người phụ trách:</span>{" "}
+                      <span>{bill.user?.full_name || "N/A"}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Phương thức:</span>{" "}
+                      <span>
+                        {payment.payment_method === "cash"
+                          ? "Tiền mặt"
+                          : payment.payment_method}
+                      </span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Đã thanh toán:</span>{" "}
+                      <span>{formatPriceToVND(payment.amount_paid)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Thời gian:</span>{" "}
+                      <span>{formatDate(payment.payment_time)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Mã giao dịch:</span>{" "}
+                      <span>{payment.transaction_ref || "N/A"}</span>
+                    </div>
+                    {payment.notes && (
+                      <div className="bill-info-row bill-info-row-note">
+                        <span>Ghi chú:</span>
+                        <Input
+                          type="textarea"
+                          readOnly
+                          rows={2}
+                          value={payment.notes}
+                          className="bill-note-input"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </Col>
@@ -252,7 +349,10 @@ const BillDetailModal = ({
           </TabPane>
           <TabPane tabId="items">
             <div className="bill-items-table-wrapper rounded shadow-sm bg-white p-2 p-md-3 mb-2">
-              <div className="bill-items-title mb-3"><FaBoxOpen className="me-2" />Chi Tiết Món Ăn</div>
+              <div className="bill-items-title mb-3">
+                <FaBoxOpen className="me-2" />
+                Chi Tiết Món Ăn
+              </div>
               <Table bordered responsive className="mt-3 bill-items-table">
                 <thead>
                   <tr>
@@ -271,43 +371,75 @@ const BillDetailModal = ({
                         <td>
                           <div className="d-flex align-items-center">
                             <img
-                              src={item.menu_item?.image_url ? `${fullUrl}${item.menu_item.image_url}` : dishDefaultImg}
-                              alt={item.menu_item?.name || item.combo?.name || ""}
+                              src={
+                                item.menu_item?.image_url
+                                  ? `${fullUrl}${item.menu_item.image_url}`
+                                  : dishDefaultImg
+                              }
+                              alt={
+                                item.menu_item?.name || item.combo?.name || ""
+                              }
                               className="order-item-img me-2"
                             />
                             <div>
-                              <div className="bill-item-name">{item.menu_item?.name || item.combo?.name || 'N/A'}</div>
-                              {item.notes && <small className="text-muted">({item.notes})</small>}
+                              <div className="bill-item-name">
+                                {item.menu_item?.name ||
+                                  item.combo?.name ||
+                                  "N/A"}
+                              </div>
+                              {item.notes && (
+                                <small className="text-muted">
+                                  ({item.notes})
+                                </small>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="text-center">
-                          <span className="bill-qty-badge">{item.quantity}</span>
+                          <span className="bill-qty-badge">
+                            {item.quantity}
+                          </span>
                         </td>
-                        <td className="text-center">{formatPriceToVND(item.unit_price)}</td>
-                        <td className="text-center">{formatPriceToVND(item.unit_price * item.quantity)}</td>
+                        <td className="text-center">
+                          {formatPriceToVND(item.unit_price)}
+                        </td>
+                        <td className="text-center">
+                          {formatPriceToVND(item.unit_price * item.quantity)}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center">Không có chi tiết món ăn.</td>
+                      <td colSpan="5" className="text-center">
+                        Không có chi tiết món ăn.
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </Table>
               <div className="bill-items-total-box mt-4">
-                <div className="bill-items-total-label">Tổng cộng ({totalQuantity} món):</div>
-                <div className="bill-items-total-value">{formatPriceToVND(bill.final_amount)}</div>
+                <div className="bill-items-total-label">
+                  Tổng cộng ({totalQuantity} món):
+                </div>
+                <div className="bill-items-total-value">
+                  {formatPriceToVND(bill.final_amount)}
+                </div>
               </div>
             </div>
           </TabPane>
         </TabContent>
       </ModalBody>
       <ModalFooter className="border-top-0 pt-0">
-        <Button color="primary" onClick={toggle} className="qnhg-button bill-btn-close">Đóng</Button>
+        <Button
+          color="primary"
+          onClick={toggle}
+          className="qnhg-button bill-btn-close"
+        >
+          Đóng
+        </Button>
       </ModalFooter>
     </Modal>
   );
 };
 
-export default BillDetailModal; 
+export default BillDetailModal;

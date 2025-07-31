@@ -35,6 +35,8 @@ import CardTable from "../Table/CardTable";
 import { getCombos } from "@services/admin/comboService";
 import { Wallet, CreditCard, Scan } from 'lucide-react';
 import PaymentModal from "./PaymentModal";
+import { Tooltip } from "reactstrap";
+import Switch from "react-switch";
 
 const kitchenStatusBadge = {
   pending: { label: "Chờ bếp", color: "#007bff", bg: "#e3f0ff" },
@@ -91,6 +93,8 @@ const FormOrderUpdate = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [activeTableId, setActiveTableId] = useState(null); // New state to track the actively selected table
+  const [priority, setPriority] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
 
   const statusOptionsMap = {
     "Dine In": [
@@ -639,6 +643,7 @@ const FormOrderUpdate = () => {
         contact_name: contactName || "",
         contact_email: contactEmail || "",
         contact_phone: contactPhone || "",
+        priority: priority ? 1 : 0,
         items: allItems.map((item) => ({
           id: item.order_item_id,
           dish_id: item.combo_id ? null : (item.dish_id?.id || item.id),
@@ -646,6 +651,7 @@ const FormOrderUpdate = () => {
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price || item.price),
           is_additional: item.is_additional ? 1 : 0,
+          is_priority: item.is_priority ? 1 : 0,
         })),
       };
 
@@ -1191,8 +1197,19 @@ const FormOrderUpdate = () => {
                 </div>
               </div>
               <div className="order-items-detail-box mb-3">
-                <div className="fw-bold mb-3 px-3" style={{ fontSize: "1.1rem" }}>
-                  Chi tiết đơn hàng ({orderItems.length} món)
+                <div className="fw-bold mb-3 px-3 d-flex align-items-center justify-content-between" style={{ fontSize: "1.1rem" }}>
+                  <span>Chi tiết đơn hàng ({orderItems.length} món)</span>
+                  <span id="priority-tooltip" style={{ cursor: 'pointer' }}>
+                    <i className="fa fa-info-circle text-secondary" />
+                  </span>
+                  <Tooltip
+                    placement="top"
+                    isOpen={tooltipOpen}
+                    target="priority-tooltip"
+                    toggle={() => setTooltipOpen(!tooltipOpen)}
+                  >
+                    Bật để đánh dấu đơn hàng này là ưu tiên (priority).
+                  </Tooltip>
                 </div>
                 {/* Tabs kitchen status */}
                 <div className="order-kitchen-status-tabs d-flex gap-2 px-2 mb-2">
@@ -1209,7 +1226,7 @@ const FormOrderUpdate = () => {
                     </Button>
                   ))}
                 </div>
-                <div className="order-items-list">
+                <div className="order-items-list px-2">
                   {orderItems.filter(item => item.kitchen_status === activeKitchenTab).length === 0 ? (
                     <div className="text-muted text-center py-4">
                       <FaShoppingCart size={32} className="mb-2 text-secondary" />
@@ -1220,6 +1237,14 @@ const FormOrderUpdate = () => {
                       <div
                         className="order-item-row d-flex align-items-center"
                         key={item.combo_id ? `combo-${item.combo_id}-${item.kitchen_status}-${item.is_additional ? 'add' : ''}` : (item.dish_id?.id || item.id) + '-' + item.kitchen_status + (item.is_additional ? '-add' : '')}
+                        style={{
+                          border: item.is_priority ? '2px solid #dc3545' : '1px solid #dee2e6',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          marginBottom: '8px',
+                          backgroundColor: item.is_priority ? '#fff5f5' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }}
                       >
                         <div className="order-item-img-block me-3">
                           <img
@@ -1233,8 +1258,39 @@ const FormOrderUpdate = () => {
                             <div className="fw-bold order-item-title ellipsis-1 mb-1">
                               {item.combo_id ? (item.name || 'Combo không tên') : (item.name || 'Món ăn không tên')}
                             </div>
-                            <div className="order-item-price-mult text-muted">
-                              {formatPriceToVND(item.unit_price || item.price)} × {item.quantity}
+                            <div className="order-item-price-mult text-muted d-flex align-items-center ">
+                              <span style={{ width: '60%' }}>{formatPriceToVND(item.unit_price || item.price)} × {item.quantity}</span>
+                              <div className="d-flex align-items-center ms-2">
+                                <Switch
+                                  id={`priority-switch-${item.order_item_id || item.id}`}
+                                  checked={!!item.is_priority}
+                                  onChange={(checked) => {
+                                    setOrderItems(prevItems => 
+                                      prevItems.map(prevItem => 
+                                        prevItem.order_item_id === item.order_item_id
+                                          ? { ...prevItem, is_priority: checked ? 1 : 0 }
+                                          : prevItem
+                                      )
+                                    );
+                                  }}
+                                  onColor="#28a745"
+                                  offColor="#ccc"
+                                  onHandleColor="#fff"
+                                  offHandleColor="#fff"
+                                  handleDiameter={16}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={20}
+                                  width={40}
+                                  className="react-switch"
+                                  aria-hidden="true"
+                                  style={{
+                                    verticalAlign: 'middle'
+                                  }}
+                                />
+                              </div>
                             </div>
                             {item.kitchen_status && (
                               (() => {

@@ -7,43 +7,89 @@ import {
     Button,
     Row,
     Col,
-    Modal,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
+    Spinner,
+    Input,
+    InputGroup,
+    InputGroupText,
     Form,
     FormGroup,
     Label,
-    Input,
-    Badge,
-    Spinner,
+    Offcanvas,
+    OffcanvasHeader,
+    OffcanvasBody,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
-import { getTableAreas, createReservation } from "@services/admin/reservationService";
+import Badge from "@components/admin/ui/Badge";
+import { getTableAreas, deleteTableArea, countTableArea } from "@services/admin/tableAreaService";
 import Swal from "sweetalert2";
+import TableAreaModal from "./TableAreaModal";
+import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
+import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 
 const TableAreaIndex = () => {
     const [areaData, setAreaData] = useState({ items: [], meta: {} });
     const [loading, setLoading] = useState(true);
-    const [showCreate, setShowCreate] = useState(false);
-    const [showEdit, setShowEdit] = useState(false);
-    const [formData, setFormData] = useState({
+    const [modalOpen, setModalOpen] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
+    const [newTableArea, setNewTableArea] = useState({
         name: "",
         description: "",
         capacity: "",
         status: "active",
     });
-    const [loadingCreate, setLoadingCreate] = useState(false);
+    const [errors, setErrors] = useState({});
+
+    // Filter states
+    const [search, setSearch] = useState("");
+    const [status, setStatus] = useState("all");
+    const [showFilter, setShowFilter] = useState(false);
+    const [filterName, setFilterName] = useState("");
+    const [filterCapacity, setFilterCapacity] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [meta, setMeta] = useState({
+        current_page: 1,
+        per_page: 10,
+        total: 0,
+        last_page: 1,
+    });
+
+    const [areaStatusCounts, setAreaStatusCounts] = useState({
+        active: 0,
+        inactive: 0,
+        all: 0,
+    });
+
+    const statusOptions = [
+        { value: "all", label: "Tất cả", badgeColor: "secondary" },
+        { value: "active", label: "Hoạt động", badgeColor: "success" },
+        { value: "inactive", label: "Không hoạt động", badgeColor: "danger" },
+    ];
 
     const fetchTableAreas = async (page = 1) => {
         setLoading(true);
         try {
-            const res = await getTableAreas({ page });
+            const params = {
+                page,
+                per_page: 10,
+                search: search || undefined,
+                status: status !== "all" ? status : undefined,
+                name: filterName || undefined,
+                capacity: filterCapacity || undefined,
+            };
+            const res = await getTableAreas(params);
             console.log("API SUCCESS:", res.data);
             setAreaData({
                 items: res.data.data.items,
                 meta: res.data.data.meta,
             });
+            setMeta({
+                current_page: res.data.data.meta.page || 1,
+                per_page: res.data.data.meta.perPage || 10,
+                total: res.data.data.meta.total || 0,
+                last_page: res.data.data.meta.totalPage || 1,
+            });
+            setCurrentPage(res.data.data.meta.page || 1);
         } catch (error) {
             console.error("API ERROR:", error);
             Swal.fire({
@@ -57,84 +103,56 @@ const TableAreaIndex = () => {
         }
     };
 
-    useEffect(() => {
-        fetchTableAreas();
-    }, []);
-
-    const handleCreate = async () => {
-        setLoadingCreate(true);
+    const fetchAreaStatusCounts = async () => {
         try {
-            const payload = {
-                customer_name: formData.name,
-                customer_phone: formData.phone_number,
-                customer_email: formData.email,
-                reservation_time: formData.booking_date && formData.booking_time
-                    ? `${formData.booking_date} ${formData.booking_time}`
-                    : null,
-                number_of_guests: Number(formData.capacity),
-                table_id: formData.table_area_id ? Number(formData.table_area_id) : null,
-                notes: formData.special_requests,
-            };
-            await createReservation(payload);
-            Swal.fire({
-                title: "Thành công!",
-                text: "Đã tạo đơn đặt bàn thành công",
-                icon: "success",
-                confirmButtonText: "OK",
-            });
-            setShowCreate(false);
-            setFormData({
-                name: "",
-                description: "",
-                capacity: "",
-                status: "active",
-            });
-            fetchTableAreas();
-        } catch (error) {
-            if (error.response && error.response.data && error.response.data.errors) {
-                Swal.fire({
-                    title: "Lỗi!",
-                    text: "Có lỗi xảy ra khi tạo đơn. Vui lòng kiểm tra lại thông tin.",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                });
-            } else {
-                Swal.fire({
-                    title: "Lỗi!",
-                    text: error.response?.data?.message || "Không thể tạo đơn đặt bàn",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                });
-            }
-        } finally {
-            setLoadingCreate(false);
+            const res = await countTableArea();
+            setAreaStatusCounts(res.data.data || {});
+        } catch {
+            setAreaStatusCounts({ active: 0, inactive: 0, all: 0 });
         }
     };
 
-    const handleEdit = async () => {
-        try {
-            // Giả lập API call - thay thế bằng API thực tế
-            Swal.fire({
-                title: "Thành công!",
-                text: "Đã cập nhật khu vực bàn thành công",
-                icon: "success",
-                confirmButtonText: "OK",
-            });
-            setShowEdit(false);
-            setFormData({
-                name: "",
-                description: "",
-                capacity: "",
-                status: "active",
-            });
-            fetchTableAreas();
-        } catch (error) { // eslint-disable-line no-unused-vars
-            Swal.fire({
-                title: "Lỗi!",
-                text: "Không thể cập nhật khu vực bàn",
-                icon: "error",
-                confirmButtonText: "OK",
-            });
+    useEffect(() => {
+        fetchTableAreas(currentPage);
+        fetchAreaStatusCounts();
+    }, [currentPage, search, status, filterName, filterCapacity]);
+
+    const openAddModal = () => {
+        setIsEdit(false);
+        setSelectedId(null);
+        setErrors({});
+        setModalOpen(true);
+    };
+
+    const openEditModal = (area) => {
+        console.log("Opening edit modal for area:", area);
+        setIsEdit(true);
+        setSelectedId(area.id);
+        setErrors({});
+        setModalOpen(true);
+    };
+
+    const handleModalSave = (validationErrors = null) => {
+        if (validationErrors) {
+            setErrors(validationErrors);
+            return;
+        }
+        
+        // Success case - refresh data and close modal
+        fetchTableAreas(currentPage);
+        setModalOpen(false);
+        setErrors({});
+    };
+
+    const handleStatusChange = (value) => {
+        setStatus(value);
+        setCurrentPage(1);
+        fetchTableAreas(1);
+    };
+
+    const handlePageChange = (pageNumber) => {
+        if (pageNumber > 0 && pageNumber <= meta.last_page) {
+            setCurrentPage(pageNumber);
         }
     };
 
@@ -152,45 +170,33 @@ const TableAreaIndex = () => {
             });
 
             if (result.isConfirmed) {
-                // Giả lập API call - thay thế bằng API thực tế
+                await deleteTableArea(id);
                 Swal.fire({
                     title: "Thành công!",
                     text: "Đã xóa khu vực bàn thành công",
                     icon: "success",
                     confirmButtonText: "OK",
                 });
-                setAreaData((prev) => ({
-                    ...prev,
-                    items: prev.items.filter((area) => area.id !== id),
-                }));
+                fetchTableAreas(currentPage);
             }
-        } catch (error) { // eslint-disable-line no-unused-vars
+        } catch (error) {
+            console.error("Error deleting area:", error);
             Swal.fire({
                 title: "Lỗi!",
-                text: "Không thể xóa khu vực bàn",
+                text: error.response?.data?.message || "Không thể xóa khu vực bàn",
                 icon: "error",
                 confirmButtonText: "OK",
             });
         }
     };
 
-    const openEditModal = (area) => {
-        setFormData({
-            name: area.name || "",
-            description: area.description || "",
-            capacity: area.capacity || "",
-            status: area.status || "active",
-        });
-        setShowEdit(true);
-    };
-
     const getStatusBadge = (status) => {
         const statusConfig = {
-            active: { color: "success", text: "Hoạt động" },
-            inactive: { color: "danger", text: "Không hoạt động" },
+            active: { type: "success", text: "Hoạt động" },
+            inactive: { type: "danger", text: "Không hoạt động" },
         };
-        const config = statusConfig[status] || { color: "secondary", text: "Không xác định" };
-        return <Badge color={config.color}>{config.text}</Badge>;
+        const config = statusConfig[status] || { type: "secondary", text: "Không xác định" };
+        return <Badge type={config.type}>{config.text}</Badge>;
     };
 
     return (
@@ -200,16 +206,37 @@ const TableAreaIndex = () => {
                 breadcrumbItem="Quản lí khu vực bàn"
             />
 
-            <Card>
+            {/* Status Filter Card */}
+            <Card className="mb-4">
                 <CardHeader className="bg-white border-bottom-0">
                     <Row className="align-items-center">
-                        <Col md="6" sm="12">
-                            <h4 className="mb-0">Khu vực bàn</h4>
+                        <Col
+                            md={7}
+                            sm={12}
+                            className="mb-2 mb-md-0 d-flex align-items-center"
+                        >
+                            <StatusFilterGroup
+                                options={statusOptions.map((opt) => ({
+                                    ...opt,
+                                    badgeCount:
+                                        opt.value === "all"
+                                            ? (areaStatusCounts.active || 0) +
+                                            (areaStatusCounts.inactive || 0)
+                                            : areaStatusCounts[opt.value] || 0,
+                                }))}
+                                value={status}
+                                onChange={handleStatusChange}
+                                style={{ gap: "1rem" }}
+                            />
                         </Col>
-                        <Col md="6" sm="12" className="text-end">
+                        <Col
+                            md={5}
+                            sm={12}
+                            className="d-flex justify-content-md-end justify-content-start gap-2"
+                        >
                             <Button
                                 color="success"
-                                onClick={() => setShowCreate(true)}
+                                onClick={openAddModal}
                             >
                                 <i className="mdi mdi-plus me-1"></i>
                                 Thêm khu vực bàn
@@ -217,6 +244,89 @@ const TableAreaIndex = () => {
                         </Col>
                     </Row>
                 </CardHeader>
+            </Card>
+
+            {/* Search and Filter Card */}
+            <Card className="mb-4">
+                <CardHeader className="bg-white border-bottom-0">
+                    <SearchAndStatusFilterBar
+                        searchValue={search}
+                        onSearchChange={setSearch}
+                        statusValue={status}
+                        onStatusChange={handleStatusChange}
+                        statusOptions={statusOptions}
+                        searchPlaceholder="Tìm kiếm khu vực bàn..."
+                        statusPlaceholder="Tất cả trạng thái"
+                        rightContent={
+                            <Button
+                                color="light"
+                                className="border"
+                                style={{ minWidth: 140 }}
+                                onClick={() => setShowFilter(true)}
+                            >
+                                <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                            </Button>
+                        }
+                    />
+                </CardHeader>
+            </Card>
+
+            {/* Advanced Filter Offcanvas */}
+            <Offcanvas
+                direction="end"
+                isOpen={showFilter}
+                toggle={() => setShowFilter(false)}
+            >
+                <OffcanvasHeader toggle={() => setShowFilter(false)}>
+                    <span>Bộ lọc nâng cao</span>
+                    <Button
+                        color="light"
+                        size="sm"
+                        style={{
+                            position: "absolute",
+                            right: 48,
+                            top: 12,
+                            boxShadow: "none",
+                            zIndex: 1,
+                        }}
+                        onClick={() => {
+                            setFilterName("");
+                            setFilterCapacity("");
+                            fetchTableAreas();
+                        }}
+                        title="Làm mới bộ lọc"
+                    >
+                        <i className="bi bi-arrow-clockwise"></i>
+                    </Button>
+                </OffcanvasHeader>
+                <OffcanvasBody>
+                    <Form>
+                        <FormGroup>
+                            <Label for="filterName">Tên khu vực</Label>
+                            <Input
+                                id="filterName"
+                                value={filterName}
+                                onChange={(e) => setFilterName(e.target.value)}
+                                placeholder="Nhập tên khu vực..."
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="filterCapacity">Sức chứa</Label>
+                            <Input
+                                id="filterCapacity"
+                                type="number"
+                                value={filterCapacity}
+                                onChange={(e) => setFilterCapacity(e.target.value)}
+                                placeholder="Nhập sức chứa..."
+                                min={1}
+                            />
+                        </FormGroup>
+                    </Form>
+                </OffcanvasBody>
+            </Offcanvas>
+
+            {/* Data Table Card */}
+            <Card>
                 <CardBody>
                     {loading ? (
                         <div className="text-center my-5">
@@ -278,143 +388,17 @@ const TableAreaIndex = () => {
                 </CardBody>
             </Card>
 
-            {/* Modal Tạo khu vực bàn */}
-            <Modal isOpen={showCreate} toggle={() => setShowCreate(false)}>
-                <ModalHeader toggle={() => setShowCreate(false)}>
-                    Thêm khu vực bàn mới
-                </ModalHeader>
-                <ModalBody>
-                    <Form>
-                        <FormGroup>
-                            <Label for="name">Tên khu vực *</Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
-                            />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="description">Mô tả</Label>
-                            <Input
-                                id="description"
-                                type="textarea"
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            />
-                        </FormGroup>
-                        <Row>
-                            <Col md={6}>
-                                <FormGroup>
-                                    <Label for="capacity">Sức chứa *</Label>
-                                    <Input
-                                        id="capacity"
-                                        type="number"
-                                        value={formData.capacity}
-                                        onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                                        required
-                                    />
-                                </FormGroup>
-                            </Col>
-                            <Col md={6}>
-                                <FormGroup>
-                                    <Label for="statuses">Trạng thái</Label>
-                                    <Input
-                                        id="statuses"
-                                        type="select"
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    >
-                                        <option value="active">Hoạt động</option>
-                                        <option value="inactive">Không hoạt động</option>
-                                    </Input>
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                    </Form>
-                </ModalBody>
-                <ModalFooter>
-                    <Button color="secondary" onClick={() => setShowCreate(false)}>
-                        Hủy
-                    </Button>
-                    <Button
-                        color="primary"
-                        onClick={handleCreate}
-                        disabled={loadingCreate || !formData.name || !formData.capacity}
-                    >
-                        {loadingCreate ? <Spinner size="sm" /> : "Thêm khu vực bàn"}
-                    </Button>
-                </ModalFooter>
-            </Modal>
-
-            {/* Modal Chỉnh sửa khu vực bàn */}
-            <Modal isOpen={showEdit} toggle={() => setShowEdit(false)}>
-                <ModalHeader toggle={() => setShowEdit(false)}>
-                    Chỉnh sửa khu vực bàn
-                </ModalHeader>
-                <ModalBody>
-                    <Form>
-                        <FormGroup>
-                            <Label for="edit_name">Tên khu vực *</Label>
-                            <Input
-                                id="edit_name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
-                            />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="edit_description">Mô tả</Label>
-                            <Input
-                                id="edit_description"
-                                type="textarea"
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            />
-                        </FormGroup>
-                        <Row>
-                            <Col md={6}>
-                                <FormGroup>
-                                    <Label for="edit_capacity">Sức chứa *</Label>
-                                    <Input
-                                        id="edit_capacity"
-                                        type="number"
-                                        value={formData.capacity}
-                                        onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                                        required
-                                    />
-                                </FormGroup>
-                            </Col>
-                            <Col md={6}>
-                                <FormGroup>
-                                    <Label for="edit_status">Trạng thái</Label>
-                                    <Input
-                                        id="edit_status"
-                                        type="select"
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    >
-                                        <option value="active">Hoạt động</option>
-                                        <option value="inactive">Không hoạt động</option>
-                                    </Input>
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                    </Form>
-                </ModalBody>
-                <ModalFooter>
-                    <Button color="secondary" onClick={() => setShowEdit(false)}>
-                        Hủy
-                    </Button>
-                    <Button
-                        color="primary"
-                        onClick={handleEdit}
-                        disabled={!formData.name || !formData.capacity}
-                    >
-                        Cập nhật
-                    </Button>
-                </ModalFooter>
-            </Modal>
+            {/* TableAreaModal component */}
+            <TableAreaModal
+                modalOpen={modalOpen}
+                setModalOpen={setModalOpen}
+                newTableArea={newTableArea}
+                setNewTableArea={setNewTableArea}
+                onSave={handleModalSave}
+                isEdit={isEdit}
+                errors={errors}
+                selectedId={selectedId}
+            />
         </div>
     );
 };
