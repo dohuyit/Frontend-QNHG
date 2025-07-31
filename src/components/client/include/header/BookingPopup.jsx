@@ -17,6 +17,7 @@ const convertTo24Hour = (time12h) => {
 
 const BookingPopup = ({ isOpen, onClose }) => {
   const [guestCount, setGuestCount] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ const BookingPopup = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     const submissionData = {
       ...orderTable,
       reservation_time: convertTo24Hour(orderTable.reservation_time),
@@ -64,6 +65,8 @@ const BookingPopup = ({ isOpen, onClose }) => {
         setErrors(apiErrors);
       }
       toast.error(error.response?.data?.message || "Lỗi tạo đơn đặt bàn");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +100,14 @@ const BookingPopup = ({ isOpen, onClose }) => {
 
   return (
     <>
+      {loading && (
+        <div className="booking-loading-overlay">
+          <div className="booking-loading-popup">
+            <div className="spinner"></div>
+            <span>Đang xử lý đặt bàn, vui lòng chờ trong giây lát...</span>
+          </div>
+        </div>
+      )}
       <div className="popup-overlay">
         <div className="popup">
           <h2>Đặt bàn</h2>
@@ -207,7 +218,10 @@ const BookingPopup = ({ isOpen, onClose }) => {
               <button type="button" onClick={onClose}>
                 Đóng
               </button>
-              <button type="submit">ĐẶT BÀN NGAY</button>
+              <button type="submit" disabled={loading}>
+                {loading ? 'Đang xử lý...' : 'ĐẶT BÀN NGAY'}
+              </button>
+              
             </div>
           </form>
         </div>
