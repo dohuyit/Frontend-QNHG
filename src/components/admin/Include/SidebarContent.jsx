@@ -315,16 +315,19 @@ const SidebarContent = (props) => {
               </Link>
               <ul className="sub-menu" aria-expanded="false">
                 {hasPermission("role.view") && (
-                  <li>
-                    <Link to="/orders">{props.t("Danh Sách Đơn Hàng")}</Link>
-                  </li>
-                  <li>
-                    <Link to="/orders/track">
-                      {props.t("Theo Dõi Đơn Hàng")}
-                    </Link>
-                  </li>
-                </ul>
-              </li>
+                  <>
+                    <li>
+                      <Link to="/orders">{props.t("Danh Sách Đơn Hàng")}</Link>
+                    </li>
+                    <li>
+                      <Link to="/orders/track">
+                        {props.t("Theo Dõi Đơn Hàng")}
+                      </Link>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </li>
             )}
 
             {hasPermission("customer.view") && (
