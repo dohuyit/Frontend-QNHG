@@ -3,32 +3,17 @@ import "./header.scss";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import logo from "@assets/client/images/header/logo.png";
 import BookingPopup from "./BookingPopup";
-import HeaderService from "@services/client/HeaderService"; 
 import { FaPhoneAlt, FaRegClock, FaGift, FaUser, FaUserPlus } from "react-icons/fa";
+// import InforPage from "./inforPage";
 
 const Header = () => {
   const [showNoti, setShowNoti] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
-  const [categories, setCategories] = useState([]);  // Danh mục cha
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Gọi API lấy danh mục cha khi load header
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await HeaderService.getParentCategories();
-        setCategories(data);
-        // console.log("✅ Danh mục cha:", data);
-      } catch (error) {
-        console.error("❌ Không thể tải danh mục cha:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
   useEffect(() => {
     const checkUser = () => {
       const token = localStorage.getItem('token');
@@ -220,6 +205,16 @@ const Header = () => {
       {showPopup && (
         <BookingPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       )}
+      {/* Hiển thị InforPage nếu không phải trang chủ */}
+      {/* {location.pathname !== "/" && (
+        <InforPage
+          category={
+            location.pathname.includes("menu-page") ? "menu" :
+            location.pathname.includes("branch-page") ? "branch" :
+            "menu"
+          }
+        />
+      )} */}
     </header>
   );
 };

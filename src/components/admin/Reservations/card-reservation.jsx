@@ -24,6 +24,7 @@ const ReservationCard = ({
     onView,
     onTimeChange,
     onStatusChangeLocal,
+    onDelete,
 }) => {
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
     const toggleDropdown = () => setDropdownOpen((prev) => !prev);
@@ -111,18 +112,26 @@ const ReservationCard = ({
     return (
         <Card className="h-100 reservation-card shadow-sm">
             <CardBody className="d-flex flex-column">
-                {/* Header với tên khách và trạng thái trên cùng một hàng */}
-                <div className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                        <h6 className="mb-0 fw-bold text-dark">
-                            {reservation.customer_name || "Khách"}
-                        </h6>
-                        {getStatusBadge(reservation.status)}
-                    </div>
-                    <div className="d-flex align-items-center">
-                        <small className="text-muted fs-6">
-                            {reservation.customer_phone || reservation.phone_number || "Không có SĐT"}
-                        </small>
+                <div className="card-reservation-body">
+                    {/* Hiển thị mã khách hàng dạng mờ */}
+                    {reservation.customer_id && (
+                        <div className="text-muted" style={{ fontSize: 15, fontWeight: 500, letterSpacing: 1, marginBottom: 2 }}>
+                            #{reservation.customer_id}
+                        </div>
+                    )}
+                    {/* Header với tên khách và trạng thái trên cùng một hàng */}
+                    <div className="mb-3">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                            <h6 className="mb-0 fw-bold text-dark">
+                                {reservation.customer_name || "Khách"}
+                            </h6>
+                            {getStatusBadge(reservation.status)}
+                        </div>
+                        <div className="d-flex align-items-center">
+                            <small className="text-muted fs-6">
+                                {reservation.customer_phone || reservation.phone_number || "Không có SĐT"}
+                            </small>
+                        </div>
                     </div>
                 </div>
 
@@ -257,11 +266,7 @@ const ReservationCard = ({
                                                 originalStatus: reservation.status
                                             };
                                             onEdit(reservationWithConfirmedStatus);
-                                            if (onStatusChangeLocal) {
-                                                onStatusChangeLocal(reservation.id, "confirmed");
-                                            }
                                         }
-
                                     }}
                                     title="Xác nhận"
                                 >
@@ -286,8 +291,8 @@ const ReservationCard = ({
                                     <DropdownItem onClick={() => onEdit && onEdit(reservation)}>
                                         <MdModeEdit size={16} className="me-2" /> Chỉnh sửa
                                     </DropdownItem>
-                                    <DropdownItem onClick={handleOpenTableModal}>
-                                        <MdTableRestaurant size={16} className="me-2" /> Chọn bàn
+                                    <DropdownItem onClick={() => onDelete && onDelete(reservation.id)}>
+                                        <FaTrash size={16} className="me-2" /> Xóa đơn đặt bàn
                                     </DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
@@ -311,4 +316,4 @@ const ReservationCard = ({
     );
 };
 
-export default ReservationCard; 
+export default ReservationCard;

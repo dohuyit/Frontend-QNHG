@@ -9,27 +9,25 @@ import {
   Col,
   Table,
   Spinner,
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  Input,
 } from "reactstrap";
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import { getBillDetails } from "@services/admin/orderService";
 import { toast } from "react-toastify";
-import { 
-  FaUser, 
-  FaShoppingCart, 
-  FaMoneyBillWave, 
-  FaClipboardList, 
-  FaPhone, 
-  FaEnvelope, 
-  FaMapMarkerAlt, 
-  FaCalendarAlt, 
-  FaTag, 
-  FaHandshake, 
-  FaBarcode, 
-  FaRegStickyNote, 
-  FaClock 
-} from "react-icons/fa";
+import { FaInfoCircle, FaBoxOpen, FaUser, FaMoneyBillWave, FaClipboardList, FaHandshake } from "react-icons/fa";
 import dishDefaultImg from "@assets/admin/images/dish/dish-default.webp";
 import "./BillDetailModal.scss";
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("vi-VN");
+};
 
 const BillDetailModal = ({
   isOpen,
@@ -42,6 +40,7 @@ const BillDetailModal = ({
   const [orderData, setOrderData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
     const fetchBillDetails = async () => {
@@ -69,7 +68,9 @@ const BillDetailModal = ({
           setPaymentData(payment);
           setOrderData(order);
         } else {
-          throw new Error(response.data.message || "Không thể lấy chi tiết hóa đơn.");
+          throw new Error(
+            response.data.message || "Không thể lấy chi tiết hóa đơn."
+          );
         }
       } catch (err) {
         console.error("Lỗi khi lấy chi tiết hóa đơn:", err.response || err);
@@ -83,12 +84,12 @@ const BillDetailModal = ({
     if (isOpen && orderId) {
       fetchBillDetails();
     } else if (!isOpen) {
-        // Reset state when modal is closed to ensure fresh data on next open
-        setBillData(null);
-        setPaymentData(null);
-        setOrderData(null);
-        setIsLoading(true); // Reset to true for next load
-        setError(null);
+      // Reset state when modal is closed to ensure fresh data on next open
+      setBillData(null);
+      setPaymentData(null);
+      setOrderData(null);
+      setIsLoading(true); // Reset to true for next load
+      setError(null);
     }
   }, [isOpen, orderId]);
 
@@ -110,7 +111,9 @@ const BillDetailModal = ({
         <ModalHeader toggle={toggle}>Lỗi tải dữ liệu</ModalHeader>
         <ModalBody className="text-center">
           <p className="text-danger">{error}</p>
-          <Button color="secondary" onClick={toggle}>Đóng</Button>
+          <Button color="secondary" onClick={toggle}>
+            Đóng
+          </Button>
         </ModalBody>
       </Modal>
     );
@@ -124,16 +127,21 @@ const BillDetailModal = ({
   console.log(order);
 
   // Hiển thị tên người đặt ưu tiên contact_name, sau đó đến customer.full_name, cuối cùng là Guest
-  const customerName = order.contact_name || order.customer?.full_name || "Guest";
+  const customerName =
+    order.contact_name || order.customer?.full_name || "Guest";
 
   // Đếm tổng số lượng items (tổng quantity)
   const totalQuantity = Array.isArray(order.items)
-    ? order.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0)
+    ? order.items.reduce(
+        (sum, item) => sum + (parseInt(item.quantity, 10) || 0),
+        0
+      )
     : 0;
 
-  const tableInfo = order.order_tables && order.order_tables.length > 0
-    ? order.order_tables.map(t => t.table_item.table_number).join(", ")
-    : "Chưa chọn bàn";
+  const tableInfo =
+    order.order_tables && order.order_tables.length > 0
+      ? order.order_tables.map((t) => t.table_item.table_number).join(", ")
+      : "Chưa chọn bàn";
 
   const getOrderType = (type) => {
     if (type === "dine-in") return "Ăn tại chỗ";
@@ -143,91 +151,295 @@ const BillDetailModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} size="lg" centered className="bill-detail-modal">
-      <ModalHeader toggle={toggle} className="border-bottom-0 pb-0">
-        <h4 className="mb-0">Chi Tiết Hóa Đơn & Thanh Toán</h4>
-      </ModalHeader>
+    <Modal
+      isOpen={isOpen}
+      toggle={toggle}
+      size="xl"
+      centered
+      className="bill-detail-modal"
+    >
+      <div className="bill-modal-header-custom">
+        <div className="bill-modal-header-content">
+          <div className="bill-modal-header-title">
+            <FaInfoCircle className="me-2" />
+            Chi Tiết Hóa Đơn
+          </div>
+          <div className="bill-modal-header-code">#{bill.bill_code}</div>
+        </div>
+        <button
+          type="button"
+          className="btn-close"
+          aria-label="Close"
+          onClick={toggle}
+        ></button>
+      </div>
       <ModalBody className="pt-0">
-        <Row>
-          <Col md={6} className="pe-md-4">
-            <h5 className="section-title"><FaShoppingCart className="me-2 text-primary" />Thông tin đơn hàng</h5>
-            <p><strong>Mã đơn hàng:</strong> {order.order_code}</p>
-            <p><strong>Loại đơn hàng:</strong> {getOrderType(order.order_type)}</p>
-            <p><strong><FaUser className="me-1 text-muted" />Khách hàng:</strong> {customerName}</p>
-            <p><strong><FaPhone className="me-1 text-muted" />Số điện thoại:</strong> {order.contact_phone || 'N/A'}</p>
-            <p><strong><FaEnvelope className="me-1 text-muted" />Email:</strong> {order.contact_email || 'N/A'}</p>
-            <p><strong>Tổng số món:</strong> {totalQuantity}</p>
-            {order.order_type === "dine-in" && (
-              <p><strong><FaMapMarkerAlt className="me-1 text-muted" />Số bàn:</strong> {tableInfo}</p>
-            )}
-            <p><strong><FaRegStickyNote className="me-1 text-muted" />Ghi chú đơn hàng:</strong> {order.notes || 'Không có'}</p>
-            <p><strong><FaCalendarAlt className="me-1 text-muted" />Ngày đặt:</strong> {new Date(order.created_at).toLocaleString()}</p>
-          </Col>
-          <Col md={6} className="ps-md-4 border-start">
-            <h5 className="section-title"><FaMoneyBillWave className="me-2 text-primary" />Thông tin hóa đơn & Thanh toán</h5>
-            <p><strong>Mã hóa đơn:</strong> {bill.bill_code}</p>
-            <p><strong>Tổng phụ:</strong> {formatPriceToVND(bill.sub_total)}</p>
-            <p><strong>Giảm giá:</strong> {formatPriceToVND(bill.discount_amount)}</p>
-            <p><strong>Phí giao hàng:</strong> {formatPriceToVND(bill.delivery_fee)}</p>
-            <p><strong>Tổng tiền hóa đơn:</strong> {formatPriceToVND(bill.final_amount)}</p>
-            <p><strong><FaTag className="me-1 text-muted" />Trạng thái hóa đơn:</strong> {bill.status === 'paid' ? 'Đã thanh toán' : bill.status}</p>
-            <p><strong><FaCalendarAlt className="me-1 text-muted" />Ngày phát hành:</strong> {new Date(bill.issued_at).toLocaleString()}</p>
-            <p><strong><FaHandshake className="me-1 text-muted" />Người phụ trách:</strong> {bill.user?.full_name || 'N/A'}</p>
-            <hr/>
-            <p><strong><FaMoneyBillWave className="me-1 text-muted" />Phương thức thanh toán:</strong> {payment.payment_method === 'cash' ? 'Tiền mặt' : payment.payment_method}</p>
-            <p><strong><FaMoneyBillWave className="me-1 text-muted" />Số tiền đã thanh toán:</strong> {formatPriceToVND(payment.amount_paid)}</p>
-            <p><strong><FaClock className="me-1 text-muted" />Thời gian thanh toán:</strong> {new Date(payment.payment_time).toLocaleString()}</p>
-            <p><strong><FaBarcode className="me-1 text-muted" />Mã giao dịch:</strong> {payment.transaction_ref || 'N/A'}</p>
-            <p><strong><FaRegStickyNote className="me-1 text-muted" />Ghi chú thanh toán:</strong> {payment.notes || 'Không có'}</p>
-          </Col>
-        </Row>
-        <h5 className="section-title mt-4"><FaClipboardList className="me-2 text-primary" />Chi tiết món ăn</h5>
-        <Table bordered striped responsive className="mt-3">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Tên món/Combo</th>
-              <th>Số lượng</th>
-              <th>Đơn giá</th>
-              <th>Tổng cộng</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.isArray(order.items) && order.items.length > 0 ? (
-              order.items.map((item, index) => (
-                <tr key={index}>
-                  <th scope="row">{index + 1}</th>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <img
-                        src={item.menu_item?.image_url ? `${fullUrl}${item.menu_item.image_url}` : dishDefaultImg}
-                        alt={item.menu_item.name || item.combo.name}
-                        className="order-item-img"
-                      />
-                      <div>
-                        <div className="bill-item-name">{item.menu_item.name || item.combo.name || 'N/A'}</div>
-                        {item.notes && <small className="text-muted">({item.notes})</small>}
-                      </div>
+        <div className="bill-tabs-wrapper">
+          <Nav tabs className="bill-tabs mb-4">
+            <NavItem>
+              <NavLink
+                className={activeTab === "info" ? "active" : ""}
+                onClick={() => setActiveTab("info")}
+                style={{ cursor: "pointer", fontWeight: 600 }}
+              >
+                Thông Tin Tổng Quan
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
+                className={activeTab === "items" ? "active" : ""}
+                onClick={() => setActiveTab("items")}
+                style={{ cursor: "pointer", fontWeight: 600 }}
+              >
+                Chi Tiết Món Ăn
+              </NavLink>
+            </NavItem>
+          </Nav>
+        </div>
+        <TabContent activeTab={activeTab}>
+          <TabPane tabId="info">
+            <Row className="g-4">
+              <Col md={6}>
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaClipboardList className="me-2" />
+                    Thông Tin Đơn Hàng
+                  </div>
+                  <div className="bill-info-list">
+                    <div className="bill-info-row">
+                      <span>Mã đơn hàng:</span> <span>{order.order_code}</span>
                     </div>
-                  </td>
-                  <td>{item.quantity}</td>
-                  <td>{formatPriceToVND(item.unit_price)}</td>
-                  <td>{formatPriceToVND(item.unit_price * item.quantity)}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="5" className="text-center">Không có chi tiết món ăn.</td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
+                    <div className="bill-info-row">
+                      <span>Loại:</span>{" "}
+                      <span>{getOrderType(order.order_type)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Số món:</span> <span>{totalQuantity}</span>
+                    </div>
+                    {order.order_type === "dine-in" && (
+                      <div className="bill-info-row">
+                        <span>Bàn:</span> <span>{tableInfo}</span>
+                      </div>
+                    )}
+                    <div className="bill-info-row">
+                      <span>Ngày đặt:</span>{" "}
+                      <span>{formatDate(order.created_at)}</span>
+                    </div>
+                    {order.notes && (
+                      <div className="bill-info-row bill-info-row-note">
+                        <span>Ghi chú:</span>
+                        <Input
+                          type="textarea"
+                          readOnly
+                          rows={2}
+                          value={order.notes}
+                          className="bill-note-input"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaMoneyBillWave className="me-2" />
+                    Thông Tin Thanh Toán
+                  </div>
+                  <div className="bill-info-list">
+                    <div className="bill-info-row">
+                      <span>Mã hóa đơn:</span> <span>{bill.bill_code}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Phụ:</span>{" "}
+                      <span>{formatPriceToVND(bill.sub_total)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Giảm:</span>{" "}
+                      <span>{formatPriceToVND(bill.discount_amount)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Phí ship:</span>{" "}
+                      <span>{formatPriceToVND(bill.delivery_fee)}</span>
+                    </div>
+                    <div className="bill-info-row bill-final-amount-row">
+                      <span>Tổng tiền:</span>{" "}
+                      <span>{formatPriceToVND(bill.final_amount)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Trạng thái:</span>
+                      <span className={`bill-status-badge ${bill.status}`}>
+                        {bill.status === "paid" ? "Đã Thanh Toán" : bill.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Col>
+
+              <Col md={6}>
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaUser className="me-2" />
+                    Thông Tin Khách Hàng
+                  </div>
+                  <div className="bill-info-list">
+                    <div className="bill-info-row">
+                      <span>Tên:</span> <span>{customerName}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>SĐT:</span>{" "}
+                      <span>{order.contact_phone || "N/A"}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Email:</span>{" "}
+                      <span>{order.contact_email || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bill-info-box">
+                  <div className="bill-info-box-title">
+                    <FaHandshake className="me-2" />
+                    Chi Tiết Thanh Toán
+                  </div>
+                  <div className="bill-info-list">
+                    <div className="bill-info-row">
+                      <span>Ngày phát hành:</span>{" "}
+                      <span>{formatDate(bill.issued_at)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Người phụ trách:</span>{" "}
+                      <span>{bill.user?.full_name || "N/A"}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Phương thức:</span>{" "}
+                      <span>
+                        {payment.payment_method === "cash"
+                          ? "Tiền mặt"
+                          : payment.payment_method}
+                      </span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Đã thanh toán:</span>{" "}
+                      <span>{formatPriceToVND(payment.amount_paid)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Thời gian:</span>{" "}
+                      <span>{formatDate(payment.payment_time)}</span>
+                    </div>
+                    <div className="bill-info-row">
+                      <span>Mã giao dịch:</span>{" "}
+                      <span>{payment.transaction_ref || "N/A"}</span>
+                    </div>
+                    {payment.notes && (
+                      <div className="bill-info-row bill-info-row-note">
+                        <span>Ghi chú:</span>
+                        <Input
+                          type="textarea"
+                          readOnly
+                          rows={2}
+                          value={payment.notes}
+                          className="bill-note-input"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </TabPane>
+          <TabPane tabId="items">
+            <div className="bill-items-table-wrapper rounded shadow-sm bg-white p-2 p-md-3 mb-2">
+              <div className="bill-items-title mb-3">
+                <FaBoxOpen className="me-2" />
+                Chi Tiết Món Ăn
+              </div>
+              <Table bordered responsive className="mt-3 bill-items-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>TÊN MÓN/COMBO</th>
+                    <th className="text-center">SỐ LƯỢNG</th>
+                    <th className="text-center">ĐƠN GIÁ</th>
+                    <th className="text-center">TỔNG CỘNG</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(order.items) && order.items.length > 0 ? (
+                    order.items.map((item, index) => (
+                      <tr key={index}>
+                        <th scope="row">{index + 1}</th>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <img
+                              src={
+                                item.menu_item?.image_url
+                                  ? `${fullUrl}${item.menu_item.image_url}`
+                                  : dishDefaultImg
+                              }
+                              alt={
+                                item.menu_item?.name || item.combo?.name || ""
+                              }
+                              className="order-item-img me-2"
+                            />
+                            <div>
+                              <div className="bill-item-name">
+                                {item.menu_item?.name ||
+                                  item.combo?.name ||
+                                  "N/A"}
+                              </div>
+                              {item.notes && (
+                                <small className="text-muted">
+                                  ({item.notes})
+                                </small>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <span className="bill-qty-badge">
+                            {item.quantity}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          {formatPriceToVND(item.unit_price)}
+                        </td>
+                        <td className="text-center">
+                          {formatPriceToVND(item.unit_price * item.quantity)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center">
+                        Không có chi tiết món ăn.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+              <div className="bill-items-total-box mt-4">
+                <div className="bill-items-total-label">
+                  Tổng cộng ({totalQuantity} món):
+                </div>
+                <div className="bill-items-total-value">
+                  {formatPriceToVND(bill.final_amount)}
+                </div>
+              </div>
+            </div>
+          </TabPane>
+        </TabContent>
       </ModalBody>
       <ModalFooter className="border-top-0 pt-0">
-        <Button color="secondary" onClick={toggle} className="qnhg-button">Đóng</Button>
+        <Button
+          color="primary"
+          onClick={toggle}
+          className="qnhg-button bill-btn-close"
+        >
+          Đóng
+        </Button>
       </ModalFooter>
     </Modal>
   );
 };
 
-export default BillDetailModal; 
+export default BillDetailModal;

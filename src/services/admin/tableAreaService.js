@@ -33,4 +33,6 @@ export const getTableArea = (id) => apiClient.get(`/${id}/detail`);
 export const createTableArea = (data) => apiClient.post(`/create`, data);
 export const updateTableArea = (id, data) => apiClient.post(`/${id}/update`, data);
 export const deleteTableArea = (id) => apiClient.delete(`/${id}/delete`);
-
+export const countTableArea = () => {
+    return apiClient.get(`/count-by-status`);
+};

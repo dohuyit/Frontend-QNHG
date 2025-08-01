@@ -35,6 +35,8 @@ import CardTable from "../Table/CardTable";
 import { getCombos } from "@services/admin/comboService";
 import { Wallet, CreditCard, Scan } from 'lucide-react';
 import PaymentModal from "./PaymentModal";
+import { Tooltip } from "reactstrap";
+import Switch from "react-switch";
 
 const kitchenStatusBadge = {
   pending: { label: "Chờ bếp", color: "#007bff", bg: "#e3f0ff" },
@@ -91,6 +93,11 @@ const FormOrderUpdate = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [activeTableId, setActiveTableId] = useState(null); // New state to track the actively selected table
+  const [priority, setPriority] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [reservationId, setReservationId] = useState(null); // Thêm state cho reservation_id
+  const [hasReservation, setHasReservation] = useState(false); // Thay đổi tên state
+  const [nextItemId, setNextItemId] = useState(1); // Thêm state để tạo unique ID cho item mới
 
   const statusOptionsMap = {
     "Dine In": [
@@ -135,6 +142,10 @@ const FormOrderUpdate = () => {
         .then(async (res) => {
           const orderData = res.data.data.order;
           setOrderDataState(orderData);
+          
+          // Kiểm tra xem có reservation object không
+          setHasReservation(!!orderData.reservation);
+          
           setOrderItems(
             orderData.items.map((item) => {
               if (item.combo_id) {
@@ -161,13 +172,20 @@ const FormOrderUpdate = () => {
             }) || []
           );
           setOrderNotes(orderData.notes || "");
-          setOrderMethod(
-            orderData.order_type === "dine-in"
-              ? "Dine In"
-              : orderData.order_type === "takeaway"
-              ? "Takeaway"
-              : "Delivery"
-          );
+          
+          // Nếu có reservation object, luôn set order method là "Dine In"
+          if (orderData.reservation) {
+            setOrderMethod("Dine In");
+          } else {
+            setOrderMethod(
+              orderData.order_type === "dine-in"
+                ? "Dine In"
+                : orderData.order_type === "takeaway"
+                ? "Takeaway"
+                : "Delivery"
+            );
+          }
+          
           setOrderStatus(orderData.status || "pending");
           setTempNote(orderData.notes || "");
           setDeliveryAddress(orderData.delivery_address || "");
@@ -313,6 +331,7 @@ const FormOrderUpdate = () => {
             kitchen_status: 'pending',
             is_additional: 1,
             name: (item.name || (isCombo ? 'Combo không tên' : 'Món ăn không tên')) + ' (bổ sung)',
+            temp_id: `temp_${Date.now()}_${nextItemId}`, // Thêm unique temp_id
           },
         ];
       }
@@ -329,6 +348,7 @@ const FormOrderUpdate = () => {
             kitchen_status: 'pending',
             is_additional: 1,
             name: (item.name || (isCombo ? 'Combo không tên' : 'Món ăn không tên')) + ' (bổ sung)',
+            temp_id: `temp_${Date.now()}_${nextItemId}`, // Thêm unique temp_id
           },
         ];
       }
@@ -349,10 +369,12 @@ const FormOrderUpdate = () => {
             price: item.selling_price ?? item.price ?? 0,
             combo_id: isCombo ? item.id : null,
             kitchen_status: 'pending',
+            temp_id: `temp_${Date.now()}_${nextItemId}`, // Thêm unique temp_id
           },
         ];
       }
     });
+    setNextItemId(prev => prev + 1); // Tăng nextItemId
   };
 
   const updateQuantity = (id, quantity, comboId = null, order_item_id = null) => {
@@ -639,6 +661,7 @@ const FormOrderUpdate = () => {
         contact_name: contactName || "",
         contact_email: contactEmail || "",
         contact_phone: contactPhone || "",
+        priority: priority ? 1 : 0,
         items: allItems.map((item) => ({
           id: item.order_item_id,
           dish_id: item.combo_id ? null : (item.dish_id?.id || item.id),
@@ -646,6 +669,7 @@ const FormOrderUpdate = () => {
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price || item.price),
           is_additional: item.is_additional ? 1 : 0,
+          is_priority: item.is_priority ? 1 : 0,
         })),
       };
 
@@ -662,10 +686,16 @@ const FormOrderUpdate = () => {
       console.error("Error updating order:", error.response || error);
       const apiErrors = error.response?.data?.errors;
       if (apiErrors) {
-        const errorMessages = Object.values(apiErrors)
-          .map((e) => (Array.isArray(e) ? e.join(", ") : e))
-          .join("; ");
-        toast.error(errorMessages || "Lỗi khi cập nhật đơn hàng!");
+        // Hiển thị mỗi error là một toast riêng biệt
+        Object.values(apiErrors).forEach((errorArray) => {
+          if (Array.isArray(errorArray)) {
+            errorArray.forEach((errorMessage) => {
+              toast.error(errorMessage);
+            });
+          } else {
+            toast.error(errorArray);
+          }
+        });
       } else {
         toast.error(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng!");
       }
@@ -1136,13 +1166,21 @@ const FormOrderUpdate = () => {
                   )}
                 </div>
                 <div className="order-method-row py-2 mb-2">
-                  <Label className="order-sidebar-label mb-1">Hình thức đơn hàng</Label>
+                  <Label className="order-sidebar-label mb-1">
+                    Hình thức đơn hàng
+                    {hasReservation && (
+                      <span className="text-muted ms-2" style={{ fontSize: '0.85rem' }}>
+                        (Đơn hàng từ đặt bàn)
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     type="select"
                     value={orderMethod}
                     onChange={(e) => setOrderMethod(e.target.value)}
                     className="order-method-select"
                     style={{ width: "100%" }}
+                    disabled={hasReservation} // Disable nếu có reservation
                   >
                     <option value="Dine In">Ăn tại chỗ</option>
                     <option value="Takeaway">Mang đi</option>
@@ -1191,8 +1229,19 @@ const FormOrderUpdate = () => {
                 </div>
               </div>
               <div className="order-items-detail-box mb-3">
-                <div className="fw-bold mb-3 px-3" style={{ fontSize: "1.1rem" }}>
-                  Chi tiết đơn hàng ({orderItems.length} món)
+                <div className="fw-bold mb-3 px-3 d-flex align-items-center justify-content-between" style={{ fontSize: "1.1rem" }}>
+                  <span>Chi tiết đơn hàng ({orderItems.length} món)</span>
+                  <span id="priority-tooltip" style={{ cursor: 'pointer' }}>
+                    <i className="fa fa-info-circle text-secondary" />
+                  </span>
+                  <Tooltip
+                    placement="top"
+                    isOpen={tooltipOpen}
+                    target="priority-tooltip"
+                    toggle={() => setTooltipOpen(!tooltipOpen)}
+                  >
+                    Bật để đánh dấu đơn hàng này là ưu tiên (priority).
+                  </Tooltip>
                 </div>
                 {/* Tabs kitchen status */}
                 <div className="order-kitchen-status-tabs d-flex gap-2 px-2 mb-2">
@@ -1209,7 +1258,7 @@ const FormOrderUpdate = () => {
                     </Button>
                   ))}
                 </div>
-                <div className="order-items-list">
+                <div className="order-items-list px-2">
                   {orderItems.filter(item => item.kitchen_status === activeKitchenTab).length === 0 ? (
                     <div className="text-muted text-center py-4">
                       <FaShoppingCart size={32} className="mb-2 text-secondary" />
@@ -1220,6 +1269,14 @@ const FormOrderUpdate = () => {
                       <div
                         className="order-item-row d-flex align-items-center"
                         key={item.combo_id ? `combo-${item.combo_id}-${item.kitchen_status}-${item.is_additional ? 'add' : ''}` : (item.dish_id?.id || item.id) + '-' + item.kitchen_status + (item.is_additional ? '-add' : '')}
+                        style={{
+                          border: item.is_priority ? '2px solid #dc3545' : '1px solid #dee2e6',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          marginBottom: '8px',
+                          backgroundColor: item.is_priority ? '#fff5f5' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }}
                       >
                         <div className="order-item-img-block me-3">
                           <img
@@ -1233,8 +1290,43 @@ const FormOrderUpdate = () => {
                             <div className="fw-bold order-item-title ellipsis-1 mb-1">
                               {item.combo_id ? (item.name || 'Combo không tên') : (item.name || 'Món ăn không tên')}
                             </div>
-                            <div className="order-item-price-mult text-muted">
-                              {formatPriceToVND(item.unit_price || item.price)} × {item.quantity}
+                            <div className="order-item-price-mult text-muted d-flex align-items-center ">
+                              <span style={{ width: '60%' }}>{formatPriceToVND(item.unit_price || item.price)} × {item.quantity}</span>
+                              <div className="d-flex align-items-center ms-2">
+                                <Switch
+                                  id={`priority-switch-${item.order_item_id || item.temp_id || item.id}`}
+                                  checked={!!item.is_priority}
+                                  onChange={(checked) => {
+                                    setOrderItems(prevItems => 
+                                      prevItems.map(prevItem => {
+                                        // Sử dụng unique identifier để match item
+                                        const currentItemId = item.order_item_id || item.temp_id || item.id;
+                                        const prevItemId = prevItem.order_item_id || prevItem.temp_id || prevItem.id;
+                                        
+                                        return currentItemId === prevItemId
+                                          ? { ...prevItem, is_priority: checked ? 1 : 0 }
+                                          : prevItem;
+                                      })
+                                    );
+                                  }}
+                                  onColor="#28a745"
+                                  offColor="#ccc"
+                                  onHandleColor="#fff"
+                                  offHandleColor="#fff"
+                                  handleDiameter={16}
+                                  uncheckedIcon={false}
+                                  checkedIcon={false}
+                                  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                  height={20}
+                                  width={40}
+                                  className="react-switch"
+                                  aria-hidden="true"
+                                  style={{
+                                    verticalAlign: 'middle'
+                                  }}
+                                />
+                              </div>
                             </div>
                             {item.kitchen_status && (
                               (() => {
@@ -1331,14 +1423,26 @@ const FormOrderUpdate = () => {
                 >
                   {isSubmitting ? <Spinner size="sm" /> : "Lưu lại"}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-danger w-100"
-                  onClick={() => setShowPaymentModal(true)}
-                  disabled={isSubmitting}
-                >
-                  Lưu & Thanh toán
-                </button>
+                {orderItems.length > 0 && total > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-danger w-100"
+                    onClick={() => setShowPaymentModal(true)}
+                    disabled={isSubmitting}
+                  >
+                    Lưu & Thanh toán
+                  </button>
+                )}
+                {(orderItems.length === 0 || total === 0) && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary w-100"
+                    onClick={() => navigate("/orders/list")}
+                    disabled={isSubmitting}
+                  >
+                    Quay lại danh sách
+                  </button>
+                )}
               </div>
               <PaymentModal
                 isOpen={showPaymentModal}

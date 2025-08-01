@@ -2,14 +2,9 @@ import React, { useState } from "react";
 import {
   Card,
   CardBody,
-  Badge,
   Button,
   Row,
   Col,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
 } from "reactstrap";
 import { MdVisibility, MdModeEdit, MdDelete } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
@@ -17,48 +12,34 @@ import { FiClock } from "react-icons/fi";
 import { BsBoxSeam } from "react-icons/bs";
 import "./card-order.css";
 import OrderDetailModal from "./OrderDetailModal";
-import BillDetailModal from "./BillDetailModal";
-// import { getBillDetails } from "@services/admin/orderService"; // No longer needed here
+import PaymentModal from "./PaymentModal";
+import Badge from "../ui/Badge";
 import { toast } from "react-toastify";
-import { BASE_URL } from "@services/admin/orderService"; // Import BASE_URL
+import { BASE_URL } from "@services/admin/orderService";
+import BillDetailModal from "./BillDetailModal";
 
 const OrderCard = ({ order, onEdit, onDelete }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showBillDetailModal, setShowBillDetailModal] = useState(false);
-  // const [currentBillData, setCurrentBillData] = useState(null);
-  // const [currentPaymentData, setCurrentPaymentData] = useState(null);
-  // const [currentOrderData, setCurrentOrderData] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { color: "warning", text: "Chờ xác nhận" },
       confirmed: { color: "info", text: "Đã xác nhận" },
-      preparing: { color: "primary", text: "Đang chế biến" },
+      preparing: { color: "primary", text: "Đang chuẩn bị" },
       ready: { color: "success", text: "Sẵn sàng" },
       delivered: { color: "success", text: "Đã giao" },
       cancelled: { color: "danger", text: "Đã hủy" },
-      completed: { color: "success", text: "Completed" },
+      completed: { color: "success", text: "Đã hoàn thành" },
     };
     const config =
       statusConfig[status] || { color: "secondary", text: "Không xác định" };
 
     return (
-      <Badge color={config.color} pill className="order-card-status-badge">
+      <Badge type={config.color} pill>
         {status === "completed" && <FaCheck size={10} className="me-1" />}
         {config.text}
-      </Badge>
-    );
-  };
-
-  const getOrderTypeBadge = (orderType) => {
-    const typeConfig = {
-      "dine-in": { color: "primary", text: "Tại bàn" },
-      takeaway: { color: "info", text: "Mang về" },
-      delivery: { color: "success", text: "Giao hàng" },
-    };
-    return (
-      <Badge color={typeConfig[orderType]?.color || "secondary"} pill>
-        {typeConfig[orderType]?.text || "Không xác định"}
       </Badge>
     );
   };
@@ -73,27 +54,6 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
   const handleViewBill = async (orderId) => {
     console.log("Viewing bill for order ID:", orderId);
     try {
-      // const response = await getBillDetails(orderId); // No longer needed here
-      // console.log("API Response data:", response.data.data);
-
-      // if (response.data.code === "SUCCESS") {
-      //   const bill = response.data.data.bill;
-      //   const payment = response.data.data.bill.bill_payments?.[0]; // Use optional chaining
-      //   const order = response.data.data.order;
-
-      //   console.log("Extracted Bill Data:", bill);
-      //   console.log("Extracted Payment Data:", payment);
-      //   console.log("Extracted Order Data:", order);
-
-      //   if (!bill || !payment || !order) {
-      //     console.error("Missing data in API response for bill modal:", { bill, payment, order });
-      //     toast.error("Dữ liệu hóa đơn không đầy đủ.");
-      //     return; // Stop execution if data is incomplete
-      //   }
-
-      //   setCurrentBillData(bill);
-      //   setCurrentPaymentData(payment);
-      //   setCurrentOrderData(order);
       setShowBillDetailModal(true);
     } catch (error) {
       console.error("Error fetching bill details:", error.response || error);
@@ -120,7 +80,6 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
               <small className="text-muted">{`#${
                 order.order_code || "N/A"
               }`}</small>
-              {getOrderTypeBadge(order.order_type)}
             </div>
             {getStatusBadge(order.status)}
           </div>
@@ -186,9 +145,9 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
                 </Button>
               )}
 
-              {onEdit && order.status !== 'completed' && (
+              {onEdit && order.status !== 'completed' && order.status !== 'cancelled' && (
                 <Button
-                  color="secondary"
+                  color="warning"
                   className="w-100 border"
                   onClick={() => onEdit(order)}
                 >
@@ -206,11 +165,11 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
               )}
             </div>
             {/* Nút thanh toán nếu trạng thái là ready */}
-            {order.status === 'ready' && (
-              <Button color="success" className="w-100 mt-2">
+            {/* {order.status === 'ready' && (
+              <Button color="success" className="w-100 mt-2" onClick={() => setShowPaymentModal(true)}>
                 Thanh toán
               </Button>
-            )}
+            )} */}
           </div>
         </CardBody>
       </Card>
@@ -223,10 +182,19 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
         <BillDetailModal
           isOpen={showBillDetailModal}
           toggle={() => setShowBillDetailModal(false)}
-          orderId={order.id} // Pass the order ID to BillDetailModal
-          fullUrl={BASE_URL} // Pass BASE_URL as fullUrl
+          orderId={order.id}
+          fullUrl={BASE_URL}
         />
       )}
+
+      {/* Modal thanh toán */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        toggle={() => setShowPaymentModal(false)}
+        orderId={order.id}
+        orderItems={order.items}
+        total={order.total_amount}
+      />
     </>
   );
 };

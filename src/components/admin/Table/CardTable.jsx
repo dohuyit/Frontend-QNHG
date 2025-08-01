@@ -65,9 +65,16 @@ const TableCard = ({
     if (typeof seatType === 'string') {
       if (seatType.includes('2')) return 2;
       if (seatType.includes('4')) return 4;
+      if (seatType.includes('6')) return 6;
       if (seatType.includes('8')) return 8;
     }
     return parseInt(seatType) || 4;
+  };
+
+  // Thêm function để format hiển thị số ghế
+  const formatSeatDisplay = (seatType) => {
+    const seatCount = getSeatCount(seatType);
+    return `${seatCount} ghế`;
   };
 
   const getStatusBadgeType = (status) => {
@@ -306,7 +313,7 @@ const TableCard = ({
       </div>
 
       <div className="text-center">
-        <small className="text-muted">{seatCount} ghế</small>
+        <small className="text-muted">{formatSeatDisplay(seatCount)}</small>
       </div>
 
     </div>

@@ -14,8 +14,7 @@ import {
 import { Wallet, CreditCard, Scan } from 'lucide-react';
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import dishDefaultImg from "@assets/admin/images/dish/dish-default.webp";
-import "./FormOrder.scss"; // Keeping this for shared styles, consider if it should be moved or renamed
-import BillDetailModal from "./BillDetailModal";
+import "./PaymentModal.scss"; // New SCSS file for custom styles
 
 const PaymentModal = ({
   isOpen,
@@ -40,12 +39,7 @@ const PaymentModal = ({
   navigate,
   toast,
   orderNotes,
-  // orderData, // New prop
 }) => {
-  // const [showBillModal, setShowBillModal] = useState(false);
-  // const [billData, setBillData] = useState(null);
-  // const [paymentData, setPaymentData] = useState(null);
-
   const handlePaymentConfirmation = async () => {
     setIsSubmitting(true);
     try {
@@ -100,6 +94,11 @@ const PaymentModal = ({
     }
   };
 
+  // Logic to display contact info with fallback
+  const displayContactName = contactName || "Khách hàng chưa nhập";
+  const displayContactPhone = contactPhone || "Chưa có số điện thoại";
+  const displayContactEmail = contactEmail || "Chưa có email";
+
   return (
     <Modal
       isOpen={isOpen}
@@ -124,19 +123,19 @@ const PaymentModal = ({
                   <Col md={6} className="qnhg-col-md-6">
                     <div className="customer-info-item">
                       <Label className="qnhg-form-label">Họ và tên *</Label>
-                      <Input type="text" value={contactName || "Chưa có"} readOnly className="qnhg-form-control" />
+                      <Input type="text" value={displayContactName} readOnly className="qnhg-form-control" />
                     </div>
                   </Col>
                   <Col md={6} className="qnhg-col-md-6">
                     <div className="customer-info-item">
                       <Label className="qnhg-form-label">Số điện thoại *</Label>
-                      <Input type="tel" value={contactPhone || "Chưa có"} readOnly className="qnhg-form-control" />
+                      <Input type="tel" value={displayContactPhone} readOnly className="qnhg-form-control" />
                     </div>
                   </Col>
                 </Row>
                 <div className="customer-info-item">
                   <Label className="qnhg-form-label">Email *</Label>
-                  <Input type="email" value={contactEmail || "Chưa có"} readOnly className="qnhg-form-control" />
+                  <Input type="email" value={displayContactEmail} readOnly className="qnhg-form-control" />
                 </div>
               </div>
             </div>
@@ -234,15 +233,16 @@ const PaymentModal = ({
               </h5>
               <div className="order-items-list">
                 {orderItems.map((item, index) => (
-                  <div key={index} className="order-item-row d-flex align-items-center mb-2">
-                    <div className="order-item-img-block me-2">
+                  <div key={index} className="order-item-row d-flex align-items-center mb-3">
+                    <div className="order-item-img-block me-3">
                       <img
                         src={item.image_url ? `${fullUrl}${item.image_url}` : dishDefaultImg}
                         alt={item.name}
+                        className="order-item-img"
                       />
                     </div>
                     <div className="order-item-details flex-grow-1">
-                      <p className="item-name mb-0">{item.name}</p>
+                      <p className="item-name mb-1">{item.name}</p>
                       <p className="item-price-qty mb-0">
                         {item.quantity} x {formatPriceToVND(item.price)}
                       </p>
@@ -255,16 +255,16 @@ const PaymentModal = ({
               </div>
               <div className="order-summary-totals">
                 <div className="summary-row">
-                  <span>Tạm tính:</span>
-                  <span>{formatPriceToVND(subtotal)}</span>
+                  <span className="summary-label">Tạm tính:</span>
+                  <span className="summary-value">{formatPriceToVND(subtotal)}</span>
                 </div>
                 <div className="summary-row">
-                  <span>VAT ({vat}%):</span>
-                  <span>{formatPriceToVND(subtotal * (vat / 100))}</span>
+                  <span className="summary-label">VAT ({vat}%):</span>
+                  <span className="summary-value">{formatPriceToVND(subtotal * (vat / 100))}</span>
                 </div>
                 <div className="summary-row total-row">
-                  <span>Tổng cộng:</span>
-                  <span>{formatPriceToVND(total)}</span>
+                  <span className="summary-label total-label">Tổng cộng:</span>
+                  <span className="summary-value total-value">{formatPriceToVND(total)}</span>
                 </div>
               </div>
             </div>
@@ -284,17 +284,8 @@ const PaymentModal = ({
           Hủy bỏ
         </Button>
       </ModalFooter>
-      {/* {showBillModal && billData && paymentData && orderData && (
-        <BillDetailModal
-          isOpen={showBillModal}
-          toggle={handleCloseBillModal}
-          bill={billData}
-          payment={paymentData}
-          order={orderData}
-        />
-      )} */}
     </Modal>
   );
 };
 
-export default PaymentModal; 
+export default PaymentModal;

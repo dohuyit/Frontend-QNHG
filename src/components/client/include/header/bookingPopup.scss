@@ -8,23 +8,26 @@
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 16px;
+  align-items: stretch; // Đổi từ center sang stretch để popup chiếm full chiều cao
+  padding: 0;           // Bỏ padding để popup sát mép trên/dưới
 }
 
 .popup {
   background: #fff;
   border-radius: 12px;
   width: 95vw;
-  max-width: 420px;
-  min-width: 280px;
-  padding: 16px 12px;
+  max-width: 500px;      // Tăng chiều rộng tối đa
+  min-width: 320px;      // Có thể tăng min-width nếu muốn
+  height: 100vh;         // Chiều cao bằng tầm nhìn trình duyệt
+  padding: 32px 32px;    // Tăng padding cho thoáng
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
   animation: fadeIn 0.3s ease;
   font-family: "Segoe UI", sans-serif;
   border-top: 5px solid #f39c12;
-  max-height: 90vh;
-  overflow-y: auto;
+  overflow-y: auto;      // Cho phép scroll nếu nội dung dài
+  display: flex;         // Để căn giữa nội dung theo chiều dọc
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 @media (max-width: 600px) {
@@ -144,6 +147,18 @@ textarea {
 
   input {
     width: 100%;
+    height: 42px; // Set consistent height for all inputs
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 13.5px;
+    transition: border 0.2s;
+    outline: none;
+    box-sizing: border-box; // Add this to ensure consistent sizing
+  }
+
+  input:focus {
+    border-color: #174229;
   }
 }
 
@@ -152,18 +167,18 @@ textarea {
   align-items: center;
   justify-content: space-between;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #f9f9f9;
+  border-radius: 6px; // Match other inputs
+  background: #fff; // Change to white to match other inputs
   overflow: hidden;
-  height: 42px;
-  width: 120px;
-  margin-right: 12px;
+  height: 42px; // Keep consistent height
+  width: 100%;
+  margin-right: 0; // Remove margin to match other inputs
+  box-sizing: border-box; // Add this to ensure consistent sizing
 
   button {
     width: 40px;
     height: 100%;
     border: none;
-    background-color: #e3f2e8;
     font-size: 22px;
     font-weight: bold;
     color: #174229;
@@ -172,10 +187,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    &:hover {
-      background-color: #c6e4d4;
-    }
+    background-color: #ffffff !important;
 
     &:disabled {
       opacity: 0.5;
@@ -193,6 +205,11 @@ textarea {
     font-weight: 600;
     color: #333;
     pointer-events: none;
+    padding: 0 8px;
+    min-width: 60px;
+    outline: none;
+    box-shadow: none;
+    border-radius: 0 !important;
   }
 }
 
@@ -240,3 +257,76 @@ textarea {
   cursor: not-allowed;
 }
 
+/* --- Overlay Loading đặt bàn toàn màn hình --- */
+.booking-loading-overlay {
+  position: fixed;
+  z-index: 10000;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
+}
+.booking-loading-popup {
+  background: #fff;
+  border-radius: 14px;
+  padding: 36px 44px 28px 44px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.booking-loading-popup .spinner {
+  width: 58px;
+  height: 58px;
+  border: 7px solid #f3f3f3;
+  border-top: 7px solid #f39c12;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 16px rgba(243, 156, 18, 0.18);
+}
+.booking-loading-popup span {
+  color: #f39c12;
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(243,156,18,0.09);
+}
+
+/* --- Loading đặt bàn (BookingPopup) --- */
+.booking-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 16px;
+  animation: fadeIn 0.5s;
+}
+
+.booking-loading .spinner {
+  width: 44px;
+  height: 44px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #f39c12;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 12px rgba(243, 156, 18, 0.18);
+}
+
+.booking-loading span {
+  color: #f39c12;
+  font-weight: bold;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(243,156,18,0.09);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -82,7 +82,7 @@ export const partyInfo = {
     "Phòng Vip riêng tư luôn sẵn sàng",
     "Hỗ trợ nhiệt tình mọi yêu cầu",
   ],
-  // image: partyVisual,
+  image: introVisual,
 };
 // slider bài viết
 

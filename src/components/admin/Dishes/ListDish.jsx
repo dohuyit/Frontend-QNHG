@@ -10,7 +10,8 @@ import {
 import { MdModeEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import SwitchUI from "@components/admin/ui/SwitchUI";
+import Switch from "react-switch";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
 
 const ROWS_PER_PAGE = 10;
 const fullUrl = `http://localhost:8000/storage/`;
@@ -80,7 +81,7 @@ const ListDish = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit, on
                           }}
                         >
                           {dish.original_price
-                            ? `${dish.original_price.toLocaleString()} VNĐ`
+                            ? formatPriceToVND(dish.original_price)
                             : "N/A"}
                         </span>
                       </div>
@@ -92,7 +93,7 @@ const ListDish = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit, on
                           }}
                         >
                           {dish.selling_price
-                            ? `${dish.selling_price.toLocaleString()} VNĐ`
+                            ? formatPriceToVND(dish.selling_price)
                             : "N/A"}
                         </strong>
                       </div>
@@ -106,13 +107,28 @@ const ListDish = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit, on
                       )}
                     </td>
                     <td>
-                      <SwitchUI
+                      <Switch
                         id={`featured-${dish.id}`}
                         checked={!!dish.is_featured}
                         onChange={() => {
                           if (onFeatureToggle) {
                             onFeatureToggle(dish.id, !dish.is_featured);
                           }
+                        }}
+                        onColor="#28a745"
+                        offColor="#ccc"
+                        onHandleColor="#fff"
+                        offHandleColor="#fff"
+                        handleDiameter={18}
+                        uncheckedIcon={false}
+                        checkedIcon={false}
+                        boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                        activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                        height={20}
+                        width={40}
+                        className="react-switch"
+                        style={{
+                          verticalAlign: 'middle'
                         }}
                       />
                     </td>
