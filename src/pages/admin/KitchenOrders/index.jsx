@@ -40,10 +40,10 @@ import "react-toastify/dist/ReactToastify.css";
 import RealtimeKitchenOrderUpdater from "@components/admin/KitchenOrders/RealtimeKitchenOrderUpdater";
 
 const STATUS_LIST = [
-  { key: "pending", label: "Pending", badgeColor: "warning" },
-  { key: "preparing", label: "In Progress", badgeColor: "info" },
-  { key: "ready", label: "Completed", badgeColor: "success" },
-  { key: "cancelled", label: "Cancelled", badgeColor: "danger" },
+  { key: "pending", label: "Chờ xử lý", badgeColor: "warning" },
+  { key: "preparing", label: "Đang chế biến", badgeColor: "info" },
+  { key: "ready", label: "Hoàn thành", badgeColor: "success" },
+  { key: "cancelled", label: "Đã hủy", badgeColor: "danger" },
 ];
 
 const KitchenOrdersPage = () => {
