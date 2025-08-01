@@ -68,7 +68,7 @@ const OrderChangeLogModal = ({ isOpen, toggle, orderId }) => {
     const fetchData = async () => {
       setLoading(true);
       setError("");
-      setBatches([]); // Fix: đổi từ setLogs thành setBatches
+      setBatches([]);
       setOrderInfo(null);
 
       try {
@@ -154,7 +154,8 @@ const OrderChangeLogModal = ({ isOpen, toggle, orderId }) => {
     if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
       try {
         obj = JSON.parse(value);
-      } catch {
+      } catch (error) {
+        console.warn('Error parsing value:', error);
         obj = value;
       }
     }
@@ -210,6 +211,105 @@ const OrderChangeLogModal = ({ isOpen, toggle, orderId }) => {
     }
 
     return <span className="text-dark">{String(obj)}</span>;
+  };
+
+  // Component để render thông tin thay đổi
+  const renderChangeInfo = (log) => {
+    // Xác định log món ăn
+    const isDishLog = log.change_type === 'ADD_ITEM' || log.change_type === 'DELETE_ITEM' || log.change_type === 'UPDATE_ITEM' || (log.field_changed && log.field_changed.includes('item'));
+
+    if (isDishLog) {
+      // Ưu tiên lấy new_value, nếu không có thì lấy old_value
+      let val = log.new_value || log.old_value;
+      let itemObj = null;
+
+      try {
+        if (typeof val === 'string') {
+          itemObj = JSON.parse(val);
+        } else {
+          itemObj = val;
+        }
+      } catch (error) {
+        console.warn('Error parsing item value:', error);
+        itemObj = null;
+      }
+
+      if (itemObj && (itemObj.dish_id || itemObj.combo_id)) {
+        const itemId = itemObj.dish_id || itemObj.combo_id;
+        const itemData = itemObj.dish_id ? dishMap[itemId] : comboMap[itemId];
+
+        if (itemData && itemData.image) {
+          return (
+            <img
+              src={itemData.image}
+              alt={itemData.name}
+              style={{
+                width: 40,
+                height: 40,
+                objectFit: 'cover',
+                borderRadius: 8,
+                marginLeft: 8
+              }}
+            />
+          );
+        }
+      }
+
+      return <span className="text-muted ms-2">Không có ảnh</span>;
+    }
+
+    if (log.change_type === 'UPDATE_FIELD') {
+      // Các trường khách hàng
+      if (["contact_name", "contact_phone", "contact_email"].includes(log.field_changed)) {
+        const fieldLabels = {
+          'contact_name': 'Tên KH',
+          'contact_phone': 'Số điện thoại',
+          'contact_email': 'Email'
+        };
+
+        return (
+          <>
+            <span className="fw-bold">
+              {fieldLabels[log.field_changed]}:
+            </span>
+            <span className="ms-2 text-danger text-decoration-line-through">{log.old_value}</span>
+            <span className="ms-2 text-success">{log.new_value}</span>
+          </>
+        );
+      }
+
+      // Trường bàn (tables)
+      if (log.field_changed === 'tables') {
+        let oldTables = [];
+        let newTables = [];
+
+        try {
+          oldTables = log.old_value ? JSON.parse(log.old_value) : [];
+        } catch (error) {
+          console.warn('Error parsing old_value:', error);
+          oldTables = [];
+        }
+
+        try {
+          newTables = log.new_value ? JSON.parse(log.new_value) : [];
+        } catch (error) {
+          console.warn('Error parsing new_value:', error);
+          newTables = [];
+        }
+
+        return (
+          <>
+            <span className="fw-bold">Bàn cũ:</span> <span className="text-danger">{oldTables.join(', ')}</span>
+            <br />
+            <span className="fw-bold">Bàn mới:</span> <span className="text-success">{newTables.join(', ')}</span>
+          </>
+        );
+      }
+
+      return <span className="text-muted ms-2">Không có dữ liệu thay đổi</span>;
+    }
+
+    return <span className="text-muted ms-2">Không có ảnh</span>;
   };
 
   return (
@@ -373,42 +473,102 @@ const OrderChangeLogModal = ({ isOpen, toggle, orderId }) => {
                                 </span>
                               </div>
                               <div className="mb-2 small">
-  <span className="fw-bold text-primary">Ảnh:</span>{(() => {
-    // Xác định log món ăn
-    const isDishLog = log.change_type === 'ADD_ITEM' || log.change_type === 'DELETE_ITEM' || log.change_type === 'UPDATE_ITEM' || (log.field_changed && log.field_changed.includes('item'));
-    let itemObj = null;
-    if (isDishLog) {
-      // Ưu tiên lấy new_value, nếu không có thì lấy old_value
-      let val = log.new_value || log.old_value;
-      try {
-        if (typeof val === 'string') val = JSON.parse(val);
-      } catch {}
-      itemObj = val;
-      let itemData = null;
-      if (itemObj && itemObj.dish_id && dishMap[itemObj.dish_id]) itemData = dishMap[itemObj.dish_id];
-      if (itemObj && itemObj.combo_id && comboMap[itemObj.combo_id]) itemData = comboMap[itemObj.combo_id];
-      if (itemData && itemData.image) {
-        return (
-          <img src={itemData.image} alt={itemData.name} style={{width:40, height:40, objectFit:'cover', borderRadius:8, marginLeft:8}} />
-        );
-      }
-      return <span className="text-muted ms-2">Không có ảnh</span>;
-    } else {
-      return <span className="text-muted ms-2">O có ảnh</span>;
-    }
-  })()}
-</div>
-                              {log.old_value && (
+                                <span className="fw-bold text-primary">Thông tin:</span>
+                                {renderChangeInfo(log)}
+                              </div>
+                              {/* Hiển thị giá trị cũ và mới dựa theo loại thay đổi */}
+                              {log.change_type === 'ADD_ITEM' && log.new_value && (
                                 <div className="mb-2">
-                                  <span className="fw-bold text-danger">Giá trị cũ:</span>
+                                  <span className="fw-bold text-success">Món được thêm:</span>
+                                  <div>{formatDetailValue(log.new_value, log.change_type)}</div>
+                                </div>
+                              )}
+
+                              {log.change_type === 'DELETE_ITEM' && log.old_value && (
+                                <div className="mb-2">
+                                  <span className="fw-bold text-danger">Món bị xóa:</span>
                                   <div>{formatDetailValue(log.old_value, log.change_type)}</div>
                                 </div>
                               )}
-                              {log.new_value && (
+
+                              {log.change_type === 'UPDATE_ITEM' && (
+                                <>
+                                  {log.old_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-danger">Thông tin cũ:</span>
+                                      <div>{formatDetailValue(log.old_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                  {log.new_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-success">Thông tin mới:</span>
+                                      <div>{formatDetailValue(log.new_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+
+                              {log.change_type === 'UPDATE_STATUS' && (
                                 <div className="mb-2">
-                                  <span className="fw-bold text-success">Giá trị mới:</span>
-                                  <div>{formatDetailValue(log.new_value, log.change_type)}</div>
+                                  <span className="fw-bold text-warning">Thay đổi trạng thái:</span>
+                                  <div className="d-flex align-items-center">
+                                    <span className="badge bg-secondary me-2">{log.old_value}</span>
+                                    <i className="fas fa-arrow-right mx-2"></i>
+                                    <span className="badge bg-primary">{log.new_value}</span>
+                                  </div>
                                 </div>
+                              )}
+
+                              {log.change_type === 'UPDATE_FIELD' && (
+                                <>
+                                  {log.old_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-danger">Giá trị cũ:</span>
+                                      <div>{formatDetailValue(log.old_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                  {log.new_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-success">Giá trị mới:</span>
+                                      <div>{formatDetailValue(log.new_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+
+                              {log.change_type === 'UPDATE_TABLES' && (
+                                <>
+                                  {log.old_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-danger">Bàn cũ:</span>
+                                      <div>{formatDetailValue(log.old_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                  {log.new_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-success">Bàn mới:</span>
+                                      <div>{formatDetailValue(log.new_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+
+                              {/* Fallback cho các loại khác */}
+                              {!['ADD_ITEM', 'DELETE_ITEM', 'UPDATE_ITEM', 'UPDATE_STATUS', 'UPDATE_FIELD', 'UPDATE_TABLES'].includes(log.change_type) && (
+                                <>
+                                  {log.old_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-danger">Giá trị cũ:</span>
+                                      <div>{formatDetailValue(log.old_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                  {log.new_value && (
+                                    <div className="mb-2">
+                                      <span className="fw-bold text-success">Giá trị mới:</span>
+                                      <div>{formatDetailValue(log.new_value, log.change_type)}</div>
+                                    </div>
+                                  )}
+                                </>
                               )}
                               {log.description && (
                                 <div className="mb-2">

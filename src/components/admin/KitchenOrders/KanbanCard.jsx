@@ -2,10 +2,10 @@ import React from "react";
 import { Draggable } from "@hello-pangea/dnd";
 
 const STATUS_LABEL = {
-  pending: { text: "Pending", color: "warning" },
-  preparing: { text: "In Progress", color: "info" },
-  ready: { text: "Completed", color: "success" },
-  cancelled: { text: "Cancelled", color: "secondary" },
+  pending: { text: "Chờ xử lý", color: "warning" },
+  preparing: { text: "Đang chế biến", color: "info" },
+  ready: { text: "Hoàn thành", color: "success" },
+  cancelled: { text: "Đã hủy", color: "secondary" },
 };
 
 const KanbanCard = ({ order, index, onChangeStatus, onCancel, status }) => {

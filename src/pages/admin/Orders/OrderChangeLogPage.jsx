@@ -26,7 +26,7 @@ const renderDishValue = (val) => {
       return `Món #${parsed.dish_id}`;
     }
     return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
-  } catch (e) {
+  } catch  {
     return val;
   }
 };

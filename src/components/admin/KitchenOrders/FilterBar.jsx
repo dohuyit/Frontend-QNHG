@@ -2,10 +2,10 @@ import React from "react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Tất cả trạng thái" },
-  { value: "pending", label: "Pending" },
-  { value: "preparing", label: "In Progress" },
-  { value: "ready", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "pending", label: "Chờ xử lý" },
+  { value: "preparing", label: "Đang chế biến" },
+  { value: "ready", label: "Hoàn thành" },
+  { value: "cancelled", label: "Đã hủy" },
 ];
 const PRIORITY_OPTIONS = [
   { value: "", label: "Tất cả" },

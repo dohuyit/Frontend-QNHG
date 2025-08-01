@@ -11,9 +11,9 @@ const KitchenOrderCard = ({ order, onChangeStatus, onCancel, status }) => {
     const nextStatus = STATUS_FLOW[status];
     return (
         <div className="kitchen-order-card">
-            <div><b>#{order.id}</b> - {order.table_number || "-"}</div>
-            <div>Khách: {order.customer || "Guest"}</div>
-            <div>Thời gian: {order.received_at}</div>
+            <div><b>Mã đơn:</b> #{order.id} - <b>Bàn:</b> {order.table_number || "-"}</div>
+            <div><b>Khách:</b> {order.customer || "Khách lẻ"}</div>
+            <div><b>Thời gian nhận:</b> {order.received_at}</div>
             <div>
                 <b>Món:</b>
                 <ul>

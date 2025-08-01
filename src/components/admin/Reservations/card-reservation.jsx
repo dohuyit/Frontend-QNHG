@@ -23,7 +23,6 @@ const ReservationCard = ({
     onEdit,
     onView,
     onTimeChange,
-    onStatusChangeLocal,
     onDelete,
 }) => {
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -39,20 +38,20 @@ const ReservationCard = ({
     const [selectedAreaIdFromTables, setSelectedAreaIdFromTables] = React.useState(null);
 
     // Hàm mở modal chọn bàn
-    const handleOpenTableModal = async () => {
-        setShowTableModal(true);
-        setLoadingTables(true);
-        try {
-            const res = await getTableAreas();
-            const areas = (res.data?.data?.items || []).filter((area) => area.status === "active");
-            setTableAreas(areas);
-            setSelectedArea(areas[0]?.id || null);
-        } catch {
-            setTableAreas([]);
-        } finally {
-            setLoadingTables(false);
-        }
-    };
+    // const handleOpenTableModal = async () => {
+    //     setShowTableModal(true);
+    //     setLoadingTables(true);
+    //     try {
+    //         const res = await getTableAreas();
+    //         const areas = (res.data?.data?.items || []).filter((area) => area.status === "active");
+    //         setTableAreas(areas);
+    //         setSelectedArea(areas[0]?.id || null);
+    //     } catch {
+    //         setTableAreas([]);
+    //     } finally {
+    //         setLoadingTables(false);
+    //     }
+    // };
 
     // Lấy danh sách bàn khi chọn khu vực
     React.useEffect(() => {

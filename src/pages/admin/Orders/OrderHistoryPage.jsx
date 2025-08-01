@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardBody, Table, Button, Spinner, Row, Col, Input, Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
 import { getOrders, getOrderDetail } from "@services/admin/orderService";
 import OrderChangeLogModal from "@components/admin/Orders/OrderChangeLogModal";
+import styles from './OrderHistoryPage.module.css';
 
 const OrderHistoryPage = () => {
   const [orders, setOrders] = useState([]);
@@ -78,9 +79,9 @@ const OrderHistoryPage = () => {
   }
 
   return (
-    <div className="page-content">
-      <Card className="mb-4">
-        <CardHeader className="bg-white border-bottom-0">
+    <div className={styles['order-history-page']}>
+      <Card className={`mb-4 ${styles['order-card']}`}>
+        <CardHeader className={styles['order-header']}>
           <h4 className="mb-0">Lịch sử đơn hàng</h4>
         </CardHeader>
         <CardBody>
@@ -107,7 +108,7 @@ const OrderHistoryPage = () => {
           {loading ? (
             <div className="text-center py-5"><Spinner color="primary" /></div>
           ) : (
-            <Table bordered hover responsive>
+            <Table bordered hover responsive className={styles['order-table']}>
               <thead>
                 <tr>
                   <th>Mã đơn</th>
@@ -139,17 +140,16 @@ const OrderHistoryPage = () => {
       </Card>
 
       {/* Modal chi tiết đơn hàng */}
-      <Modal isOpen={showDetail} toggle={() => setShowDetail(false)} size="lg">
-        <ModalHeader toggle={() => setShowDetail(false)}>Chi tiết đơn hàng</ModalHeader>
-        <ModalBody>
+      <Modal isOpen={showDetail} toggle={() => setShowDetail(false)} size="lg" className={styles['order-modal']}>
+        <ModalHeader toggle={() => setShowDetail(false)} className={styles['order-modal-header']}>Chi tiết đơn hàng</ModalHeader>
+        <ModalBody className={styles['order-modal-body']}>
           {detail ? (
             <Row className="mb-2">
-              <Col md={6}><b>Mã đơn:</b> {detail.order_code}</Col>
-              <Col md={6}><b>Người thao tác:</b> {detail.user_name}</Col>
-              <Col md={6}><b>Khách hàng:</b> {detail.customer_name}</Col>
-              <Col md={6}><b>Thời gian tạo:</b> {detail.order_time ? new Date(detail.order_time).toLocaleString('vi-VN') : '-'}</Col>
-              <Col md={6}><b>Trạng thái:</b> <span className={`badge bg-${getStatusColor(detail.status)}`}>{getStatusLabel(detail.status)}</span></Col>
-              <Col md={12}><b>Ghi chú:</b> {detail.notes}</Col>
+              <Col md={6}><span className={styles['order-detail-label']}>Mã đơn:</span> <span className={styles['order-detail-value']}>{detail.order_code}</span></Col>
+              <Col md={6}><span className={styles['order-detail-label']}>Khách hàng:</span> <span className={styles['order-detail-value']}>{detail.contact_name}</span></Col>
+              <Col md={6}><span className={styles['order-detail-label']}>Thời gian tạo:</span> <span className={styles['order-detail-value']}>{detail.order_time ? new Date(detail.order_time).toLocaleString('vi-VN') : '-'}</span></Col>
+              <Col md={6}><span className={styles['order-detail-label']}>Trạng thái:</span> <span className={`badge bg-${getStatusColor(detail.status)}`}>{getStatusLabel(detail.status)}</span></Col>
+              <Col md={12}><span className={styles['order-detail-label']}>Ghi chú:</span> <span className={styles['order-detail-value']}>{detail.notes}</span></Col>
             </Row>
           ) : <div className="text-center py-4"><Spinner color="primary" /></div>}
         </ModalBody>
