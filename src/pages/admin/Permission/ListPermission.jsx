@@ -156,7 +156,7 @@ export default function ListPermission() {
                             permissions.map((item) => (
                                 <tr key={item.id}>
                                     <td>{item.id}</td>
-                                    <td>{item.permission_name}</td>
+                                    <td>{item.description}</td>
                                     <td>{item.permission_group_name}</td>
                                     <td>{item.permission_group_description}</td>
                                     <td>{item.description}</td>
