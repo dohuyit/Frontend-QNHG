@@ -402,7 +402,7 @@ const DishIndex = () => {
         </TabPane>
 
         <TabPane tabId="trash">
-          <ListTrashDish />
+          <ListTrashDish key={activeTab} />
         </TabPane>
       </TabContent>
       <Offcanvas
