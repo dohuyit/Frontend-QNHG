@@ -283,8 +283,23 @@ const SidebarContent = (props) => {
                   </li>
               </ul>
             </li>
-            )} 
-            
+            )}
+
+            {hasPermission("discount.view") && (
+                <li>
+                  <Link to="/#" className="has-arrow ">
+                    <i className="bx bxs-discount"></i>
+                    <span>{props.t("Quản Lí Mã giảm giá")}</span>
+                  </Link>
+                  <ul className="sub-menu" aria-expanded="false">
+                    <li>
+                      <Link to="/discount-code">{props.t("Danh Sách Mã Giảm giá")}</Link>
+                    </li>
+                  </ul>
+                </li>
+            )}
+
+
             {hasPermission("customer.view") && (
             <li>
               <Link to="/#" className="has-arrow ">

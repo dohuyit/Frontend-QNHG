@@ -45,6 +45,7 @@ import AdminResetPassword from "@pages/admin/Users/ AdminResetPassword.jsx";
 import Forbidden403 from "@pages/admin/Users/403.jsx";
 import ChangePassword from "@pages/admin/Users/ChangePassword.jsx";
 import ReservationHistory from "@pages/admin/Reservations/History";
+import ListDiscountCode from "@pages/admin/DiscountCode/index.jsx"
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard />, permission: "dashboard.view" },
 
@@ -103,6 +104,10 @@ const authProtectedRoutes = [
   { path: "/combos", component: <PageCombo />, permission: "combo.view" },
 
   { path: "/kitchen-orders", component: <PageKitchenOrders />, permission: "kitchen-order.view" },
+
+    // max giảm giá
+
+  { path: "/discount-code", component: <ListDiscountCode/>, permission: "discount.view"}
 ];
 
 
