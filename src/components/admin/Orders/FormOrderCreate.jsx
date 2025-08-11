@@ -8,9 +8,6 @@ import {
   Input,
   Label,
   Spinner,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
   Modal,
   ModalHeader,
   ModalBody,
@@ -19,6 +16,7 @@ import {
   NavItem,
   NavLink,
 } from "reactstrap";
+import CustomPaginate from "@components/admin/ui/CustomPaginate";
 import { getDishes } from "@services/admin/dishService";
 import "./FormOrder.scss";
 import { FaEdit, FaShoppingCart } from "react-icons/fa";
@@ -72,9 +70,15 @@ const FormOrderCreate = () => {
   const [loadingCombos, setLoadingCombos] = useState(false);
   const [comboSearch, setComboSearch] = useState("");
   const [comboCategoryFilter, setComboCategoryFilter] = useState("");
-  const [comboMeta, setComboMeta] = useState({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
+  const [comboMeta, setComboMeta] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    last_page: 1,
+  });
   const [comboCurrentPage, setComboCurrentPage] = useState(1);
-  const [selectedAreaIdFromTables, setSelectedAreaIdFromTables] = useState(null);
+  const [selectedAreaIdFromTables, setSelectedAreaIdFromTables] =
+    useState(null);
   const [priority, setPriority] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
@@ -83,7 +87,15 @@ const FormOrderCreate = () => {
   useEffect(() => {
     if (activeTab === "dishes") fetchDishes(currentPage);
     if (activeTab === "combos") fetchCombos(comboCurrentPage);
-  }, [activeTab, currentPage, search, categoryFilter, comboCurrentPage, comboSearch, comboCategoryFilter]);
+  }, [
+    activeTab,
+    currentPage,
+    search,
+    categoryFilter,
+    comboCurrentPage,
+    comboSearch,
+    comboCategoryFilter,
+  ]);
 
   const fetchDishes = async (page = 1) => {
     setLoadingDishes(true);
@@ -253,16 +265,23 @@ const FormOrderCreate = () => {
   const handleCloseTableModal = () => setShowTableModal(false);
 
   const handleTableToggle = (tableId) => {
-    const clickedTable = tableList.find((t) => String(t.id) === String(tableId));
-    if (!clickedTable || clickedTable.status !== 'available') {
+    const clickedTable = tableList.find(
+      (t) => String(t.id) === String(tableId)
+    );
+    if (!clickedTable || clickedTable.status !== "available") {
       toast.error("Chỉ có thể chọn bàn ở trạng thái Trống.");
       return;
     }
 
     setSelectedTables((prev) => {
-      const existingIndex = prev.findIndex((t) => String(t.id) === String(tableId));
+      const existingIndex = prev.findIndex(
+        (t) => String(t.id) === String(tableId)
+      );
 
-      if (prev.length > 0 && String(prev[0].table_area_id) !== String(clickedTable.table_area_id)) {
+      if (
+        prev.length > 0 &&
+        String(prev[0].table_area_id) !== String(clickedTable.table_area_id)
+      ) {
         // If a table from a different area is selected, clear previous selections and select new one
         toast.info("Bạn chỉ có thể chọn bàn trong cùng một khu vực.");
         return [clickedTable];
@@ -270,7 +289,9 @@ const FormOrderCreate = () => {
 
       if (existingIndex !== -1) {
         // Deselect if already selected
-        const updatedTables = prev.filter((t) => String(t.id) !== String(tableId));
+        const updatedTables = prev.filter(
+          (t) => String(t.id) !== String(tableId)
+        );
         if (updatedTables.length === 0) {
           setSelectedAreaIdFromTables(null); // Clear selected area if no tables are selected
         }
@@ -358,7 +379,10 @@ const FormOrderCreate = () => {
   return (
     <div className="page-content">
       <div className="mb-3">
-        <Breadcrumbs title="Quản lý đơn hàng" breadcrumbItem="Tạo đơn hàng mới" />
+        <Breadcrumbs
+          title="Quản lý đơn hàng"
+          breadcrumbItem="Tạo đơn hàng mới"
+        />
       </div>
       <Row>
         {/* Product Catalog */}
@@ -426,7 +450,11 @@ const FormOrderCreate = () => {
                       <Card className="menu-card d-flex flex-row align-items-stretch shadow-sm border-0">
                         <div className="menu-card-img-block">
                           <img
-                            src={dish.image_url ? `${fullUrl}${dish.image_url}` : dishDefaultImg}
+                            src={
+                              dish.image_url
+                                ? `${fullUrl}${dish.image_url}`
+                                : dishDefaultImg
+                            }
                             alt={dish.name}
                             className="menu-card-img"
                           />
@@ -454,29 +482,11 @@ const FormOrderCreate = () => {
               </Row>
               {/* Pagination */}
               <div className="d-flex justify-content-center mt-3">
-                <Pagination>
-                  <PaginationItem disabled={currentPage === 1}>
-                    <PaginationLink
-                      previous
-                      onClick={() => handlePageChange(currentPage - 1)}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: meta.last_page }, (_, i) => i + 1).map(
-                    (page) => (
-                      <PaginationItem key={page} active={page === currentPage}>
-                        <PaginationLink onClick={() => handlePageChange(page)}>
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  )}
-                  <PaginationItem disabled={currentPage === meta.last_page}>
-                    <PaginationLink
-                      next
-                      onClick={() => handlePageChange(currentPage + 1)}
-                    />
-                  </PaginationItem>
-                </Pagination>
+                <CustomPaginate
+                  currentPage={currentPage}
+                  totalPages={meta.last_page}
+                  onPageChange={handlePageChange}
+                />
               </div>
             </>
           ) : (
@@ -489,7 +499,11 @@ const FormOrderCreate = () => {
                       type="search"
                       placeholder="Tìm kiếm combo..."
                       value={comboSearch}
-                      onChange={e => { setComboSearch(e.target.value); setComboCurrentPage(1); fetchCombos(1); }}
+                      onChange={(e) => {
+                        setComboSearch(e.target.value);
+                        setComboCurrentPage(1);
+                        fetchCombos(1);
+                      }}
                     />
                   </div>
                 </Col>
@@ -497,7 +511,11 @@ const FormOrderCreate = () => {
                   <Input
                     type="select"
                     value={comboCategoryFilter}
-                    onChange={e => { setComboCategoryFilter(e.target.value); setComboCurrentPage(1); fetchCombos(1); }}
+                    onChange={(e) => {
+                      setComboCategoryFilter(e.target.value);
+                      setComboCurrentPage(1);
+                      fetchCombos(1);
+                    }}
                   >
                     <option value="">Tất cả danh mục</option>
                   </Input>
@@ -514,7 +532,11 @@ const FormOrderCreate = () => {
                       <Card className="menu-card d-flex flex-row align-items-stretch shadow-sm border-0">
                         <div className="menu-card-img-block">
                           <img
-                            src={combo.image_url ? `${fullUrl}${combo.image_url}` : dishDefaultImg}
+                            src={
+                              combo.image_url
+                                ? `${fullUrl}${combo.image_url}`
+                                : dishDefaultImg
+                            }
                             alt={combo.name}
                             className="menu-card-img"
                           />
@@ -541,19 +563,11 @@ const FormOrderCreate = () => {
                 )}
               </Row>
               <div className="d-flex justify-content-center mt-3">
-                <Pagination>
-                  <PaginationItem disabled={comboCurrentPage === 1}>
-                    <PaginationLink previous onClick={() => setComboCurrentPage(comboCurrentPage - 1)} />
-                  </PaginationItem>
-                  {Array.from({ length: comboMeta.last_page }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page} active={page === comboCurrentPage}>
-                      <PaginationLink onClick={() => setComboCurrentPage(page)}>{page}</PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  <PaginationItem disabled={comboCurrentPage === comboMeta.last_page}>
-                    <PaginationLink next onClick={() => setComboCurrentPage(comboCurrentPage + 1)} />
-                  </PaginationItem>
-                </Pagination>
+                <CustomPaginate
+                  currentPage={comboCurrentPage}
+                  totalPages={comboMeta.last_page}
+                  onPageChange={setComboCurrentPage}
+                />
               </div>
             </>
           )}
@@ -569,7 +583,9 @@ const FormOrderCreate = () => {
             </div>
             {/* Thông tin khách hàng */}
             <div className="order-sidebar-section mb-3">
-              <Label className="order-sidebar-label mb-2">Thông tin khách hàng</Label>
+              <Label className="order-sidebar-label mb-2">
+                Thông tin khách hàng
+              </Label>
               <Row className="mb-2">
                 <Col md={6}>
                   <Input
@@ -616,7 +632,9 @@ const FormOrderCreate = () => {
                 <div className="order-table-box d-flex align-items-center justify-content-between py-2 mb-2">
                   <span>
                     {selectedTables.length > 0 ? (
-                      selectedTables.map((t) => `Bàn ${t.table_number}`).join(", ")
+                      selectedTables
+                        .map((t) => `Bàn ${t.table_number}`)
+                        .join(", ")
                     ) : (
                       <span className="text-muted">Chưa chọn bàn nào</span>
                     )}
@@ -636,7 +654,7 @@ const FormOrderCreate = () => {
                     isOpen={showTableModal}
                     toggle={handleCloseTableModal}
                     size="xl"
-                    style={{ maxWidth: '80vw' }}
+                    style={{ maxWidth: "80vw" }}
                   >
                     <ModalHeader toggle={handleCloseTableModal}>
                       Chọn bàn
@@ -647,23 +665,39 @@ const FormOrderCreate = () => {
                         style={{ overflowX: "auto" }}
                       >
                         {tableAreas.map((area) => {
-                          const isDisabled = selectedAreaIdFromTables && String(selectedAreaIdFromTables) !== String(area.id);
+                          const isDisabled =
+                            selectedAreaIdFromTables &&
+                            String(selectedAreaIdFromTables) !==
+                              String(area.id);
                           return (
                             <div
                               key={area.id}
-                              className={`table-area-item py-2 me-2 rounded ${selectedArea === area.id ? "active" : ""} ${isDisabled ? "disabled-area" : ""}`}
+                              className={`table-area-item py-2 me-2 rounded ${
+                                selectedArea === area.id ? "active" : ""
+                              } ${isDisabled ? "disabled-area" : ""}`}
                               style={{
-                                background: selectedArea === area.id ? "#556ee6" : "#f4f4f6",
-                                color: selectedArea === area.id ? "#fff" : "#222",
+                                background:
+                                  selectedArea === area.id
+                                    ? "#556ee6"
+                                    : "#f4f4f6",
+                                color:
+                                  selectedArea === area.id ? "#fff" : "#222",
                                 cursor: isDisabled ? "not-allowed" : "pointer",
                                 opacity: isDisabled ? 0.6 : 1,
                                 minWidth: 120,
                                 textAlign: "center",
                                 fontWeight: 500,
-                                border: selectedArea === area.id ? "2px solid #556ee6" : "2px solid transparent",
+                                border:
+                                  selectedArea === area.id
+                                    ? "2px solid #556ee6"
+                                    : "2px solid transparent",
                                 transition: "all 0.2s",
                               }}
-                              onClick={isDisabled ? null : () => setSelectedArea(area.id)}
+                              onClick={
+                                isDisabled
+                                  ? null
+                                  : () => setSelectedArea(area.id)
+                              }
                             >
                               {area.name}
                             </div>
@@ -681,36 +715,82 @@ const FormOrderCreate = () => {
                           </div>
                         ) : (
                           [
-                            { key: 'available', label: 'Trống' },
-                            { key: 'occupied', label: 'Đang sử dụng' },
-                            { key: 'cleaning', label: 'Đang dọn dẹp' },
-                            { key: 'out_of_service', label: 'Ngưng phục vụ' },
-                          ].map(statusObj => {
-                            const tables = tableList.filter(t => t.status === statusObj.key);
+                            { key: "available", label: "Trống" },
+                            { key: "occupied", label: "Đang sử dụng" },
+                            { key: "cleaning", label: "Đang dọn dẹp" },
+                            { key: "out_of_service", label: "Ngưng phục vụ" },
+                          ].map((statusObj) => {
+                            const tables = tableList.filter(
+                              (t) => t.status === statusObj.key
+                            );
                             return (
-                              <div className="table-status-row mb-3" key={statusObj.key}>
-                                <div className="table-status-label mb-1" style={{ fontWeight: 600 }}>{statusObj.label}</div>
-                                <div className="table-status-cards-row d-flex flex-row flex-nowrap align-items-center" style={{ gap: 12, overflowX: 'auto', minHeight: 48 }}>
+                              <div
+                                className="table-status-row mb-3"
+                                key={statusObj.key}
+                              >
+                                <div
+                                  className="table-status-label mb-1"
+                                  style={{ fontWeight: 600 }}
+                                >
+                                  {statusObj.label}
+                                </div>
+                                <div
+                                  className="table-status-cards-row d-flex flex-row flex-nowrap align-items-center"
+                                  style={{
+                                    gap: 12,
+                                    overflowX: "auto",
+                                    minHeight: 48,
+                                  }}
+                                >
                                   {tables.length === 0 ? (
-                                    <span className="text-muted" style={{fontSize: '0.97rem'}}>Không có bàn</span>
+                                    <span
+                                      className="text-muted"
+                                      style={{ fontSize: "0.97rem" }}
+                                    >
+                                      Không có bàn
+                                    </span>
                                   ) : (
-                                    tables.map(table => {
-                                      const isSelected = selectedTables.some((t) => String(t.id) === String(table.id));
+                                    tables.map((table) => {
+                                      const isSelected = selectedTables.some(
+                                        (t) => String(t.id) === String(table.id)
+                                      );
                                       return (
                                         <div
                                           key={table.id}
-                                          className={`table-card-wrapper ${isSelected ? "selected" : ""} ${table.status !== 'available' ? "disabled-table" : ""}`}
-                                          onClick={() => handleTableToggle(String(table.id))}
-                                          style={{ margin: 4, flex: '0 0 auto', cursor: table.status !== 'available' ? 'not-allowed' : 'pointer', opacity: table.status !== 'available' ? 0.6 : 1 }}
+                                          className={`table-card-wrapper ${
+                                            isSelected ? "selected" : ""
+                                          } ${
+                                            table.status !== "available"
+                                              ? "disabled-table"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            handleTableToggle(String(table.id))
+                                          }
+                                          style={{
+                                            margin: 4,
+                                            flex: "0 0 auto",
+                                            cursor:
+                                              table.status !== "available"
+                                                ? "not-allowed"
+                                                : "pointer",
+                                            opacity:
+                                              table.status !== "available"
+                                                ? 0.6
+                                                : 1,
+                                          }}
                                         >
                                           <CardTable
                                             tableId={table.id}
                                             tableNumber={table.table_number}
                                             seatCount={
-                                              table.table_type === '2_seats' ? 2 :
-                                              table.table_type === '4_seats' ? 4 :
-                                              table.table_type === '8_seats' ? 8 :
-                                              table.capacity || 4
+                                              table.table_type === "2_seats"
+                                                ? 2
+                                                : table.table_type === "4_seats"
+                                                ? 4
+                                                : table.table_type === "8_seats"
+                                                ? 8
+                                                : table.capacity || 4
                                             }
                                             status={table.status}
                                             hideMenu={true}
@@ -770,7 +850,9 @@ const FormOrderCreate = () => {
               </div>
               {/* Hình thức phục vụ */}
               <div className="order-method-row py-2 mb-2">
-                <Label className="order-sidebar-label mb-1">Hình thức đơn hàng</Label>
+                <Label className="order-sidebar-label mb-1">
+                  Hình thức đơn hàng
+                </Label>
                 <Input
                   type="select"
                   value={orderMethod}
@@ -786,7 +868,10 @@ const FormOrderCreate = () => {
             </div>
             {/* Danh sách món ăn */}
             <div className="order-items-detail-box mb-3">
-              <div className="fw-bold mb-3 px-3 d-flex align-items-center justify-content-between" style={{fontSize: '1.1rem'}}>
+              <div
+                className="fw-bold mb-3 px-3 d-flex align-items-center justify-content-between"
+                style={{ fontSize: "1.1rem" }}
+              >
                 <span>Chi tiết đơn hàng ({orderItems.length} món)</span>
                 <div className="d-flex align-items-center gap-2">
                   <div className="d-flex align-items-center">
@@ -808,12 +893,12 @@ const FormOrderCreate = () => {
                       className="react-switch"
                       aria-hidden="true"
                       style={{
-                        verticalAlign: 'middle',
-                        marginLeft: '4px'
+                        verticalAlign: "middle",
+                        marginLeft: "4px",
                       }}
                     />
                   </div>
-                  <span id="priority-tooltip" style={{ cursor: 'pointer' }}>
+                  <span id="priority-tooltip" style={{ cursor: "pointer" }}>
                     <i className="fa fa-info-circle text-secondary" />
                   </span>
                   <Tooltip
@@ -834,19 +919,54 @@ const FormOrderCreate = () => {
                   </div>
                 ) : (
                   orderItems.map((item) => (
-                    <div className="order-item-row d-flex align-items-center" key={item.id}>
+                    <div
+                      className="order-item-row d-flex align-items-center"
+                      key={item.id}
+                    >
                       <div className="order-item-img-block me-3">
-                        <img src={item.image_url ? `${fullUrl}${item.image_url}` : dishDefaultImg} alt={item.name} className="order-item-img" />
+                        <img
+                          src={
+                            item.image_url
+                              ? `${fullUrl}${item.image_url}`
+                              : dishDefaultImg
+                          }
+                          alt={item.name}
+                          className="order-item-img"
+                        />
                       </div>
                       <div className="flex-grow-1 d-flex align-items-center">
-                        <div style={{flex: 1, minWidth: 0}}>
-                          <div className="fw-bold order-item-title ellipsis-1 mb-1">{item.name}</div>
-                          <div className="order-item-price-mult text-muted">{formatPriceToVND(item.price)} đ × {item.quantity}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="fw-bold order-item-title ellipsis-1 mb-1">
+                            {item.name}
+                          </div>
+                          <div className="order-item-price-mult text-muted">
+                            {formatPriceToVND(item.price)} đ × {item.quantity}
+                          </div>
                         </div>
                         <div className="d-flex align-items-center gap-2 ms-3">
-                          <Button color="light" size="sm" className="border order-item-qty-btn" onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</Button>
-                          <span className="mx-2 order-item-qty">{item.quantity}</span>
-                          <Button color="light" size="sm" className="border order-item-qty-btn" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</Button>
+                          <Button
+                            color="light"
+                            size="sm"
+                            className="border order-item-qty-btn"
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity - 1)
+                            }
+                          >
+                            -
+                          </Button>
+                          <span className="mx-2 order-item-qty">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            color="light"
+                            size="sm"
+                            className="border order-item-qty-btn"
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity + 1)
+                            }
+                          >
+                            +
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -857,15 +977,23 @@ const FormOrderCreate = () => {
             <div className="order-sidebar-totals mb-3">
               <div className="order-totals-row">
                 <span className="order-totals-label">Tạm tính</span>
-                <span className="order-totals-value">{formatPriceToVND(subtotal)}</span>
+                <span className="order-totals-value">
+                  {formatPriceToVND(subtotal)}
+                </span>
               </div>
               <div className="order-totals-row">
                 <span className="order-totals-label">VAT</span>
-                <span className="order-totals-value">{formatPriceToVND(vat)}</span>
+                <span className="order-totals-value">
+                  {formatPriceToVND(vat)}
+                </span>
               </div>
               <div className="order-totals-row order-totals-total">
-                <span className="order-totals-label order-totals-label-total">Tổng cộng</span>
-                <span className="order-totals-value order-totals-value-total">{formatPriceToVND(total)}</span>
+                <span className="order-totals-label order-totals-label-total">
+                  Tổng cộng
+                </span>
+                <span className="order-totals-value order-totals-value-total">
+                  {formatPriceToVND(total)}
+                </span>
               </div>
             </div>
             <div className="d-flex gap-2">
@@ -884,13 +1012,39 @@ const FormOrderCreate = () => {
                 Lưu & Thanh toán
               </button>
             </div>
-            <Modal isOpen={showPaymentModal} toggle={() => setShowPaymentModal(false)}>
-              <ModalHeader toggle={() => setShowPaymentModal(false)}>Chọn phương thức thanh toán</ModalHeader>
+            <Modal
+              isOpen={showPaymentModal}
+              toggle={() => setShowPaymentModal(false)}
+            >
+              <ModalHeader toggle={() => setShowPaymentModal(false)}>
+                Chọn phương thức thanh toán
+              </ModalHeader>
               <ModalBody>
                 <div className="d-flex flex-column gap-3">
-                  <Button color="primary" onClick={() => { setShowPaymentModal(false); handleCreateOrder(/* paymentMethod: 'cash' */); }}>Tiền mặt</Button>
-                  <Button color="info" onClick={() => { setShowPaymentModal(false); handleCreateOrder(/* paymentMethod: 'bank' */); }}>Chuyển khoản</Button>
-                  <Button color="secondary" onClick={() => setShowPaymentModal(false)}>Hủy</Button>
+                  <Button
+                    color="primary"
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      handleCreateOrder(/* paymentMethod: 'cash' */);
+                    }}
+                  >
+                    Tiền mặt
+                  </Button>
+                  <Button
+                    color="info"
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      handleCreateOrder(/* paymentMethod: 'bank' */);
+                    }}
+                  >
+                    Chuyển khoản
+                  </Button>
+                  <Button
+                    color="secondary"
+                    onClick={() => setShowPaymentModal(false)}
+                  >
+                    Hủy
+                  </Button>
                 </div>
               </ModalBody>
             </Modal>
