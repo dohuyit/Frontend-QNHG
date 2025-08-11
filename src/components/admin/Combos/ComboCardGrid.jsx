@@ -85,11 +85,6 @@ const ComboCard = ({ combo, onDetail, onEdit, onDelete, onAddDish  }) => {
                             {combo.selling_price ? `${Number(combo.selling_price).toLocaleString()} đ` : "N/A"}
                         </span>
                     </div>
-                    {/* Độ phổ biến, số đơn, ngày tạo */}
-                    <div className="mb-2 d-flex align-items-center gap-3" style={{ fontSize: 15, color: "#888" }}>
-                        <span><i className="mdi mdi-cart-outline"></i> {combo.orders_count || 0} đơn</span>
-                        <span><i className="mdi mdi-calendar"></i> {combo.created_at ? new Date(combo.created_at).toLocaleDateString('vi-VN') : ""}</span>
-                    </div>
                     {/* Nút chi tiết và menu thao tác */}
                     <div className="mt-auto">
                         <div className="d-flex align-items-center justify-content-between gap-2">
