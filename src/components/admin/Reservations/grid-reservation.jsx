@@ -27,6 +27,8 @@ import {
 } from "@services/admin/reservationService";
 import "./grid-reservation.css";
 import TableSelectModal from "@components/admin/Table/TableSelectModal";
+import ReservationChangeLogModal from "@components/admin/Reservations/ReservationChangeLogModal";
+import { getReservationChangeLogs } from "@services/admin/reservationService";
 import { FaEdit } from "react-icons/fa";
 
 const ReservationGrid = ({
@@ -47,6 +49,10 @@ const ReservationGrid = ({
     const [isConfirmingReservation, setIsConfirmingReservation] = useState(false);
     const [showTableSelect, setShowTableSelect] = useState(false);
     const [selectedTables, setSelectedTables] = useState([]);
+  // Lịch sử thay đổi
+  const [showChangeLogs, setShowChangeLogs] = useState(false);
+  const [changeLogs, setChangeLogs] = useState([]);
+  const [loadingChangeLogs, setLoadingChangeLogs] = useState(false);
 
     const currentPage = paginate.page || 1;
     const totalPages = paginate.totalPage || 1;
@@ -223,6 +229,21 @@ const ReservationGrid = ({
         setSelectedItem(item);
         setShowView(true);
     };
+
+  const openChangeLogsModal = async () => {
+    if (!selectedItem?.id) return;
+    setLoadingChangeLogs(true);
+    setShowChangeLogs(true);
+    try {
+      const res = await getReservationChangeLogs(selectedItem.id);
+      setChangeLogs(res.data?.data || res.data || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Không tải được lịch sử thay đổi");
+      setChangeLogs([]);
+    } finally {
+      setLoadingChangeLogs(false);
+    }
+  };
 
     const handleCardDelete = (item) => {
         setSelectedItem(item);
@@ -724,6 +745,9 @@ const ReservationGrid = ({
                     )}
                 </ModalBody>
                 <ModalFooter className="border-0 pt-0">
+                    <Button color="info" onClick={openChangeLogsModal} className="me-2">
+                        <i className="mdi mdi-history me-1"></i> Lịch sử thay đổi
+                    </Button>
                     <Button color="secondary" onClick={() => setShowView(false)}>
                         Đóng
                     </Button>
@@ -739,6 +763,14 @@ const ReservationGrid = ({
                 setEditForm(prev => ({ ...prev, tables }));
               }}
               initialSelectedTables={selectedTables}
+            />
+
+            {/* Modal lịch sử thay đổi đơn đặt bàn */}
+            <ReservationChangeLogModal
+              isOpen={showChangeLogs}
+              toggle={() => setShowChangeLogs(false)}
+              logs={changeLogs}
+              loading={loadingChangeLogs}
             />
         </>
     );

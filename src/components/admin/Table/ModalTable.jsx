@@ -43,49 +43,51 @@ const TableModal = ({
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  // Fetch table areas when the modal opens
+  // Fetch table areas khi mở modal (không phụ thuộc newTable để tránh gọi API lặp)
   useEffect(() => {
-    if (modalOpen) {
-      const fetchTableAreas = async () => {
-        setLoading(true);
-        setFetchError(null);
-        try {
-          const response = await getTableAreas();
-          console.log("Fetched table areas:", response);
-          // Ensure the response is an array and normalize id to string for consistency
-          const areas = (response.data.data.items || []).map((area) => ({
-            ...area,
-            id: String(area.id), // Convert id to string to avoid type mismatch
-          }));
-          setTableAreas(areas);
-          // If in edit mode, ensure newTable.table_area_id is a string
-          if (isEdit && newTable.table_area_id) {
-            setNewTable({
-              ...newTable,
-              table_area_id: String(newTable.table_area_id), // Normalize to string
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching table areas:", error);
-          setFetchError("Không thể tải danh sách khu vực. Vui lòng thử lại.");
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchTableAreas();
-    }
-  }, [modalOpen, isEdit, newTable, setNewTable]);
+    if (!modalOpen) return;
+    let isMounted = true;
+    const fetchTableAreas = async () => {
+      setLoading(true);
+      setFetchError(null);
+      try {
+        const response = await getTableAreas();
+        const areas = (response.data.data.items || []).map((area) => ({
+          ...area,
+          id: String(area.id),
+        }));
+        if (!isMounted) return;
+        setTableAreas(areas);
+      } catch  {
+        if (!isMounted) return;
+        setFetchError("Không thể tải danh sách khu vực. Vui lòng thử lại.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchTableAreas();
+    return () => {
+      isMounted = false;
+    };
+  }, [modalOpen]);
 
-  // Debug the selected table_area_id and available tableAreas
+  // Chuẩn hoá table_area_id khi đang sửa (an toàn, không gây vòng lặp)
   useEffect(() => {
-    if (isEdit && modalOpen) {
-      console.log(
-        "Edit mode - newTable.table_area_id:",
-        newTable.table_area_id
-      );
-      console.log("Available tableAreas:", tableAreas);
+    if (!modalOpen || !isEdit) return;
+    if (newTable.table_area_id == null) return;
+    const normalized = String(newTable.table_area_id);
+    if (newTable.table_area_id !== normalized) {
+      setNewTable({ ...newTable, table_area_id: normalized });
     }
-  }, [isEdit, modalOpen, newTable.table_area_id, tableAreas]);
+  }, [modalOpen, isEdit, newTable.table_area_id, setNewTable, newTable]);
+
+  // Giảm log để tránh spam console khi form thay đổi
+  // useEffect(() => {
+  //   if (isEdit && modalOpen) {
+  //     console.log("Edit mode - newTable.table_area_id:", newTable.table_area_id);
+  //     console.log("Available tableAreas:", tableAreas);
+  //   }
+  // }, [isEdit, modalOpen]);
 
   return (
     <Modal
@@ -249,12 +251,25 @@ const TableModal = ({
                     }
                     invalid={!!errors.status}
                   >
-                    <option value="">Chọn trạng thái</option>
-                    {statusOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
+                    {/* Quy tắc: nếu đang Trống chỉ cho chọn Dọn dẹp hoặc Ngưng phục vụ */}
+                    {newTable.status === 'available' ? (
+                      <>
+                        <option value="available" disabled>
+                          Trống (hiện tại)
+                        </option>
+                        <option value="cleaning">Đang dọn dẹp</option>
+                        <option value="out_of_service">Ngưng phục vụ</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="">Chọn trạng thái</option>
+                        {statusOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </Input>
                   {errors.status && (
                     <FormFeedback>

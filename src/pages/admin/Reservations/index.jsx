@@ -237,10 +237,6 @@ const TableBookingIndex = () => {
                 toast.error("Vui lòng điền đầy đủ thông tin bắt buộc (tên và số điện thoại)");
                 return;
             }
-            if (!createForm.tables || createForm.tables.length === 0) {
-                toast.error("Vui lòng chọn ít nhất một bàn.");
-                return;
-            }
             if (!createForm.booking_date || !createForm.booking_time) {
                 toast.error("Vui lòng chọn ngày và giờ đặt.");
                 return;
@@ -254,7 +250,6 @@ const TableBookingIndex = () => {
                 reservation_date: createForm.booking_date,
                 reservation_time: createForm.booking_time,
                 number_of_guests: Number(createForm.number_of_guests) || 1,
-                table_id: createForm.tables.map(t => t.id), // Lưu ID các bàn đã chọn
                 notes: createForm.notes,
                 special_requests: createForm.special_requests,
                 status: "pending"
