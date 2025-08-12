@@ -23,7 +23,6 @@ import TableDetailModal from "@components/admin/Table/TableDetailModal";
 import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 import DeleteModal from "@components/admin/ui/DeleteModal";
 import PaginateUi from "@components/admin/ui/paginateUi";
-import RealtimeTableUpdater from "@components/admin/Table/RealtimeTableUpdater";
 import { toast } from "react-toastify";
 import {
   getTables,
@@ -315,7 +314,6 @@ const TableIndex = () => {
 
   return (
     <div className="page-content">
-      <RealtimeTableUpdater onRefreshData={fetchTables} />
       <Breadcrumbs
         title="Quản Lý Bàn Nhà Hàng"
         breadcrumbItem="Danh sách bàn"

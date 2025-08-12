@@ -65,10 +65,13 @@ const OrderIndex = () => {
   const [orderType, setOrderType] = useState("");
   const [orderCode, setOrderCode] = useState("");
   const [orderStatusCounts, setOrderStatusCounts] = useState({});
+  // Bộ lọc theo ngày
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const navigate = useNavigate();
 
-  // Lọc dữ liệu theo search và filter
+  // Lọc dữ liệu theo search và filter (client-side fallback)
   const filteredData = orderData.items.filter((order) => {
     const matchesSearch =
       order.customer?.full_name
@@ -78,7 +81,14 @@ const OrderIndex = () => {
       order.order_code?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    // Lọc theo khoảng ngày (client-side fallback nếu backend chưa lọc)
+    const orderDate = order.order_time || order.created_at;
+    const orderDateStr = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : "";
+    const inFrom = !dateFrom || (orderDateStr && orderDateStr >= dateFrom);
+    const inTo = !dateTo || (orderDateStr && orderDateStr <= dateTo);
+
+    return matchesSearch && matchesStatus && inFrom && inTo;
   });
 
   const fetchOrders = async (page = 1) => {
@@ -90,6 +100,9 @@ const OrderIndex = () => {
         order_type: orderType || undefined,
         order_code: orderCode || undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
+        // Thêm bộ lọc theo ngày - sử dụng đúng tên params backend mong đợi
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
       };
 
       if (statusFilter !== "all") {
@@ -135,7 +148,8 @@ const OrderIndex = () => {
   useEffect(() => {
     fetchOrders(currentPage);
     fetchOrderStatusCounts();
-  }, [currentPage, orderType, orderCode, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, orderType, orderCode, statusFilter, dateFrom, dateTo]);
 
   const handleDelete = async (id) => {
     try {
@@ -225,9 +239,8 @@ const OrderIndex = () => {
               <Nav tabs className="border-0">
                 <NavItem>
                   <NavLink
-                    className={`border-0 ${
-                      activeTab === "1" ? "active fw-bold" : "text-muted"
-                    }`}
+                    className={`border-0 ${activeTab === "1" ? "active fw-bold" : "text-muted"
+                      }`}
                     onClick={() => toggleTab("1")}
                     style={{
                       borderBottom:
@@ -244,9 +257,8 @@ const OrderIndex = () => {
                 </NavItem>
                 <NavItem>
                   <NavLink
-                    className={`border-0 ${
-                      activeTab === "2" ? "active fw-bold" : "text-muted"
-                    }`}
+                    className={`border-0 ${activeTab === "2" ? "active fw-bold" : "text-muted"
+                      }`}
                     onClick={() => toggleTab("2")}
                     style={{
                       borderBottom:
@@ -271,7 +283,7 @@ const OrderIndex = () => {
                 className="d-flex align-items-center"
                 size="sm"
               >
-                <span className="me-1">Tạo mới đơn hàng</span> 
+                <span className="me-1">Tạo mới đơn hàng</span>
               </Button>
             </Col>
           </Row>
@@ -293,19 +305,19 @@ const OrderIndex = () => {
                   className="mb-2 mb-md-0 d-flex align-items-center"
                 >
                   <StatusFilterGroup
-  options={orderStatusOptions.map(opt => ({
-    ...opt,
-    badgeCount: opt.value === "all"
-      ? Object.values(orderStatusCounts).reduce((a, b) => a + b, 0)
-      : orderStatusCounts[opt.value] || 0
-  }))}
-  value={statusFilter}
-  onChange={val => {
-    setStatusFilter(val);
-    setCurrentPage(1);
-  }}
-  className="mb-2"
-/>
+                    options={orderStatusOptions.map(opt => ({
+                      ...opt,
+                      badgeCount: opt.value === "all"
+                        ? Object.values(orderStatusCounts).reduce((a, b) => a + b, 0)
+                        : orderStatusCounts[opt.value] || 0
+                    }))}
+                    value={statusFilter}
+                    onChange={val => {
+                      setStatusFilter(val);
+                      setCurrentPage(1);
+                    }}
+                    className="mb-2"
+                  />
                 </Col>
               </Row>
             </CardHeader>
@@ -314,33 +326,112 @@ const OrderIndex = () => {
           {/* Khối tìm kiếm và lọc nâng cao */}
           <Card className="mb-4">
             <CardBody>
-              <SearchAndStatusFilterBar
-                searchValue={searchTerm}
-                onSearchChange={(val) => {
-                  setSearchTerm(val);
-                  setCurrentPage(1);
-                }}
-                statusValue={statusFilter}
-                onStatusChange={(val) => {
-                  setStatusFilter(val);
-                  setCurrentPage(1);
-                }}
-                statusOptions={orderStatusOptions}
-                searchPlaceholder="Tìm kiếm theo mã đơn hàng, tên, SĐT..."
-                statusPlaceholder="Tất cả trạng thái"
-                rightContent={
-                  <Button
-                    color="light"
-                    className="border"
-                    style={{ minWidth: 140 }}
-                    onClick={() => setShowFilter(true)}
-                  >
-                    <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
-                  </Button>
-                }
-              />
+              <Row className="align-items-center">
+                <Col md={4}>
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="mdi mdi-magnify"></i>
+                    </span>
+                    <Input
+                      type="text"
+                      placeholder="Tìm kiếm theo mã đơn hàng, tên, SĐT..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="mdi mdi-calendar"></i>
+                    </span>
+                    <Input
+                      type="date"
+                      placeholder="Từ ngày"
+                      value={dateFrom}
+                      onChange={(e) => {
+                        setDateFrom(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="mdi mdi-calendar"></i>
+                    </span>
+                    <Input
+                      type="date"
+                      placeholder="Đến ngày"
+                      value={dateTo}
+                      min={dateFrom}
+                      onChange={(e) => {
+                        setDateTo(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </div>
+                </Col>
+                <Col md={2} className="text-end">
+                  <div className="d-flex gap-2">
+                    {(dateFrom || dateTo) && (
+                      <Button
+                        color="outline-secondary"
+                        size="sm"
+                        onClick={() => {
+                          setDateFrom("");
+                          setDateTo("");
+                          setCurrentPage(1);
+                        }}
+                        title="Xóa bộ lọc ngày"
+                      >
+                        <i className="mdi mdi-close me-1"></i>
+                        Xóa ngày
+                      </Button>
+                    )}
+                    <Button
+                      color="light"
+                      className="border"
+                      style={{ minWidth: 140 }}
+                      onClick={() => setShowFilter(true)}
+                    >
+                      <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                    </Button>
+                  </div>
+                </Col>
+              </Row>
             </CardBody>
           </Card>
+
+          {/* Thông báo khoảng ngày đang lọc */}
+          {(dateFrom || dateTo) && (
+            <div className="mb-3">
+              <div className="alert alert-info d-flex align-items-center" style={{ fontSize: 14 }}>
+                <i className="mdi mdi-calendar-clock me-2"></i>
+                <div>
+                  <strong>Đang lọc theo ngày:</strong>{" "}
+                  {dateFrom && dateTo ? (
+                    <>
+                      Từ <strong>{new Date(dateFrom).toLocaleDateString("vi-VN")}</strong> đến{" "}
+                      <strong>{new Date(dateTo).toLocaleDateString("vi-VN")}</strong>
+                    </>
+                  ) : dateFrom ? (
+                    <>
+                      Từ <strong>{new Date(dateFrom).toLocaleDateString("vi-VN")}</strong> trở đi
+                    </>
+                  ) : (
+                    <>
+                      Đến <strong>{new Date(dateTo).toLocaleDateString("vi-VN")}</strong>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Danh sách đơn hàng */}
           {loading ? (
@@ -430,6 +521,8 @@ const OrderIndex = () => {
               setOrderType("");
               setOrderCode("");
               setStatusFilter("all");
+              setDateFrom("");
+              setDateTo("");
               setCurrentPage(1);
               fetchOrders(1);
             }}
@@ -477,13 +570,13 @@ const OrderIndex = () => {
             <FormGroup className="mb-3">
               <Label for="status">Trạng thái</Label>
               <Input
-                  type="select"
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-100"
+                type="select"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-100"
               >
                 <option value="all">Tất cả</option>
                 <option value="pending">Chờ xác nhận</option>
