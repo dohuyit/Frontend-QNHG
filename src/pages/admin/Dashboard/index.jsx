@@ -1,365 +1,227 @@
-import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Container,
   Row,
   Col,
-  Button,
   Card,
   CardBody,
-  Input,
+  Button,
   Modal,
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Table,
 } from "reactstrap";
 import { Link } from "react-router-dom";
-
 import classNames from "classnames";
 
-//import Charts
+import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import StackedColumnChart from "./StackedColumnChart";
 
-//import action
-import { getChartsData as onGetChartsData } from "@store/admin/actions";
+import {
+  getReservationStatusStats,
+  getReservationTimeStats,
+  getOrderRevenueStats,
+} from "@services/admin/dashboardService";
 
-import modalimage1 from "@assets/admin/images/product/img-7.png";
-import modalimage2 from "@assets/admin/images/product/img-4.png";
+const Dashboard = ({ t = (key) => key })  => {
+  // Modal State
+  const [modal, setModal] = useState(false);
 
-// Pages Components
-import WelcomeComp from "./WelcomeComp";
-import MonthlyEarning from "./MonthlyEarning";
-import SocialSource from "./SocialSource";
-import ActivityComp from "./ActivityComp";
-import TopCities from "./TopCities";
-
-//Import Breadcrumb
-import Breadcrumbs from "@components/admin/ui/Breadcrumb";
-
-import { withTranslation } from "react-i18next";
-
-//redux
-import { useSelector, useDispatch } from "react-redux";
-import { createSelector } from "reselect";
-
-const Dashboard = (props) => {
-  const [modal, setmodal] = useState(false);
-  const [subscribemodal, setSubscribemodal] = useState(false);
-
-  const DashboardProperties = createSelector(
-    (state) => state.Dashboard,
-    (dashboard) => ({
-      chartsData: dashboard.chartsData,
-    })
-  );
-
-  const { chartsData } = useSelector(DashboardProperties);
-
-  const reports = [
-    { title: "Orders", iconClass: "bx-copy-alt", description: "1,235" },
-    { title: "Revenue", iconClass: "bx-archive-in", description: "$35, 723" },
-    {
-      title: "Average Price",
-      iconClass: "bx-purchase-tag-alt",
-      description: "$16.2",
-    },
-  ];
-
-  useEffect(() => {
-    setTimeout(() => {
-      setSubscribemodal(true);
-    }, 2000);
-  }, []);
-
-  const [periodData, setPeriodData] = useState([]);
+  // Data state
+  const [reservationStatusStats, setReservationStatusStats] = useState({});
+  const [reservationTimeStats, setReservationTimeStats] = useState([]);
+  const [orderRevenueStats, setOrderRevenueStats] = useState([]);
   const [periodType, setPeriodType] = useState("Year");
 
   useEffect(() => {
-    setPeriodData(chartsData);
-  }, [chartsData]);
+    fetchAllStats(periodType);
+  }, [periodType]);
+  const fetchAllStats = async (period) => {
+    try {
+      const resStatus = await getReservationStatusStats();
+      setReservationStatusStats(resStatus.data.data || {});
 
-  const onChangeChartPeriod = (pType) => {
-    setPeriodType(pType);
-    dispatch(onGetChartsData(pType));
+      const resTime = await getReservationTimeStats({ periodType: period });
+      setReservationTimeStats(resTime.data.data || []);
+
+      const resRevenue = await getOrderRevenueStats({ periodType: period });
+      setOrderRevenueStats(resRevenue.data.data || []);
+    } catch (error) {
+      console.error("Error loading stats:", error);
+    }
   };
 
-  const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(onGetChartsData("Year"));
-  }, [dispatch]);
 
-  //meta title
-  document.title = "Dashboard | Skote - Vite React Admin & Dashboard Template";
+
+
+  // Tổng đơn đặt bàn tính từ reservationTimeStats (sum count)
+  const totalOrders = reservationTimeStats.reduce(
+      (acc, cur) => acc + (cur.count || 0),
+      0
+  );
+
+  // Tổng doanh thu tính từ orderRevenueStats (sum revenue)
+  const totalRevenue = orderRevenueStats.reduce(
+      (acc, cur) => acc + (cur.revenue || 0),
+      0
+  );
+
+  // Giá trung bình
+  const averagePrice = totalOrders ? (totalRevenue / totalOrders).toFixed(2) : 0;
+
+  // Dữ liệu báo cáo tổng quan
+  const reports = [
+    {
+      title: t("Đơn đặt bàn"),
+      iconClass: "bx-copy-alt",
+      description: totalOrders.toLocaleString(),
+      color: "primary",
+    },
+    {
+      title: t("Doanh thu"),
+      iconClass: "bx-archive-in",
+      description: `$${totalRevenue.toFixed(2)}`,
+      color: "success",
+    },
+    {
+      title: t("Giá trung bình"),
+      iconClass: "bx-purchase-tag-alt",
+      description: `$${averagePrice}`,
+      color: "warning",
+    },
+  ];
+
+  // Merge dữ liệu thời gian để biểu đồ stacked column
+  // Các ngày có thể không trùng nhau, nên lấy tất cả ngày
+  const allDates = new Set([
+    ...reservationTimeStats.map((r) => r.time),
+    ...orderRevenueStats.map((r) => r.time),
+  ]);
+
+  const chartDataFormatted = Array.from(allDates)
+      .sort()
+      .map((date) => {
+        const revenueObj = orderRevenueStats.find((r) => r.time === date);
+        const reservationObj = reservationTimeStats.find((r) => r.time === date);
+        return {
+          name: date,
+          bookings: reservationObj ? reservationObj.count : 0,
+          revenue: revenueObj ? revenueObj.revenue : 0,
+        };
+      });
+  console.log("periodType:", periodType);
+  console.log("reservationTimeStats:", reservationTimeStats);
+  console.log("orderRevenueStats:", orderRevenueStats);
+  console.log("chartDataFormatted:", chartDataFormatted);
+  const statusColorMap = {
+    cancelled: "danger",
+    confirmed: "success",
+    pending: "warning",
+    completed: "info",
+  };
 
   return (
-    <React.Fragment>
-      <div className="page-content">
-        <Container fluid>
-          {/* Render Breadcrumb */}
-          <Breadcrumbs
-            title={props.t("Dashboards")}
-            breadcrumbItem={props.t("Dashboard")}
-          />
+      <>
+        <div className="page-content">
+          <Container fluid>
+            {/* Breadcrumb */}
+            <Breadcrumbs title={t("Dashboard")} breadcrumbItem={t("Tổng quan")} />
 
-          <Row>
-            <Col xl="4">
-              <WelcomeComp />
-              <MonthlyEarning />
-            </Col>
-            <Col xl="8">
-              <Row>
-                {/* Reports Render */}
-                {(reports || [])?.map((report, key) => (
-                  <Col md="4" key={"_col_" + key}>
-                    <Card className="mini-stats-wid">
+            {/* Báo cáo tổng quan */}
+            <Row className="mb-4">
+              {reports.map(({ title, iconClass, description, color }, i) => (
+                  <Col md={4} key={i}>
+                    <Card className={`mini-stats-wid border border-${color}`}>
                       <CardBody>
-                        <div className="d-flex">
+                        <div className="d-flex align-items-center">
                           <div className="flex-grow-1">
-                            <p className="text-muted fw-medium">
-                              {report.title}
-                            </p>
-                            <h4 className="mb-0">{report.description}</h4>
+                            <p className="text-muted fw-medium mb-1">{title}</p>
+                            <h4 className={`mb-0 text-${color}`}>{description}</h4>
                           </div>
-                          <div className="avatar-sm rounded-circle bg-primary align-self-center mini-stat-icon">
-                            <span className="avatar-title rounded-circle bg-primary">
-                              <i
-                                className={
-                                  "bx " + report.iconClass + " font-size-24"
-                                }
-                              ></i>
-                            </span>
+                          <div
+                              className={`avatar-sm rounded-circle bg-${color} align-self-center mini-stat-icon`}
+                          >
+                        <span className={`avatar-title rounded-circle bg-${color}`}>
+                          <i className={`bx ${iconClass} font-size-24`} />
+                        </span>
                           </div>
                         </div>
                       </CardBody>
                     </Card>
                   </Col>
-                ))}
-              </Row>
+              ))}
+            </Row>
 
-              <Card>
-                <CardBody>
-                  <div className="d-sm-flex flex-wrap">
-                    <h4 className="card-title mb-4">Email Sent</h4>
-                    <div className="ms-auto">
+            {/* Thống kê trạng thái đặt bàn */}
+            <Row className="mb-4">
+              {Object.entries(reservationStatusStats).map(([status, count]) => (
+                  <Col md={3} key={status}>
+                    <Card className={`mini-stats-wid border border-${statusColorMap[status] || "secondary"}`}>
+                      <CardBody className="text-center">
+                        <p className="text-muted fw-medium text-capitalize">{status}</p>
+                        <h4 className={`text-${statusColorMap[status] || "secondary"}`}>{count}</h4>
+                      </CardBody>
+                    </Card>
+                  </Col>
+              ))}
+            </Row>
+
+            {/* Biểu đồ đặt bàn và doanh thu theo thời gian */}
+            <Row className="mb-4">
+              <Col xl={12}>
+                <Card>
+                  <CardBody>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h4 className="card-title mb-0">{t("Xu hướng đặt bàn & doanh thu")}</h4>
                       <ul className="nav nav-pills">
-                        <li className="nav-item">
-                          <Link
-                            to="#"
-                            className={classNames(
-                              { active: periodType === "Week" },
-                              "nav-link"
-                            )}
-                            onClick={() => {
-                              onChangeChartPeriod("Week");
-                            }}
-                            id="one_month"
-                          >
-                            Week
-                          </Link>{" "}
-                        </li>
-                        <li className="nav-item">
-                          <Link
-                            to="#"
-                            className={classNames(
-                              { active: periodType === "Month" },
-                              "nav-link"
-                            )}
-                            onClick={() => {
-                              onChangeChartPeriod("Month");
-                            }}
-                            id="one_month"
-                          >
-                            Month
-                          </Link>
-                        </li>
-                        <li className="nav-item">
-                          <Link
-                            to="#"
-                            className={classNames(
-                              { active: periodType === "Year" },
-                              "nav-link"
-                            )}
-                            onClick={() => {
-                              onChangeChartPeriod("Year");
-                            }}
-                            id="one_month"
-                          >
-                            Year
-                          </Link>
-                        </li>
+                        {["Week", "Month", "Year"].map((p) => (
+                            <li className="nav-item" key={p}>
+                              <Link
+                                  to="#"
+                                  className={classNames({ active: periodType === p }, "nav-link")}
+                                  onClick={() => setPeriodType(p)}
+                              >
+                                {p}
+                              </Link>
+                            </li>
+                        ))}
                       </ul>
                     </div>
-                  </div>
-                  {/* <div className="clearfix"></div> */}
-                  <StackedColumnChart
-                    periodData={periodData}
-                    dataColors='["--bs-primary", "--bs-warning", "--bs-success"]'
-                  />
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col xl="4">
-              <SocialSource />
-            </Col>
-            <Col xl="4">
-              <ActivityComp />
-            </Col>
-
-            <Col xl="4">
-              <TopCities />
-            </Col>
-          </Row>
-        </Container>
-      </div>
-
-      {/* subscribe ModalHeader */}
-      <Modal
-        // isOpen={subscribemodal}
-        // role="dialog"
-        // autoFocus={true}
-        // centered
-        // data-toggle="modal"
-        // toggle={() => {
-        //   setSubscribemodal(!subscribemodal);
-        // }}
-      >
-        <div>
-          <ModalHeader
-            className="border-bottom-0"
-            toggle={() => {
-              setSubscribemodal(!subscribemodal);
-            }}
-          ></ModalHeader>
+                    <StackedColumnChart
+                        periodData={chartDataFormatted}
+                        dataColors={["--bs-primary", "--bs-success"]}
+                    />
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+          </Container>
         </div>
-        <div className="modal-body">
-          <div className="text-center mb-4">
-            <div className="avatar-md mx-auto mb-4">
-              <div className="avatar-title bg-light  rounded-circle text-primary h1">
-                <i className="mdi mdi-email-open"></i>
-              </div>
-            </div>
 
-            
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={modal}
-        role="dialog"
-        autoFocus={true}
-        centered={true}
-        className="exampleModal"
-        tabIndex="-1"
-        toggle={() => {
-          setmodal(!modal);
-        }}
-      >
-        <div>
-          <ModalHeader
-            toggle={() => {
-              setmodal(!modal);
-            }}
-          >
-            Order Details
-          </ModalHeader>
+        {/* Modal nếu cần */}
+        <Modal
+            isOpen={modal}
+            toggle={() => setModal(!modal)}
+            centered
+            size="lg"
+        >
+          <ModalHeader toggle={() => setModal(!modal)}>{t("Chi tiết đơn đặt bàn")}</ModalHeader>
           <ModalBody>
-            <p className="mb-2">
-              Product id: <span className="text-primary">#SK2540</span>
-            </p>
-            <p className="mb-4">
-              Billing Name: <span className="text-primary">Neal Matthews</span>
-            </p>
-
-            <div className="table-responsive">
-              <Table className="table table-centered table-nowrap">
-                <thead>
-                  <tr>
-                    <th scope="col">Product</th>
-                    <th scope="col">Product Name</th>
-                    <th scope="col">Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">
-                      <div>
-                        <img src={modalimage1} alt="" className="avatar-sm" />
-                      </div>
-                    </th>
-                    <td>
-                      <div>
-                        <h5 className="text-truncate font-size-14">
-                          Wireless Headphone (Black)
-                        </h5>
-                        <p className="text-muted mb-0">$ 225 x 1</p>
-                      </div>
-                    </td>
-                    <td>$ 255</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      <div>
-                        <img src={modalimage2} alt="" className="avatar-sm" />
-                      </div>
-                    </th>
-                    <td>
-                      <div>
-                        <h5 className="text-truncate font-size-14">
-                          Hoodie (Blue)
-                        </h5>
-                        <p className="text-muted mb-0">$ 145 x 1</p>
-                      </div>
-                    </td>
-                    <td>$ 145</td>
-                  </tr>
-                  <tr>
-                    <td colSpan="2">
-                      <h6 className="m-0 text-end">Sub Total:</h6>
-                    </td>
-                    <td>$ 400</td>
-                  </tr>
-                  <tr>
-                    <td colSpan="2">
-                      <h6 className="m-0 text-end">Shipping:</h6>
-                    </td>
-                    <td>Free</td>
-                  </tr>
-                  <tr>
-                    <td colSpan="2">
-                      <h6 className="m-0 text-end">Total:</h6>
-                    </td>
-                    <td>$ 400</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </div>
+            <p>{t("Thông tin chi tiết đơn đặt bàn sẽ hiển thị ở đây.")}</p>
           </ModalBody>
           <ModalFooter>
-            <Button
-              type="button"
-              color="secondary"
-              onClick={() => {
-                setmodal(!modal);
-              }}
-            >
-              Close
+            <Button color="secondary" onClick={() => setModal(false)}>
+              {t("Đóng")}
             </Button>
           </ModalFooter>
-        </div>
-      </Modal>
-    </React.Fragment>
+        </Modal>
+      </>
   );
 };
 
 Dashboard.propTypes = {
-  t: PropTypes.any,
-  chartsData: PropTypes.any,
-  onGetChartsData: PropTypes.func,
+  t: PropTypes.func.isRequired,
 };
 
-export default withTranslation()(Dashboard);
+export default React.memo(Dashboard);
