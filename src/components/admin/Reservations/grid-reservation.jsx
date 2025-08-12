@@ -494,9 +494,26 @@ const ReservationGrid = ({
                                                 const times = [];
                                                 let start = 9 * 60; // 9:00
                                                 let end = 20 * 60; // 20:00
+                                                
+                                                // Lấy giờ hiện tại để so sánh
+                                                const now = new Date();
+                                                const currentHour = now.getHours();
+                                                const currentMinute = now.getMinutes();
+                                                const currentTimeInMinutes = currentHour * 60 + currentMinute;
+                                                
+                                                // Lấy ngày đã chọn (nếu có)
+                                                const selectedDate = editForm.reservation_date || selectedItem?.reservation_date || selectedItem?.booking_date;
+                                                const isToday = selectedDate ? new Date(selectedDate).toDateString() === now.toDateString() : false;
+                                                
                                                 for (let mins = start; mins <= end; mins += 30) {
                                                     const h = Math.floor(mins / 60);
                                                     const m = mins % 60;
+                                                    
+                                                    // Nếu là hôm nay và giờ này đã qua thì bỏ qua
+                                                    if (isToday && mins <= currentTimeInMinutes) {
+                                                        continue;
+                                                    }
+                                                    
                                                     // Hiển thị dạng 12h
                                                     const ampm = h < 12 ? 'AM' : 'PM';
                                                     const h12 = h % 12 === 0 ? 12 : h % 12;
