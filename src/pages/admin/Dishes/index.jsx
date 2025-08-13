@@ -17,6 +17,7 @@ import {
   Offcanvas,
   OffcanvasHeader,
   OffcanvasBody,
+  CardFooter,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListDish from "@components/admin/Dishes/ListDish";
@@ -39,6 +40,7 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import "react-toastify/dist/ReactToastify.css";
 import "./Dishes.scss";
+import CustomPaginate from "@components/admin/ui/CustomPaginate";
 
 const DishIndex = () => {
   const [dishes, setDishes] = useState([]);
@@ -48,10 +50,10 @@ const DishIndex = () => {
   const [status, setStatus] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [meta, setMeta] = useState({
-    current_page: 1,
-    per_page: 10,
+    page: 1,
+    perPage: 10,
     total: 0,
-    last_page: 1,
+    totalPage: 1,
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -141,13 +143,14 @@ const DishIndex = () => {
 
       const res = await getDishes(params);
       const items = res.data?.data?.items;
+      console.log(res.data.data.meta);
       if (Array.isArray(items)) {
         setDishes(items);
         setMeta(res.data.data.meta);
         setCurrentPage(res.data.data.meta.page);
       } else {
         setDishes([]);
-        setMeta({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
+        setMeta({ page: 1, perPage: 10, total: 0, totalPage: 1 });
       }
     } catch {
       toast.error("Lỗi khi tải danh sách món ăn!");
@@ -197,11 +200,12 @@ const DishIndex = () => {
         console.log("File appended:", v.name); // Debug file
       } else if (k === "is_featured") {
         formData.append(k, v ? 1 : 0); // Boolean to 1/0
-      } else if (k !== "image_url") { // Tránh append image_url nếu là File
+      } else if (k !== "image_url") {
+        // Tránh append image_url nếu là File
         formData.append(k, v);
       }
     });
-  
+
     try {
       isEdit
         ? await updateDish(editDishId, formData)
@@ -370,35 +374,35 @@ const DishIndex = () => {
                 }
               />
             </CardHeader>
-          </Card>
-
-          <Card className="mb-4">
             <CardBody>
               {loadingDishes ? (
                 <div className="text-center my-5">
                   <Spinner color="primary" />
                 </div>
               ) : (
-                <ListDish
-                  paginate={{
-                    page: meta.current_page,
-                    perPage: meta.per_page,
-                    totalPage: meta.last_page,
-                  }}
-                  data={dishes}
-                  onDelete={handleDeleteClick}
-                  onPageChange={setCurrentPage}
-                  onEdit={handleDishClick}
-                />
+                <>
+                  <ListDish
+                    data={dishes}
+                    onDelete={handleDeleteClick}
+                    onEdit={handleDishClick}
+                  />
+                </>
               )}
             </CardBody>
           </Card>
-
-          <PaginateUi
-            currentPage={meta.current_page}
-            totalPages={meta.last_page}
-            onPageChange={setCurrentPage}
-          />
+          <Card>
+            <CardBody>
+              {meta.totalPage > 1 && (
+                <div className="d-flex justify-content-center">
+                  <CustomPaginate
+                    currentPage={meta.page || meta.current_page}
+                    totalPages={meta.totalPage || meta.last_page}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
+            </CardBody>
+          </Card>
         </TabPane>
 
         <TabPane tabId="trash">

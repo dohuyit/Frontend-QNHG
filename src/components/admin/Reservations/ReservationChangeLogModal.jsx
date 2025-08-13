@@ -16,16 +16,23 @@ const statusColor = {
 };
 
 const fieldLabels = {
+  // Khách hàng
+  customer_id: "Khách hàng",
   customer_name: "Tên khách hàng",
   customer_phone: "Số điện thoại",
   customer_email: "Email",
-  reservation_time: "Giờ đặt",
+  // Thời gian đặt
   reservation_date: "Ngày đặt",
+  reservation_time: "Giờ đặt",
+  confirmed_at: "Thời điểm xác nhận",
+  cancelled_at: "Thời điểm hủy",
+  completed_at: "Thời điểm hoàn thành",
+  // Thông tin khác
   number_of_guests: "Số khách",
   table_id: "Bàn",
   notes: "Ghi chú",
   status: "Trạng thái",
-  // ... các trường khác
+  user_id: "Người phụ trách",
 };
 
 export default function ReservationChangeLogModal({

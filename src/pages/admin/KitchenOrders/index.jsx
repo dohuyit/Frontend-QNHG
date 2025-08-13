@@ -28,7 +28,6 @@ import FilterBar from "@components/admin/KitchenOrders/FilterBar";
 import {
   getListKitchenOrders,
   updateKitchenOrderStatus,
-  countKitchenOrdersByStatus,
 } from "@services/admin/kitchenOrderService";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
@@ -55,16 +54,24 @@ const KitchenOrdersPage = () => {
   const [activeTab, setActiveTab] = useState("1");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [kitchenOrderStatusCounts, setKitchenOrderStatusCounts] = useState({
-    pending: 0,
-    preparing: 0,
-    ready: 0,
-    cancelled: 0,
-  });
+  // Bộ lọc theo khoảng ngày
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
 
   const fetchOrders = async (filterParams = filter, date = filterDate) => {
     try {
-      const params = { ...filterParams, created_at: date };
+      const params = { ...filterParams };
+      
+      // Nếu có khoảng ngày thì ưu tiên khoảng ngày
+      if (dateFrom || dateTo) {
+        if (dateFrom) params.date_from = dateFrom;
+        if (dateTo) params.date_to = dateTo;
+      } else {
+        // Nếu không có khoảng ngày thì dùng ngày đơn lẻ
+        params.created_at = date;
+      }
+      
       const res = await getListKitchenOrders(params);
       const items =
         res.data.data && Array.isArray(res.data.data.items)
@@ -77,25 +84,12 @@ const KitchenOrdersPage = () => {
     }
   };
 
-  const fetchKitchenOrderStatusCounts = async () => {
-    try {
-      const res = await countKitchenOrdersByStatus();
-      setKitchenOrderStatusCounts(res.data.data || {});
-    } catch {
-      setKitchenOrderStatusCounts({
-        pending: 0,
-        preparing: 0,
-        ready: 0,
-        cancelled: 0,
-      });
-    }
-  };
+
 
   useEffect(() => {
     fetchOrders(filter, filterDate);
-    fetchKitchenOrderStatusCounts();
     // eslint-disable-next-line
-  }, [filterDate]);
+  }, [filterDate, dateFrom, dateTo]);
 
   // Filter trạng thái badge
   const handleStatusBadge = (status) => {
@@ -173,7 +167,7 @@ const KitchenOrdersPage = () => {
     }
   };
 
-  // Filter theo searchTerm (KHÔNG filter trạng thái ở FE nữa)
+  // Filter theo searchTerm và ngày (client-side fallback)
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       String(order.order_id || "")
@@ -185,7 +179,23 @@ const KitchenOrdersPage = () => {
       String(order.item_name || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    // Lọc theo ngày (client-side fallback nếu backend chưa lọc)
+    const orderDate = order.created_at || order.order_time;
+    const orderDateStr = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : "";
+    
+    // Nếu có khoảng ngày thì ưu tiên khoảng ngày
+    let matchesDate = true;
+    if (dateFrom || dateTo) {
+      const inFrom = !dateFrom || (orderDateStr && orderDateStr >= dateFrom);
+      const inTo = !dateTo || (orderDateStr && orderDateStr <= dateTo);
+      matchesDate = inFrom && inTo;
+    } else {
+      // Nếu không có khoảng ngày thì dùng ngày đơn lẻ
+      matchesDate = !filterDate || orderDateStr === filterDate;
+    }
+    
+    return matchesSearch && matchesDate;
   });
 
   // Xử lý kéo thả card giữa các cột
@@ -341,20 +351,17 @@ const KitchenOrdersPage = () => {
           <Card className="mb-4">
             <CardHeader className="bg-white border-bottom-0">
               <div className="d-flex flex-wrap gap-2">
-                <Button
-                  color={statusFilter === "all" ? "secondary" : ""}
-                  outline={statusFilter !== "all"}
-                  onClick={() => handleStatusBadge("all")}
-                  size="sm"
-                >
-                  Tất cả{" "}
-                  <Badge color="secondary" pill className="ms-2">
-                    {Object.values(kitchenOrderStatusCounts).reduce(
-                      (a, b) => a + b,
-                      0
-                    )}
-                  </Badge>
-                </Button>
+                                  <Button
+                    color={statusFilter === "all" ? "secondary" : ""}
+                    outline={statusFilter !== "all"}
+                    onClick={() => handleStatusBadge("all")}
+                    size="sm"
+                  >
+                    Tất cả{" "}
+                    <Badge color="secondary" pill className="ms-2">
+                      {filteredOrders.length}
+                    </Badge>
+                  </Button>
                 {STATUS_LIST.map((opt) => (
                   <Button
                     key={opt.key}
@@ -373,7 +380,7 @@ const KitchenOrdersPage = () => {
                   >
                     {opt.label}{" "}
                     <Badge color={opt.badgeColor} pill className="ms-2">
-                      {kitchenOrderStatusCounts[opt.key] || 0}
+                      {filteredOrders.filter(order => order.status === opt.key).length}
                     </Badge>
                   </Button>
                 ))}
@@ -398,39 +405,84 @@ const KitchenOrdersPage = () => {
                   </div>
                 </Col>
                 <Col md={3}>
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="mdi mdi-filter-variant"></i>
-                    </span>
+                  <div className="d-flex align-items-center" style={{ gap: 8 }}>
                     <Input
-                      type="select"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <option value="all">Tất cả trạng thái</option>
-                      <option value="pending">Pending</option>
-                      <option value="preparing">In Progress</option>
-                      <option value="ready">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </Input>
+                      type="date"
+                      value={dateFrom}
+                      max={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => {
+                        setDateFrom(e.target.value);
+                        setDateTo(""); // Reset dateTo khi thay đổi dateFrom
+                        setFilterDate(""); // Reset filterDate khi dùng khoảng ngày
+                      }}
+                      placeholder="Từ ngày"
+                      title="Chọn ngày bắt đầu"
+                    />
+                    <span className="text-muted">—</span>
+                    <Input
+                      type="date"
+                      value={dateTo}
+                      min={dateFrom || undefined}
+                      max={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => {
+                        setDateTo(e.target.value);
+                        setFilterDate(""); // Reset filterDate khi dùng khoảng ngày
+                      }}
+                      placeholder="Đến ngày"
+                      title="Chọn ngày kết thúc"
+                    />
                   </div>
                 </Col>
-                <Col md={3}></Col>
+                <Col md={3}>
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="mdi mdi-calendar"></i>
+                    </span>
+                    <Input
+                      type="date"
+                      value={filterDate}
+                      max={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => {
+                        setFilterDate(e.target.value);
+                        setDateFrom(""); // Reset khoảng ngày khi dùng ngày đơn lẻ
+                        setDateTo("");
+                      }}
+                      title="Chọn ngày xem đơn bếp"
+                    />
+                  </div>
+                </Col>
                 <Col md={2} className="text-end">
-                  <Button
-                    color="light"
-                    className="border"
-                    style={{ minWidth: 140 }}
-                    onClick={() => setShowFilter(true)}
-                  >
-                    <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
-                  </Button>
+                  <div className="d-flex gap-2">
+                                         {(filterDate !== todayStr || dateFrom || dateTo) && (
+                       <Button
+                         color="outline-secondary"
+                         size="sm"
+                         onClick={() => {
+                           setFilterDate(todayStr);
+                           setDateFrom("");
+                           setDateTo("");
+                         }}
+                         title="Về ngày hôm nay"
+                       >
+                         <i className="mdi mdi-close me-1"></i>
+                         Hôm nay
+                       </Button>
+                     )}
+                    <Button
+                      color="light"
+                      className="border"
+                      style={{ minWidth: 140 }}
+                      onClick={() => setShowFilter(true)}
+                    >
+                      <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                    </Button>
+                  </div>
                 </Col>
               </Row>
             </CardBody>
           </Card>
 
-          {/* Kanban board dạng hàng ngang với kéo thả */}
+          {/* Thông báo khoảng ngày đang lọc */}
           <div className="mb-3">
             <div
               className="alert alert-info d-flex align-items-center"
@@ -438,18 +490,53 @@ const KitchenOrdersPage = () => {
             >
               <i className="mdi mdi-information-outline me-2"></i>
               <div>
-                <strong>Lưu ý:</strong> Đơn có{" "}
-                <span className="badge bg-danger">Ưu tiên</span> đầu bếp cần
-                phải làm trước.
-                {filterDate !== todayStr && (
-                  <span className="ms-2">
-                    <i className="mdi mdi-calendar-clock me-1"></i>
-                    Đang xem đơn bếp ngày:{" "}
-                    <strong>
-                      {new Date(filterDate).toLocaleDateString("vi-VN")}
-                    </strong>
-                  </span>
-                )}
+                                 <strong>Lưu ý:</strong> Đơn có{" "}
+                 <span className="badge bg-danger">Ưu tiên</span> đầu bếp cần
+                 phải làm trước.
+                 {dateFrom || dateTo ? (
+                   <span className="ms-2">
+                     <i className="mdi mdi-calendar-range me-1"></i>
+                     <strong>Đang xem đơn bếp từ:</strong>{" "}
+                     {dateFrom && dateTo ? (
+                       <>
+                         <span className="badge bg-primary">
+                           {new Date(dateFrom).toLocaleDateString("vi-VN")}
+                         </span>{" "}
+                         đến{" "}
+                         <span className="badge bg-primary">
+                           {new Date(dateTo).toLocaleDateString("vi-VN")}
+                         </span>
+                       </>
+                     ) : dateFrom ? (
+                       <>
+                         <span className="badge bg-primary">
+                           {new Date(dateFrom).toLocaleDateString("vi-VN")}
+                         </span>{" "}
+                         trở đi
+                       </>
+                     ) : (
+                       <>
+                         đến{" "}
+                         <span className="badge bg-primary">
+                           {new Date(dateTo).toLocaleDateString("vi-VN")}
+                         </span>
+                       </>
+                     )}
+                   </span>
+                 ) : filterDate !== todayStr ? (
+                   <span className="ms-2">
+                     <i className="mdi mdi-calendar-clock me-1"></i>
+                     <strong>Đang xem đơn bếp ngày:</strong>{" "}
+                     <span className="badge bg-primary">
+                       {new Date(filterDate).toLocaleDateString("vi-VN")}
+                     </span>
+                   </span>
+                 ) : (
+                   <span className="ms-2">
+                     <i className="mdi mdi-calendar-today me-1"></i>
+                     <strong>Đang xem đơn bếp hôm nay</strong>
+                   </span>
+                 )}
               </div>
             </div>
           </div>
@@ -534,12 +621,15 @@ const KitchenOrdersPage = () => {
               boxShadow: "none",
               zIndex: 1,
             }}
-            onClick={() => {
-              setFilter({});
-              setStatusFilter("all");
-              setFilterDate(todayStr);
-              fetchOrders({}, todayStr);
-            }}
+                         onClick={() => {
+               setFilter({});
+               setStatusFilter("all");
+               setFilterDate(todayStr);
+               setDateFrom("");
+               setDateTo("");
+               setSearchTerm("");
+               fetchOrders({}, todayStr);
+             }}
             title="Làm mới bộ lọc"
           >
             <i className="bi bi-arrow-clockwise"></i>

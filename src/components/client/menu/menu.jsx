@@ -25,6 +25,7 @@ const Menu = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const categoryId = searchParams.get("category");
+  const fullUrl = `http://localhost:8000/storage/`;
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -84,12 +85,8 @@ setSelectedDish(res.data?.dish || null);
                         }}
                       >
                         <img
-                          src={item.image_url || defaultDishImg}
+                          src={`${fullUrl}${item.image_url}`}
                           alt={item.name}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = defaultDishImg;
-                          }}
                         />
                       </a>
 

@@ -184,8 +184,7 @@ const SidebarContent = (props) => {
             )}
 
             {hasPermission("reservation.view") && (
-
-            <li>
+              <li>
               <Link to="/#" className="has-arrow">
                 <i className="bx bx-task"></i>
                 <span>{props.t("Quản Lí Đơn Đặt Bàn")}</span>
@@ -195,14 +194,6 @@ const SidebarContent = (props) => {
                   <Link to="/reservations">
                     {props.t("Danh Sách Đơn Đặt Bàn")}
                   </Link>
-                </li>
-                <li>
-                  <Link to="/reservations/history">
-                    {props.t("Lịch sử đơn đặt bàn")}
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/table-areas">{props.t("Khu vực bàn")}</Link>
                 </li>
               </ul>
             </li>
@@ -273,14 +264,6 @@ const SidebarContent = (props) => {
                 <li>
                   <Link to="/orders">{props.t("Danh Sách Đơn Hàng")}</Link>
                 </li>
-                <li>
-                  <Link to="/orders/track">{props.t("Theo Dõi Đơn Hàng")}</Link>
-                  </li>
-                  <li>
-                    <Link to="/orders/history">
-                      <span>Lịch sử đơn hàng</span>
-                    </Link>
-                  </li>
               </ul>
             </li>
             )}

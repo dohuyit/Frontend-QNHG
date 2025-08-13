@@ -16,7 +16,6 @@ import { FaTrash, FaCheck, FaTimes, FaUsers, FaCalendarAlt, FaClock, FaStickyNot
 import Badge from "../ui/Badge";
 import TableSelectModal from "../Orders/TableSelectModal";
 import { getTables } from "@services/admin/tableService";
-import { getTableAreas } from "@services/admin/tableAreaService";
 
 const ReservationCard = ({
     reservation,
@@ -30,7 +29,6 @@ const ReservationCard = ({
 
     // State cho modal chọn bàn
     const [showTableModal, setShowTableModal] = React.useState(false);
-    const [tableAreas, setTableAreas] = React.useState([]);
     const [selectedArea, setSelectedArea] = React.useState(null);
     const [tableList, setTableList] = React.useState([]);
     const [loadingTables, setLoadingTables] = React.useState(false);
@@ -172,6 +170,20 @@ const ReservationCard = ({
                                             return "";
                                         })()}
                                         onChange={e => onTimeChange(reservation.id, e.target.value)}
+                                        min={(() => {
+                                            // Nếu là hôm nay thì chỉ cho chọn giờ hiện tại trở đi
+                                            const reservationDate = reservation.reservation_date || reservation.booking_date;
+                                            if (reservationDate) {
+                                                const today = new Date().toDateString();
+                                                const reservationDay = new Date(reservationDate).toDateString();
+                                                if (today === reservationDay) {
+                                                    const now = new Date();
+                                                    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                                                }
+                                            }
+                                            return "09:00"; // Giờ mở cửa
+                                        })()}
+                                        max="20:00" // Giờ đóng cửa
                                         style={{ fontSize: 16, padding: "2px 8px" }}
                                     />
                                 ) : (
@@ -302,7 +314,6 @@ const ReservationCard = ({
             <TableSelectModal
                 isOpen={showTableModal}
                 onClose={() => setShowTableModal(false)}
-                tableAreas={tableAreas}
                 selectedArea={selectedArea}
                 onAreaSelect={setSelectedArea}
                 tableList={tableList}
