@@ -72,7 +72,8 @@ const TableAreaIndex = () => {
             const params = {
                 page,
                 per_page: 10,
-                search: search || undefined,
+                // Nếu filterName có giá trị thì không gửi query (search)
+                query: filterName ? undefined : (search || undefined),
                 status: status !== "all" ? status : undefined,
                 name: filterName || undefined,
                 capacity: filterCapacity || undefined,

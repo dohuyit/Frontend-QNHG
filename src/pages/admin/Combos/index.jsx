@@ -62,6 +62,7 @@ const ComboIndex = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [, setEditComboId] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
+  const [refreshTrashKey, setRefreshTrashKey] = useState(0);
   const [dishList] = useState([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState(null);
@@ -381,10 +382,10 @@ const ComboIndex = () => {
             </CardBody>
           </Card>
         </TabPane>
-
         <TabPane tabId="trash">
-          <ListTrashCombo />
+          <ListTrashCombo refreshKey={refreshTrashKey} />
         </TabPane>
+
       </TabContent>
 
       <ModalCombo
