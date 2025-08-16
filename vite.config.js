@@ -28,6 +28,7 @@ export default defineConfig({
       "@layouts": resolve(__dirname, "src/layouts"),
       "@services": resolve(__dirname, "src/services"),
       "@hooks": resolve(__dirname, "src/hooks"),
+      "@config": resolve(__dirname, "src/config"),
     },
   },
 });

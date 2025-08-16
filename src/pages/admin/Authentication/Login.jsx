@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import FaceLogin from "@components/admin/auth/FaceLogin";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import withRouter from "@components/admin/ui/withRouter";
@@ -33,6 +34,18 @@ import logo from "@assets/admin/images/logo.svg";
 import lightlogo from "@assets/admin/images/logo-light.svg";
 
 const Login = (props) => {
+  // State cho đăng nhập khuôn mặt
+  const [showFaceLogin, setShowFaceLogin] = useState(false);
+
+  // Xử lý khi đăng nhập khuôn mặt thành công
+  const handleFaceLoginSuccess = (userData) => {
+    // Ví dụ: lưu token vào localStorage, chuyển hướng, v.v.
+    // localStorage.setItem('token', userData.token);
+    // props.router.navigate('/admin/dashboard');
+    // Ở đây chỉ log ra console
+    console.log('Đăng nhập khuôn mặt thành công:', userData);
+    setShowFaceLogin(false);
+  };
   //meta title
   document.title = "Login | Skote - Vite React Admin & Dashboard Template";
   const dispatch = useDispatch();
@@ -202,7 +215,17 @@ const Login = (props) => {
                           className="btn btn-primary btn-block"
                           type="submit"
                         >
-                          Log In
+                          Đăng nhập
+                        </button>
+                      </div>
+
+                      <div className="mt-3 d-grid">
+                        <button
+                          className="btn btn-outline-primary btn-block"
+                          type="button"
+                          onClick={() => setShowFaceLogin(true)}
+                        >
+                          Đăng nhập bằng khuôn mặt
                         </button>
                       </div>
 
@@ -284,8 +307,14 @@ const Login = (props) => {
             </Col>
           </Row>
         </Container>
-      </div>
-    </React.Fragment>
+      {/* Modal đăng nhập khuôn mặt */}
+      <FaceLogin
+        isOpen={showFaceLogin}
+        toggle={() => setShowFaceLogin(false)}
+        onLoginSuccess={handleFaceLoginSuccess}
+      />
+    </div>
+  </React.Fragment>
   );
 };
 

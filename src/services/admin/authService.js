@@ -1,65 +1,81 @@
+import api from './api';
 
-import axios from "axios";
-
-export const BASE_URL = "http://localhost:8000";
-const API_URL = `${BASE_URL}/api/admin`;
-
-// Lấy token từ localStorage hoặc nơi bạn lưu token
-const getToken = () => {
-    const adminToken = localStorage.getItem("admin_token");
-    return adminToken || null;
+// Traditional login
+export const login = async (credentials) => {
+    const response = await api.post('/admin/login', credentials);
+    return response.data;
 };
 
-// Tạo axios instance dùng chung
-const apiClient = axios.create({
-    baseURL: API_URL,
-    headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    },
-});
-
-// Interceptor thêm Authorization header trước khi gửi request
-apiClient.interceptors.request.use((config) => {
-    const token = getToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (
-            error.response &&
-            error.response.status === 403 &&
-            error.response.data?.code === "ACCOUNT_INACTIVE"
-        ) {
-            localStorage.removeItem("admin_token");
-            window.location.href = "http://localhost:5173/admin/login";
-        }
-        return Promise.reject(error);
-    }
-);
-
-export const login = (data) => {
-    return apiClient.post(`/login`, data, { headers: { "Authorization": undefined } }); // Login does not need a token
+// FaceNet login (sinh token từ user_id + confidence)
+export const faceAuthLogin = async (userId, confidence) => {
+    const response = await api.post('/admin/face-auth/login', {
+        user_id: userId,
+        confidence,
+    });
+    return response.data;
 };
-export const logout = () => {
-    return apiClient.post(`/logout`, {});
+
+// Face login
+export const faceLogin = async (base64Image) => {
+    const response = await api.post('/admin/face/login', {
+        base64_image: base64Image
+    });
+    return response.data;
+};
+
+// Face login via LBPH
+export const faceLoginLbph = async (base64Image, threshold = 65.0) => {
+    const response = await api.post('/admin/face/login-lbph', {
+        base64_image: base64Image,
+        threshold,
+    });
+    return response.data;
+};
+
+// Recognize only (preview user info before confirm login)
+export const faceRecognizeLbph = async (base64Image, threshold = 65.0) => {
+    const response = await api.post('/admin/face/recognize-lbph', {
+        base64_image: base64Image,
+        threshold,
+    });
+    return response.data;
+};
+
+// Register face
+export const registerFace = async (userId, base64Image) => {
+    const response = await api.post('/admin/face/register', {
+        user_id: userId,
+        base64_image: base64Image
+    });
+    return response.data;
+};
+
+// Delete face
+export const deleteFace = async (userId) => {
+    const response = await api.delete(`/admin/face/delete/${userId}`);
+    return response.data;
+};
+
+// Health check
+export const faceHealthCheck = async () => {
+    const response = await api.get('/admin/face/health');
+    return response.data;
+};
+
+// Logout
+export const logout = async () => {
+    const response = await api.post('/admin/logout');
+    return response.data;
 };
 
 export const forgotPassword = (email) => {
-    return apiClient.post(`/forgot-password`, { email }, { headers: { "Authorization": undefined } }); // Forgot password does not need a token
+    return api.post(`/admin/forgot-password`, { email });
 };
 
 export const resetPassword = (id, data) => {
-    return apiClient.post(`/reset-password/${id}`, data, { headers: { "Authorization": undefined } }); // Reset password does not need a token
+    return api.post(`/admin/reset-password/${id}`, data);
 };
 
 export const changePassword = (data) => {
-    return apiClient.post(`/users/change-password`, data, {
-        headers: { "Authorization": undefined }
-    });
+    return api.post(`/admin/users/change-password`, data);
 };

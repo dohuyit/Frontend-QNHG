@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useNavigate, useSearchParams, Link } from "react-router-dom"
 import Swal from "sweetalert2"
-import { login as adminLogin } from "@services/admin/authService"
-import { Coffee, Utensils, Wine, ChefHat, Eye, EyeOff } from "lucide-react"
+import { login as adminLogin, faceAuthLogin } from "@services/admin/authService"
+import { redirectAfterLogin, getUserDisplayInfo } from "@services/admin/authRoutingService"
+import { Coffee, Eye, EyeOff, Camera } from "lucide-react"
 import "./AdminLogin.css"
+import { faceRecognitionService, FACE_RECOGNITION_CONSTANTS } from "@services/admin/faceRecognitionService"
 
 export default function AdminLogin() {
     const navigate = useNavigate()
@@ -19,146 +21,419 @@ export default function AdminLogin() {
 
     const [errors, setErrors] = useState({})
     const [generalError, setGeneralError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
 
-    const handleChange = (e) => {
+    // Face recognition state
+    const [isFaceRecognizing, setIsFaceRecognizing] = useState(false)
+    const [registerUserId, setRegisterUserId] = useState("")
+    const [registerRole, setRegisterRole] = useState("Admin")
+    const videoRef = useRef(null)
+    const canvasRef = useRef(null)
+    const streamRef = useRef(null)
+
+    const handleInputChange = (e) => {
         const { name, value } = e.target
-        setFormData((prev) => ({
+        setFormData(prev => ({
             ...prev,
-            [name]: value,
+            [name]: value
         }))
+        // Clear error when user starts typing
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ""
+            }))
+        }
     }
 
-    const handleLogin = async (e) => {
+    const validateForm = () => {
+        const newErrors = {}
+        
+        if (!formData.email.trim()) {
+            newErrors.email = "Email là bắt buộc"
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Email không hợp lệ"
+        }
+        
+        if (!formData.password) {
+            newErrors.password = "Mật khẩu là bắt buộc"
+        }
+        
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
+
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        setErrors({})
+        
+        if (!validateForm()) return
+        
+        setIsLoading(true)
         setGeneralError("")
-
+        
         try {
-            const res = await adminLogin(formData)
-            const { token, user } = res.data.data
+            const response = await adminLogin(formData)
+            
+            if (response.code === "SUCCESS") {
+                // Lưu thông tin đăng nhập
+                if (response.data.token) localStorage.setItem('admin_token', response.data.token)
+                if (response.data.user) localStorage.setItem('admin_user', JSON.stringify(response.data.user))
+                
+                const userInfo = getUserDisplayInfo(response.data.user)
+                const welcomeMessage = `Chào mừng ${userInfo.name}! (${userInfo.role})`
+                
+                Swal.fire("Thành công", welcomeMessage, "success").then(() => {
+                    redirectAfterLogin(response.data.user, navigate)
+                })
+            } else {
+                setGeneralError(response.message || "Đăng nhập thất bại")
+            }
+        } catch (error) {
+            setGeneralError("Có lỗi xảy ra khi đăng nhập")
+            console.error("Login error:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
-            localStorage.setItem("admin_token", token)
-            localStorage.setItem("admin_user", JSON.stringify(user))
-
-            Swal.fire("Thành công", "Đăng nhập thành công!", "success").then(() => {
-                navigate("/dashboard")
+    // Face recognition functions
+    const startFaceRecognition = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    width: 640, 
+                    height: 480,
+                    facingMode: 'user'
+                } 
             })
-        } catch (err) {
-            const response = err.response
-            const validationErrors = response?.data?.errors || {}
-            const message = response?.data?.message || "Đăng nhập thất bại!"
+            
+            if (!videoRef.current) return
+            
+            videoRef.current.srcObject = stream
+            // Đảm bảo video phát
+            try {
+                videoRef.current.setAttribute('playsinline', '')
+                videoRef.current.muted = true
+                const p = videoRef.current.play()
+                if (p && typeof p.then === 'function') {
+                    p.catch(() => {})
+                }
+            } catch (e) {}
+            streamRef.current = stream
+            setIsFaceRecognizing(true)
 
-            if (Object.keys(validationErrors).length > 0) {
-                setErrors(validationErrors)
+            // Đợi camera sẵn sàng một chút
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            // Chụp một khung hình từ video
+            const videoEl = videoRef.current
+            const canvasEl = canvasRef.current
+            if (!canvasEl) return
+            const ctx = canvasEl.getContext('2d')
+            canvasEl.width = videoEl.videoWidth || 640
+            canvasEl.height = videoEl.videoHeight || 480
+            ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height)
+            const base64Image = canvasEl.toDataURL('image/jpeg')
+
+            // Gọi Laravel API nhận diện để đồng bộ logic và token
+            let faceResult
+            try {
+                faceResult = await faceRecognitionService.recognizeFace(base64Image)
+            } catch (err) {
+                // Nếu bị 401 (Unauthorized) do route bảo vệ, fallback gọi trực tiếp Flask API
+                const status = err?.response?.status
+                if (status === 401) {
+                    const res = await fetch('http://localhost:5000/api/face/recognize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: base64Image })
+                    })
+                    const data = await res.json().catch(() => ({}))
+                    if (!res.ok || !data?.success) {
+                        throw new Error(data?.message || 'Nhận diện thất bại (Flask)')
+                    }
+                    faceResult = data
+                } else {
+                    throw err
+                }
+            }
+
+            if (!faceResult?.success) {
+                throw new Error(faceResult?.message || 'Nhận diện thất bại')
+            }
+
+            // Lấy thông tin từ kết quả nhận diện
+            const { user_info: userInfo, accuracy, user_id } = faceResult
+            const accuracyPercentage = parseFloat(accuracy || 0)
+            
+            // Kiểm tra độ chính xác
+            const autoLogin = accuracyPercentage >= FACE_RECOGNITION_CONSTANTS.MIN_ACCURACY
+            
+            const recognitionHtml = `
+                <div style="text-align: left; font-size: 14px;">
+                    <p><strong>Người dùng:</strong> ${userInfo?.full_name || 'N/A'}</p>
+                    <p><strong>Email:</strong> ${userInfo?.email || 'N/A'}</p>
+                    <p><strong>Quyền:</strong> ${userInfo?.role_name || 'N/A'}</p>
+                    <p><strong>Độ chính xác:</strong> <span style="color: ${accuracyPercentage >= 80 ? '#28a745' : accuracyPercentage >= 60 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${accuracyPercentage.toFixed(1)}%</span></p>
+                </div>
+            `
+
+            if (autoLogin) {
+                // Tự động đăng nhập nếu độ chính xác đủ cao - gọi API tạo token
+                const confidence = accuracyPercentage / 100; // Chuyển về 0-1
+                const authResult = await faceAuthLogin(user_id, confidence);
+                
+                if (authResult.success && authResult.data?.token) {
+                    localStorage.setItem('admin_token', authResult.data.token)
+                } else {
+                    throw new Error('Không thể tạo token đăng nhập. Vui lòng thử lại.')
+                }
+                // Lưu thông tin user từ authResult
+                const loggedUser = {
+                    id: authResult.data.user.id,
+                    full_name: authResult.data.user.full_name,
+                    email: authResult.data.user.email,
+                    username: authResult.data.user.username,
+                    roles: authResult.data.user.roles,
+                    permissions: authResult.data.user.permissions
+                }
+                localStorage.setItem('admin_user', JSON.stringify(loggedUser))
+
+                // Thông báo đăng nhập thành công
+                await Swal.fire({
+                    title: 'Đăng nhập thành công!',
+                    html: recognitionHtml,
+                    icon: 'success',
+                    confirmButtonText: 'Vào trang quản trị',
+                    timer: 3000,
+                    timerProgressBar: true
+                })
+
+                navigate('/dashboard')
+            } else {
+                // Hiển thị kết quả nhưng không tự động đăng nhập
+                const result = await Swal.fire({
+                    title: 'Kết quả nhận diện',
+                    html: recognitionHtml,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Đăng nhập dù sao',
+                    cancelButtonText: 'Hủy',
+                    confirmButtonColor: accuracyPercentage >= 60 ? '#28a745' : '#dc3545'
+                })
+
+                if (result.isConfirmed) {
+                    // Đăng nhập thủ công - gọi API tạo token
+                    const confidence = accuracyPercentage / 100; // Chuyển về 0-1
+                    const authResult = await faceAuthLogin(user_id, confidence);
+                    
+                    if (authResult.success && authResult.data?.token) {
+                        localStorage.setItem('admin_token', authResult.data.token)
+                        
+                        const loggedUser = {
+                            id: authResult.data.user.id,
+                            full_name: authResult.data.user.full_name,
+                            email: authResult.data.user.email,
+                            username: authResult.data.user.username,
+                            roles: authResult.data.user.roles,
+                            permissions: authResult.data.user.permissions
+                        }
+                        localStorage.setItem('admin_user', JSON.stringify(loggedUser))
+                    } else {
+                        Swal.fire('Lỗi', 'Không thể tạo token đăng nhập. Vui lòng thử lại.', 'error')
+                        return
+                    }
+                    
+                    Swal.fire('Thành công', 'Đăng nhập thành công!', 'success').then(() => {
+                        navigate('/dashboard')
+                    })
+                }
+            }
+        } catch (error) {
+            Swal.fire('Lỗi', error.message || 'Không thể nhận diện/đăng nhập bằng khuôn mặt.', 'error')
+            console.error('Face login error:', error)
+        } finally {
+            // Dừng camera
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop())
+                streamRef.current = null
+            }
+            setIsFaceRecognizing(false)
+        }
+    }
+
+    const registerFace = async () => {
+        try {
+            if (!registerUserId) {
+                Swal.fire('Thiếu thông tin', 'Vui lòng nhập User ID để đăng ký khuôn mặt', 'warning')
                 return
             }
 
-            Swal.fire("Lỗi", message, "error")
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 640,
+                    height: 480,
+                    facingMode: 'user'
+                }
+            })
+
+            if (!videoRef.current) return
+
+            videoRef.current.srcObject = stream
+            streamRef.current = stream
+
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            const videoEl = videoRef.current
+            const canvasEl = canvasRef.current
+            if (!canvasEl) return
+            const ctx = canvasEl.getContext('2d')
+            canvasEl.width = videoEl.videoWidth || 640
+            canvasEl.height = videoEl.videoHeight || 480
+            ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height)
+            const base64Image = canvasEl.toDataURL('image/jpeg')
+
+            const res = await fetch('http://localhost:8000/api/admin/face-auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: Number(registerUserId),
+                    role_name: registerRole,
+                    face_image: base64Image
+                })
+            })
+
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok || !data?.success) {
+                throw new Error(data?.message || 'Đăng ký khuôn mặt thất bại')
+            }
+
+            Swal.fire('Thành công', 'Đăng ký khuôn mặt thành công!', 'success')
+        } catch (error) {
+            console.error('Register face error:', error)
+            Swal.fire('Lỗi', error.message || 'Không thể đăng ký khuôn mặt.', 'error')
+        } finally {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop())
+                streamRef.current = null
+            }
         }
     }
 
     return (
         <div className="admin-login-container">
-            {/* Background Animation */}
-            <div className="background-pattern"></div>
-
-            {/* Floating Icons */}
-            <div className="floating-icon floating-1"><Coffee size={40} /></div>
-            <div className="floating-icon floating-2"><Utensils size={35} /></div>
-            <div className="floating-icon floating-3"><Wine size={30} /></div>
-            <div className="floating-icon floating-4"><ChefHat size={38} /></div>
-
-            <div className="glowing-orb orb-1"></div>
-            <div className="glowing-orb orb-2"></div>
-
-            <div className="login-card">
-                <div className="card-header-line"></div>
-                <div className="card-header">
-                    <div className="logo-container">
-                        <div className="logo-ping"></div>
-                        <ChefHat className="logo-icon" size={48} />
+            <div className="admin-login-card">
+                <div className="admin-login-header">
+                    <div className="admin-login-logo-container">
+                        <Coffee className="admin-login-logo-icon" />
+                        <h1>QNHG Restaurant</h1>
                     </div>
-                    <h1 className="title">Quán Nhậu Hoàng Gia</h1>
-                    <p className="subtitle">Hệ thống quản trị</p>
+                    <p className="admin-login-subtitle">Hệ thống quản lý nhà hàng</p>
                 </div>
 
-                <div className="card-content">
-                    {message && (
-                        <div className="success-message">
-                            <p>{message}</p>
-                        </div>
-                    )}
+                {message && (
+                    <div className="admin-login-alert admin-login-alert-info">
+                        {message}
+                    </div>
+                )}
 
-                    {generalError && (
-                        <div className="error-message text-danger text-center mb-2">
-                            {generalError}
-                        </div>
-                    )}
+                {generalError && (
+                    <div className="admin-login-alert admin-login-alert-danger">
+                        {generalError}
+                    </div>
+                )}
 
-                    <form onSubmit={handleLogin} className="login-form">
-                        <div className="form-group">
-                            <label htmlFor="email" className="form-label">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                id="email"
-                                placeholder="admin@quannhau.com"
-                                value={formData.email}
-                                onChange={handleChange}
-                                className={`form-input ${errors.email ? "error" : ""}`}
-                            />
-                            {errors.email && <div className="error-message">{errors.email}</div>}
-                        </div>
+                <form onSubmit={handleSubmit} className="admin-login-form">
+                    <div className="admin-login-form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className={`admin-login-form-control ${errors.email ? 'admin-login-is-invalid' : ''}`}
+                            placeholder="Nhập email của bạn"
+                        />
+                        {errors.email && <div className="admin-login-invalid-feedback">{errors.email}</div>}
+                    </div>
 
-                        <div className="form-group" style={{ position: "relative" }}>
-                            <label htmlFor="password" className="form-label">Mật khẩu</label>
+                    <div className="admin-login-form-group">
+                        <label htmlFor="password">Mật khẩu</label>
+                        <div className="admin-login-password-input-group">
                             <input
                                 type={showPassword ? "text" : "password"}
-                                name="password"
                                 id="password"
-                                placeholder="••••••••••"
+                                name="password"
                                 value={formData.password}
-                                onChange={handleChange}
-                                className={`form-input ${errors.password ? "error" : ""}`}
+                                onChange={handleInputChange}
+                                className={`admin-login-form-control ${errors.password ? 'admin-login-is-invalid' : ''}`}
+                                placeholder="Nhập mật khẩu của bạn"
                             />
-                            {/* Icon hiện/ẩn mật khẩu */}
-                            <div
-                                className="password-toggle-icon"
+                            <button
+                                type="button"
+                                className="admin-login-password-toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
-                                style={{
-                                    position: "absolute",
-                                    right: "12px",
-                                    top: "50%", // Căn giữa theo chiều dọc
-                                    transform: "translateY(-50%)",
-                                    cursor: "pointer",
-                                    color: "#888"
-                                }}
                             >
                                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </div>
-
-
-                            {errors.password && <div className="error-message">{errors.password}</div>}
-
-                            {/* Link "Quên mật khẩu?" */}
-                            <div className="forgot-password-link mt-2">
-                                <Link to="/admin/forgot-password">Quên mật khẩu?</Link>
-                            </div>
+                            </button>
                         </div>
-
-                        <button type="submit" className="login-button">
-                            <span>Đăng nhập</span>
-                            <div className="button-overlay"></div>
-                        </button>
-                    </form>
-
-                    <div className="card-footer">
-                        <div className="divider"></div>
-                        <p className="copyright">© 2025 Quán Nhậu Hoàng Gia</p>
+                        {errors.password && <div className="admin-login-invalid-feedback">{errors.password}</div>}
                     </div>
+
+                    <button
+                        type="submit"
+                        className="admin-login-btn admin-login-btn-primary admin-login-btn-block"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+                    </button>
+                </form>
+
+                {/* Face Recognition Section */}
+                <div className="admin-login-face-auth-section">
+                    <h4>Xác thực bằng khuôn mặt</h4>
+                    <div className="admin-login-face-auth-buttons">
+                        <button
+                            className="admin-login-btn admin-login-btn-success admin-login-btn-block admin-login-mb-2"
+                            onClick={startFaceRecognition}
+                            disabled={isFaceRecognizing}
+                        >
+                            <Camera size={20} className="admin-login-me-2" />
+                            {isFaceRecognizing ? "Đang nhận diện..." : "Đăng nhập bằng khuôn mặt"}
+                        </button>
+                    </div>
+                    
+                </div>
+                <div className="admin-login-footer">
+                    <p>
+                        <Link to="/admin/forgot-password">Quên mật khẩu?</Link>
+                    </p>
                 </div>
             </div>
+
+            {/* Hidden elements for face recognition */}
+            <div style={{ marginTop: 16 }}>
+                <video
+                    ref={videoRef}
+                    style={{
+                        display: isFaceRecognizing ? 'block' : 'none',
+                        width: 320,
+                        height: 240,
+                        borderRadius: 8,
+                        border: '1px solid #e5e7eb',
+                        objectFit: 'cover'
+                    }}
+                    autoPlay
+                    muted
+                    width="320"
+                    height="240"
+                />
+            </div>
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
     )
 }
