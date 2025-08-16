@@ -5,42 +5,44 @@ import getChartColorsArray from "@components/admin/ui/ChartsDynamicColor";
 
 const StackedColumnChart = ({ dataColors, periodData }) => {
   const stackedColumnChartColors = getChartColorsArray(dataColors);
+
+  // Tạo series theo định dạng ApexCharts
+  const series = [
+    {
+      name: "Bookings",
+      data: periodData.map((item) => item.bookings),
+    },
+    {
+      name: "Revenue",
+      data: periodData.map((item) => item.revenue),
+    },
+  ];
+
+  // categories lấy từ periodData
+  const categories = periodData.map((item) => item.name);
+
   const options = {
     chart: {
-      stacked: !0,
+      stacked: true,
       toolbar: {
         show: false,
       },
       zoom: {
-        enabled: !0,
+        enabled: true,
       },
     },
     plotOptions: {
       bar: {
-        horizontal: !1,
+        horizontal: false,
         columnWidth: "15%",
         // endingShape: "rounded"
       },
     },
     dataLabels: {
-      enabled: !1,
+      enabled: false,
     },
     xaxis: {
-      show: true,
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories: categories,
       labels: {
         show: true,
       },
@@ -53,20 +55,23 @@ const StackedColumnChart = ({ dataColors, periodData }) => {
       opacity: 1,
     },
   };
+
   return (
-    <React.Fragment>
-      <ReactApexChart
-        options={options}
-        series={[...periodData]}
-        type="bar"
-        height="359"
-        className="apex-charts"
-      />
-    </React.Fragment>
+      <React.Fragment>
+        <ReactApexChart
+            options={options}
+            series={series}
+            type="bar"
+            height="359"
+            className="apex-charts"
+        />
+      </React.Fragment>
   );
 };
 
 StackedColumnChart.propTypes = {
-  periodData: PropTypes.any,
+  periodData: PropTypes.array.isRequired,
+  dataColors: PropTypes.oneOfType([PropTypes.string, PropTypes.array]).isRequired,
 };
+
 export default StackedColumnChart;
