@@ -45,11 +45,8 @@ import AdminResetPassword from "@pages/admin/Users/ AdminResetPassword.jsx";
 import Forbidden403 from "@pages/admin/Users/403.jsx";
 import ChangePassword from "@pages/admin/Users/ChangePassword.jsx";
 import ReservationHistory from "@pages/admin/Reservations/History";
-<<<<<<< HEAD
 import FaceAuthPage from "@pages/admin/FaceAuth";
-=======
 import ListDiscountCode from "@pages/admin/DiscountCode/index.jsx"
->>>>>>> 1b75cab917ac75d2b0cf9b3a65a16b9cae0135ec
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard />, permission: "dashboard.view" },
 

@@ -6,10 +6,10 @@
 export const ROLE_ROUTES = {
   'Admin': '/dashboard',           // Admin vào dashboard chính
   'admin': '/dashboard',           // Fallback cho lowercase
-  'Quản lý bếp': '/kitchen',       // Quản lý bếp vào trang bếp
-  'bếp': '/kitchen',               // Fallback cho role từ admin_faces
-  'Nhân viên': '/staff',           // Nhân viên vào trang nhân viên
-  'nhân viên': '/staff',           // Fallback cho role từ admin_faces
+  'Quản lý bếp': '/dashboard',       // Quản lý bếp vào trang bếp
+  'bếp': '/dashboard',           // Fallback cho role từ admin_faces
+  'Nhân viên': '/dashboard',       // Nhân viên vào dashboard (tạm thời)
+  'nhân viên': '/dashboard',       // Fallback cho role từ admin_faces
   'default': '/dashboard'          // Route mặc định
 };
 

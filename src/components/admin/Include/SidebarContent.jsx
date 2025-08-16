@@ -278,7 +278,6 @@ const SidebarContent = (props) => {
                 </li>
               </ul>
             </li>
-            )}
 
             {hasPermission("discount.view") && (
                 <li>
