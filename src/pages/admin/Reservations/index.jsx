@@ -83,7 +83,6 @@ const TableBookingIndex = () => {
   const [areaData, setAreaData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("1");
-  const [view, setView] = useState("list");
   const [showFilter, setShowFilter] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -641,6 +640,7 @@ const TableBookingIndex = () => {
                   <Label for="customer_name">Tên khách hàng *</Label>
                   <Input
                     id="customer_name"
+                    placeholder="Nhập tên khách hàng..."
                     value={createForm.customer_name}
                     onChange={(e) =>
                       setCreateForm({
@@ -660,6 +660,7 @@ const TableBookingIndex = () => {
                     type="tel"
                     pattern="[0-9]*"
                     inputMode="numeric"
+                    placeholder="Nhập số điện thoại..."
                     value={createForm.customer_phone}
                     onChange={(e) => {
                       // Chỉ cho nhập số
@@ -678,6 +679,7 @@ const TableBookingIndex = () => {
                   <Input
                     id="customer_email"
                     type="email"
+                    placeholder="Nhập địa chỉ email..."
                     value={createForm.customer_email}
                     onChange={(e) =>
                       setCreateForm({
@@ -694,6 +696,8 @@ const TableBookingIndex = () => {
                   <Input
                     id="number_of_guests"
                     type="number"
+                    placeholder="Nhập số lượng khách..."
+                    min="1"
                     value={createForm.number_of_guests}
                     onChange={(e) =>
                       setCreateForm({
@@ -713,6 +717,7 @@ const TableBookingIndex = () => {
                   <Input
                     id="booking_date"
                     type="date"
+                    placeholder="Chọn ngày đặt bàn..."
                     min={new Date().toISOString().slice(0, 10)}
                     value={createForm.booking_date}
                     onChange={(e) =>
@@ -808,6 +813,8 @@ const TableBookingIndex = () => {
               <Input
                 id="notes"
                 type="textarea"
+                placeholder="Nhập ghi chú cho đơn đặt bàn (nếu có)..."
+                style={{ minHeight: 100 }}
                 value={createForm.notes}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, notes: e.target.value })

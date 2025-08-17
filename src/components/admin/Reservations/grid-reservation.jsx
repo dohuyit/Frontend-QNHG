@@ -413,6 +413,7 @@ const ReservationGrid = ({
                     <Label for="customer_name">Tên khách hàng</Label>
                     <Input
                       id="customer_name"
+                      placeholder="Nhập tên khách hàng..."
                       value={
                         editForm.customer_name ||
                         selectedItem.customer_name ||
@@ -433,6 +434,7 @@ const ReservationGrid = ({
                     <Label for="customer_phone">Số điện thoại</Label>
                     <Input
                       id="customer_phone"
+                      placeholder="Nhập số điện thoại..."
                       value={
                         editForm.customer_phone ||
                         selectedItem.customer_phone ||
@@ -457,6 +459,7 @@ const ReservationGrid = ({
                     <Input
                       id="customer_email"
                       type="email"
+                      placeholder="Nhập địa chỉ email..."
                       value={
                         editForm.customer_email ||
                         selectedItem.customer_email ||
@@ -479,6 +482,8 @@ const ReservationGrid = ({
                     <Input
                       id="number_of_guests"
                       type="number"
+                      placeholder="Nhập số lượng khách..."
+                      min="1"
                       value={
                         editForm.number_of_guests ||
                         selectedItem.number_of_guests ||
@@ -502,6 +507,7 @@ const ReservationGrid = ({
                     <Input
                       id="reservation_date"
                       type="date"
+                      placeholder="Chọn ngày đặt bàn..."
                       min={new Date().toISOString().slice(0, 10)}
                       value={
                         // Ưu tiên editForm, sau đó selectedItem.reservation_date, cuối cùng là ''
@@ -699,6 +705,7 @@ const ReservationGrid = ({
                     <Input
                       id="notes"
                       type="textarea"
+                      placeholder="Nhập ghi chú cho đơn đặt bàn..."
                       style={{
                         minHeight: 120,
                         height: 150,
