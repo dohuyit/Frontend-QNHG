@@ -33,11 +33,14 @@ import CardTable from "../Table/CardTable";
 import { getCombos } from "@services/admin/comboService";
 import Switch from "react-switch";
 import { Tooltip } from "reactstrap";
+import { getCategories } from "@services/admin/categoryService";
 
 const FormOrderCreate = () => {
   const [orderItems, setOrderItems] = useState([]);
   const [orderNotes, setOrderNotes] = useState("");
   const [orderMethod, setOrderMethod] = useState("Dine In");
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [priority, setPriority] = useState(0);
   const [selectedTables, setSelectedTables] = useState([]); // [{id, table_number, ...}]
   const [dishes, setDishes] = useState([]);
   const [search, setSearch] = useState("");
@@ -63,8 +66,6 @@ const FormOrderCreate = () => {
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-
   const [activeTab, setActiveTab] = useState("dishes");
   const [combos, setCombos] = useState([]);
   const [loadingCombos, setLoadingCombos] = useState(false);
@@ -79,8 +80,8 @@ const FormOrderCreate = () => {
   const [comboCurrentPage, setComboCurrentPage] = useState(1);
   const [selectedAreaIdFromTables, setSelectedAreaIdFromTables] =
     useState(null);
-  const [priority, setPriority] = useState(false);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const navigate = useNavigate();
 
@@ -96,6 +97,26 @@ const FormOrderCreate = () => {
     comboSearch,
     comboCategoryFilter,
   ]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const params = { parent_id: 1 };
+        const res = await getCategories(params);
+        const fetchedCategories = res.data?.data?.items || [];
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Error fetching categories:", error.response || error);
+        setCategories([]);
+        toast.error("Lỗi khi tải danh sách danh mục!");
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const fetchDishes = async (page = 1) => {
     setLoadingDishes(true);
@@ -194,6 +215,8 @@ const FormOrderCreate = () => {
             quantity: 1,
             price: item.selling_price ?? item.price ?? 0,
             combo_id: isCombo ? item.id : null,
+            is_priority: 0,
+            kitchen_status: "pending",
           },
         ];
       }
@@ -346,6 +369,7 @@ const FormOrderCreate = () => {
         combo_id: item.combo_id ? Number(item.combo_id) : null,
         quantity: Number(item.quantity),
         unit_price: Number(item.price),
+        is_priority: Number(item.is_priority),
       })),
     };
 
@@ -432,9 +456,14 @@ const FormOrderCreate = () => {
                     type="select"
                     value={categoryFilter}
                     onChange={handleCategoryFilterChange}
+                    disabled={loadingCategories}
                   >
                     <option value="">Tất cả danh mục</option>
-                    {/* Note: Category options would need to be fetched separately */}
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
                   </Input>
                 </Col>
               </Row>
@@ -516,8 +545,14 @@ const FormOrderCreate = () => {
                       setComboCurrentPage(1);
                       fetchCombos(1);
                     }}
+                    disabled={loadingCategories}
                   >
                     <option value="">Tất cả danh mục</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
                   </Input>
                 </Col>
               </Row>
@@ -873,43 +908,17 @@ const FormOrderCreate = () => {
                 style={{ fontSize: "1.1rem" }}
               >
                 <span>Chi tiết đơn hàng ({orderItems.length} món)</span>
-                <div className="d-flex align-items-center gap-2">
-                  <div className="d-flex align-items-center">
-                    <Switch
-                      id="priority-switch"
-                      checked={priority}
-                      onChange={setPriority}
-                      onColor="#28a745"
-                      offColor="#ccc"
-                      onHandleColor="#fff"
-                      offHandleColor="#fff"
-                      handleDiameter={20}
-                      uncheckedIcon={false}
-                      checkedIcon={false}
-                      boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-                      activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                      height={24}
-                      width={48}
-                      className="react-switch"
-                      aria-hidden="true"
-                      style={{
-                        verticalAlign: "middle",
-                        marginLeft: "4px",
-                      }}
-                    />
-                  </div>
-                  <span id="priority-tooltip" style={{ cursor: "pointer" }}>
-                    <i className="fa fa-info-circle text-secondary" />
-                  </span>
-                  <Tooltip
-                    placement="top"
-                    isOpen={tooltipOpen}
-                    target="priority-tooltip"
-                    toggle={() => setTooltipOpen(!tooltipOpen)}
-                  >
-                    Bật để đánh dấu đơn hàng này là ưu tiên (priority).
-                  </Tooltip>
-                </div>
+                <span id="priority-tooltip" style={{ cursor: "pointer" }}>
+                  <i className="fa fa-info-circle text-secondary" />
+                </span>
+                <Tooltip
+                  placement="top"
+                  isOpen={tooltipOpen}
+                  target="priority-tooltip"
+                  toggle={() => setTooltipOpen(!tooltipOpen)}
+                >
+                  Bật để đánh dấu món ăn này là ưu tiên.
+                </Tooltip>
               </div>
               <div className="order-items-list">
                 {orderItems.length === 0 ? (
@@ -922,6 +931,18 @@ const FormOrderCreate = () => {
                     <div
                       className="order-item-row d-flex align-items-center"
                       key={item.id}
+                      style={{
+                        border: item.is_priority
+                          ? "2px solid #dc3545"
+                          : "1px solid #dee2e6",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        marginBottom: "8px",
+                        backgroundColor: item.is_priority
+                          ? "#fff5f5"
+                          : "transparent",
+                        transition: "all 0.2s ease",
+                      }}
                     >
                       <div className="order-item-img-block me-3">
                         <img
@@ -939,8 +960,38 @@ const FormOrderCreate = () => {
                           <div className="fw-bold order-item-title ellipsis-1 mb-1">
                             {item.name}
                           </div>
-                          <div className="order-item-price-mult text-muted">
-                            {formatPriceToVND(item.price)} đ × {item.quantity}
+                          <div className="order-item-price-mult text-muted d-flex align-items-center">
+                            <span style={{ width: "60%" }}>
+                              {formatPriceToVND(item.price)} đ × {item.quantity}
+                            </span>
+                            <div className="d-flex align-items-center ms-2">
+                              <Switch
+                                checked={!!item.is_priority}
+                                onChange={(checked) => {
+                                  setOrderItems((prevItems) =>
+                                    prevItems.map((i) =>
+                                      i.id === item.id
+                                        ? { ...i, is_priority: checked ? 1 : 0 }
+                                        : i
+                                    )
+                                  );
+                                }}
+                                onColor="#28a745"
+                                offColor="#ccc"
+                                onHandleColor="#fff"
+                                offHandleColor="#fff"
+                                handleDiameter={16}
+                                uncheckedIcon={false}
+                                checkedIcon={false}
+                                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                                activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                                height={20}
+                                width={40}
+                                className="react-switch"
+                                aria-hidden="true"
+                                style={{ verticalAlign: "middle" }}
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="d-flex align-items-center gap-2 ms-3">
@@ -996,7 +1047,7 @@ const FormOrderCreate = () => {
                 </span>
               </div>
             </div>
-            <div className="d-flex gap-2">
+            <div>
               <button
                 type="button"
                 className="btn btn-primary w-100"
@@ -1004,50 +1055,7 @@ const FormOrderCreate = () => {
               >
                 Lưu lại
               </button>
-              <button
-                type="button"
-                className="btn btn-danger w-100"
-                onClick={() => setShowPaymentModal(true)}
-              >
-                Lưu & Thanh toán
-              </button>
             </div>
-            <Modal
-              isOpen={showPaymentModal}
-              toggle={() => setShowPaymentModal(false)}
-            >
-              <ModalHeader toggle={() => setShowPaymentModal(false)}>
-                Chọn phương thức thanh toán
-              </ModalHeader>
-              <ModalBody>
-                <div className="d-flex flex-column gap-3">
-                  <Button
-                    color="primary"
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      handleCreateOrder(/* paymentMethod: 'cash' */);
-                    }}
-                  >
-                    Tiền mặt
-                  </Button>
-                  <Button
-                    color="info"
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      handleCreateOrder(/* paymentMethod: 'bank' */);
-                    }}
-                  >
-                    Chuyển khoản
-                  </Button>
-                  <Button
-                    color="secondary"
-                    onClick={() => setShowPaymentModal(false)}
-                  >
-                    Hủy
-                  </Button>
-                </div>
-              </ModalBody>
-            </Modal>
           </div>
         </Col>
       </Row>

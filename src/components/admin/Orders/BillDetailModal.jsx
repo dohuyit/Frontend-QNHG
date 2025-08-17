@@ -19,7 +19,14 @@ import {
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import { getBillDetails } from "@services/admin/orderService";
 import { toast } from "react-toastify";
-import { FaInfoCircle, FaBoxOpen, FaUser, FaMoneyBillWave, FaClipboardList, FaHandshake } from "react-icons/fa";
+import {
+  FaInfoCircle,
+  FaBoxOpen,
+  FaUser,
+  FaMoneyBillWave,
+  FaClipboardList,
+  FaHandshake,
+} from "react-icons/fa";
 import dishDefaultImg from "@assets/admin/images/dish/dish-default.webp";
 import "./BillDetailModal.scss";
 
@@ -29,12 +36,7 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString("vi-VN");
 };
 
-const BillDetailModal = ({
-  isOpen,
-  toggle,
-  orderId,
-  fullUrl, // Add fullUrl prop for image display
-}) => {
+const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
   const [billData, setBillData] = useState(null);
   const [paymentData, setPaymentData] = useState(null);
   const [orderData, setOrderData] = useState(null);
@@ -379,7 +381,7 @@ const BillDetailModal = ({
                               alt={
                                 item.menu_item?.name || item.combo?.name || ""
                               }
-                              className="order-item-img me-2"
+                              className="bill-order-item-img me-2"
                             />
                             <div>
                               <div className="bill-item-name">
