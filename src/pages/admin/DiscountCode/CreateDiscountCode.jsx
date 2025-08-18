@@ -52,7 +52,7 @@ const CreateDiscountCode = ({ isOpen, toggle, coupon, setCoupon, onSave, errors 
                                     value={coupon.discount_type}
                                     onChange={(e) => handleChange("discount_type", e.target.value)}
                                 >
-                                    <option value="percent">Phần trăm</option>
+                                    <option value="percentage">Phần trăm</option>
                                     <option value="fixed">Tiền cố định</option>
                                 </Input>
                             </FormGroup>
@@ -66,6 +66,18 @@ const CreateDiscountCode = ({ isOpen, toggle, coupon, setCoupon, onSave, errors 
                                     type="number"
                                     value={coupon.discount_value}
                                     onChange={(e) => handleChange("discount_value", e.target.value)}
+                                />
+                            </FormGroup>
+                        </Col>
+
+                        <Col md={6}>
+                            <FormGroup>
+                                <Label for="usage_limit">Giới hạn sử dụng</Label>
+                                <Input
+                                    id="usage_limit"
+                                    type="number"
+                                    value={coupon.usage_limit}
+                                    onChange={(e) => handleChange("usage_limit", e.target.value)}
                                 />
                             </FormGroup>
                         </Col>
@@ -94,19 +106,9 @@ const CreateDiscountCode = ({ isOpen, toggle, coupon, setCoupon, onSave, errors 
                             </FormGroup>
                         </Col>
 
-                        <Col md={6}>
-                            <FormGroup>
-                                <Label for="usage_limit">Giới hạn sử dụng</Label>
-                                <Input
-                                    id="usage_limit"
-                                    type="number"
-                                    value={coupon.usage_limit}
-                                    onChange={(e) => handleChange("usage_limit", e.target.value)}
-                                />
-                            </FormGroup>
-                        </Col>
+                        
 
-                        <Col md={6}>
+                        <Col md={12}>
                             <FormGroup>
                                 <Label for="status">Trạng thái</Label>
                                 <Input

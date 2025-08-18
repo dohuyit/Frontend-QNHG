@@ -11,7 +11,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "reactstrap";
-import { Wallet, CreditCard, Scan } from 'lucide-react';
+import { Wallet, CreditCard, Scan } from "lucide-react";
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import dishDefaultImg from "@assets/admin/images/dish/dish-default.webp";
 import "./PaymentModal.scss"; // New SCSS file for custom styles
@@ -27,7 +27,6 @@ const PaymentModal = ({
   setIsSubmitting,
   orderMethod,
   selectedTables,
-  tableAreas,
   contactName,
   contactPhone,
   contactEmail,
@@ -45,7 +44,7 @@ const PaymentModal = ({
     try {
       let currentUserId = null;
       try {
-        const adminUserString = localStorage.getItem('admin_user');
+        const adminUserString = localStorage.getItem("admin_user");
         if (adminUserString) {
           const adminUser = JSON.parse(adminUserString);
           currentUserId = adminUser.id || null;
@@ -68,14 +67,20 @@ const PaymentModal = ({
       const paymentRes = await paymentOrder(orderId, paymentPayload);
       const paymentUrl = paymentRes.data?.data?.payment_url;
 
-      if ((selectedPaymentMethod === 'momo' || selectedPaymentMethod === 'vnpay') && paymentUrl) {
+      if (
+        (selectedPaymentMethod === "momo" ||
+          selectedPaymentMethod === "vnpay") &&
+        paymentUrl
+      ) {
         window.location.href = paymentUrl;
       } else {
         if (paymentRes.data?.code === "SUCCESS") {
           toast.success(paymentRes.data.message, { autoClose: 2000 });
           navigate("/orders/list");
         } else {
-          toast.error(paymentRes.data.message || "Thanh toán đơn hàng thất bại!");
+          toast.error(
+            paymentRes.data.message || "Thanh toán đơn hàng thất bại!"
+          );
         }
       }
     } catch (error) {
@@ -87,7 +92,9 @@ const PaymentModal = ({
           .join("; ");
         toast.error(errorMessages || "Lỗi khi xác nhận thanh toán!");
       } else {
-        toast.error(error.response?.data?.message || "Lỗi khi xác nhận thanh toán!");
+        toast.error(
+          error.response?.data?.message || "Lỗi khi xác nhận thanh toán!"
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -120,23 +127,40 @@ const PaymentModal = ({
               </h5>
               <div className="customer-info-grid">
                 <Row className="mb-3">
-                  <Col md={6} className="qnhg-col-md-6">
+                  <Col md={12} className="qnhg-col-md-6">
                     <div className="customer-info-item">
                       <Label className="qnhg-form-label">Họ và tên *</Label>
-                      <Input type="text" value={displayContactName} readOnly className="qnhg-form-control" />
+                      <Input
+                        type="text"
+                        value={displayContactName}
+                        readOnly
+                        className="qnhg-form-control"
+                      />
                     </div>
                   </Col>
-                  <Col md={6} className="qnhg-col-md-6">
+                  <Col md={12} className="qnhg-col-md-6">
                     <div className="customer-info-item">
                       <Label className="qnhg-form-label">Số điện thoại *</Label>
-                      <Input type="tel" value={displayContactPhone} readOnly className="qnhg-form-control" />
+                      <Input
+                        type="tel"
+                        value={displayContactPhone}
+                        readOnly
+                        className="qnhg-form-control"
+                      />
+                    </div>
+                  </Col>
+                  <Col md={12} className="qnhg-col-md-6">
+                    <div className="customer-info-item">
+                      <Label className="qnhg-form-label">Email *</Label>
+                      <Input
+                        type="email"
+                        value={displayContactEmail}
+                        readOnly
+                        className="qnhg-form-control"
+                      />
                     </div>
                   </Col>
                 </Row>
-                <div className="customer-info-item">
-                  <Label className="qnhg-form-label">Email *</Label>
-                  <Input type="email" value={displayContactEmail} readOnly className="qnhg-form-control" />
-                </div>
               </div>
             </div>
 
@@ -145,26 +169,14 @@ const PaymentModal = ({
                 <h5 className="payment-section-title">
                   <i className="ri-map-pin-line me-2"></i>Thông tin đặt bàn
                 </h5>
-                <Row>
-                  <Col xs={6}>
-                    <div className="table-info-box">
-                      <p className="label">Số bàn</p>
-                      <p className="value">
-                        {selectedTables.length > 0
-                          ? selectedTables.map((t) => t.table_number).join(", ")
-                          : "---"}
-                      </p>
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="table-info-box">
-                      <p className="label">Khu vực</p>
-                      <p className="value">
-                        {selectedTables.length > 0 && tableAreas.find(area => area.id === selectedTables[0]?.table_area_id)?.name || "---"}
-                      </p>
-                    </div>
-                  </Col>
-                </Row>
+                <div className="table-info-box">
+                  <p className="label">Số bàn</p>
+                  <p className="value">
+                    {selectedTables.length > 0
+                      ? selectedTables.map((t) => t.table_number).join(", ")
+                      : "---"}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -174,8 +186,10 @@ const PaymentModal = ({
               </h5>
               <div className="payment-method-options">
                 <div
-                  className={`payment-method-option ${selectedPaymentMethod === 'cash' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPaymentMethod('cash')}
+                  className={`payment-method-option ${
+                    selectedPaymentMethod === "cash" ? "selected" : ""
+                  }`}
+                  onClick={() => setSelectedPaymentMethod("cash")}
                 >
                   <div className="icon-box cash">
                     <Wallet size={24} color="#fff" />
@@ -185,14 +199,18 @@ const PaymentModal = ({
                     <div className="subtitle">Thanh toán tại quầy</div>
                   </div>
                   <div className="radio-circle">
-                    {selectedPaymentMethod === 'cash' && <div className="inner-circle"></div>}
+                    {selectedPaymentMethod === "cash" && (
+                      <div className="inner-circle"></div>
+                    )}
                   </div>
                   <span className="badge-popular">Phổ biến</span>
                 </div>
 
                 <div
-                  className={`payment-method-option ${selectedPaymentMethod === 'momo' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPaymentMethod('momo')}
+                  className={`payment-method-option ${
+                    selectedPaymentMethod === "momo" ? "selected" : ""
+                  }`}
+                  onClick={() => setSelectedPaymentMethod("momo")}
                 >
                   <div className="icon-box momo">
                     <Scan size={24} color="#fff" />
@@ -202,13 +220,17 @@ const PaymentModal = ({
                     <div className="subtitle">Ví điện tử MoMo</div>
                   </div>
                   <div className="radio-circle">
-                    {selectedPaymentMethod === 'momo' && <div className="inner-circle"></div>}
+                    {selectedPaymentMethod === "momo" && (
+                      <div className="inner-circle"></div>
+                    )}
                   </div>
                 </div>
 
                 <div
-                  className={`payment-method-option ${selectedPaymentMethod === 'vnpay' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPaymentMethod('vnpay')}
+                  className={`payment-method-option ${
+                    selectedPaymentMethod === "vnpay" ? "selected" : ""
+                  }`}
+                  onClick={() => setSelectedPaymentMethod("vnpay")}
                 >
                   <div className="icon-box vnpay">
                     <CreditCard size={24} color="#fff" />
@@ -218,7 +240,9 @@ const PaymentModal = ({
                     <div className="subtitle">Cổng thanh toán VNPay</div>
                   </div>
                   <div className="radio-circle">
-                    {selectedPaymentMethod === 'vnpay' && <div className="inner-circle"></div>}
+                    {selectedPaymentMethod === "vnpay" && (
+                      <div className="inner-circle"></div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -233,10 +257,17 @@ const PaymentModal = ({
               </h5>
               <div className="order-items-list">
                 {orderItems.map((item, index) => (
-                  <div key={index} className="order-item-row d-flex align-items-center mb-3">
+                  <div
+                    key={index}
+                    className="order-item-row d-flex align-items-center mb-3"
+                  >
                     <div className="order-item-img-block me-3">
                       <img
-                        src={item.image_url ? `${fullUrl}${item.image_url}` : dishDefaultImg}
+                        src={
+                          item.image_url
+                            ? `${fullUrl}${item.image_url}`
+                            : dishDefaultImg
+                        }
                         alt={item.name}
                         className="order-item-img"
                       />
@@ -256,15 +287,21 @@ const PaymentModal = ({
               <div className="order-summary-totals">
                 <div className="summary-row">
                   <span className="summary-label">Tạm tính:</span>
-                  <span className="summary-value">{formatPriceToVND(subtotal)}</span>
+                  <span className="summary-value">
+                    {formatPriceToVND(subtotal)}
+                  </span>
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">VAT ({vat}%):</span>
-                  <span className="summary-value">{formatPriceToVND(subtotal * (vat / 100))}</span>
+                  <span className="summary-value">
+                    {formatPriceToVND(subtotal * (vat / 100))}
+                  </span>
                 </div>
                 <div className="summary-row total-row">
                   <span className="summary-label total-label">Tổng cộng:</span>
-                  <span className="summary-value total-value">{formatPriceToVND(total)}</span>
+                  <span className="summary-value total-value">
+                    {formatPriceToVND(total)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -278,9 +315,18 @@ const PaymentModal = ({
           disabled={isSubmitting || selectedPaymentMethod === null}
           className="qnhg-button primary-button"
         >
-          {isSubmitting ? <Spinner size="sm"> Loading...</Spinner> : "Xác nhận thanh toán"}
+          {isSubmitting ? (
+            <Spinner size="sm"> Loading...</Spinner>
+          ) : (
+            "Xác nhận thanh toán"
+          )}
         </Button>
-        <Button color="secondary" onClick={toggle} disabled={isSubmitting} className="qnhg-button">
+        <Button
+          color="secondary"
+          onClick={toggle}
+          disabled={isSubmitting}
+          className="qnhg-button"
+        >
           Hủy bỏ
         </Button>
       </ModalFooter>

@@ -3,6 +3,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CardFooter,
   Row,
   Col,
   Spinner,
@@ -39,6 +40,7 @@ import Swal from "sweetalert2";
 import RealtimeOrderUpdater from "@components/admin/Orders/RealtimeOrderUpdater";
 import StatusFilterGroup from "@components/admin/ui/StatusFilterGroup";
 import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
+import CustomPaginate from "@components/admin/ui/CustomPaginate";
 
 // Danh sách trạng thái đơn hàng
 const orderStatusOptions = [
@@ -84,7 +86,9 @@ const OrderIndex = () => {
 
     // Lọc theo khoảng ngày (client-side fallback nếu backend chưa lọc)
     const orderDate = order.order_time || order.created_at;
-    const orderDateStr = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : "";
+    const orderDateStr = orderDate
+      ? new Date(orderDate).toISOString().slice(0, 10)
+      : "";
     const inFrom = !dateFrom || (orderDateStr && orderDateStr >= dateFrom);
     const inTo = !dateTo || (orderDateStr && orderDateStr <= dateTo);
 
@@ -239,8 +243,9 @@ const OrderIndex = () => {
               <Nav tabs className="border-0">
                 <NavItem>
                   <NavLink
-                    className={`border-0 ${activeTab === "1" ? "active fw-bold" : "text-muted"
-                      }`}
+                    className={`border-0 ${
+                      activeTab === "1" ? "active fw-bold" : "text-muted"
+                    }`}
                     onClick={() => toggleTab("1")}
                     style={{
                       borderBottom:
@@ -257,8 +262,9 @@ const OrderIndex = () => {
                 </NavItem>
                 <NavItem>
                   <NavLink
-                    className={`border-0 ${activeTab === "2" ? "active fw-bold" : "text-muted"
-                      }`}
+                    className={`border-0 ${
+                      activeTab === "2" ? "active fw-bold" : "text-muted"
+                    }`}
                     onClick={() => toggleTab("2")}
                     style={{
                       borderBottom:
@@ -271,20 +277,6 @@ const OrderIndex = () => {
                   </NavLink>
                 </NavItem>
               </Nav>
-            </Col>
-            <Col
-              md="5"
-              sm="12"
-              className="d-flex justify-content-md-end justify-content-start align-items-center gap-2"
-            >
-              <Button
-                color="success"
-                onClick={navigateToCreateOrder}
-                className="d-flex align-items-center"
-                size="sm"
-              >
-                <span className="me-1">Tạo mới đơn hàng</span>
-              </Button>
             </Col>
           </Row>
         </CardHeader>
@@ -300,24 +292,42 @@ const OrderIndex = () => {
             <CardHeader className="bg-white border-bottom-0">
               <Row className="align-items-center">
                 <Col
-                  md="12"
+                  md="9"
                   sm="12"
                   className="mb-2 mb-md-0 d-flex align-items-center"
                 >
                   <StatusFilterGroup
-                    options={orderStatusOptions.map(opt => ({
+                    options={orderStatusOptions.map((opt) => ({
                       ...opt,
-                      badgeCount: opt.value === "all"
-                        ? Object.values(orderStatusCounts).reduce((a, b) => a + b, 0)
-                        : orderStatusCounts[opt.value] || 0
+                      badgeCount:
+                        opt.value === "all"
+                          ? Object.values(orderStatusCounts).reduce(
+                              (a, b) => a + b,
+                              0
+                            )
+                          : orderStatusCounts[opt.value] || 0,
                     }))}
                     value={statusFilter}
-                    onChange={val => {
+                    onChange={(val) => {
                       setStatusFilter(val);
                       setCurrentPage(1);
                     }}
                     className="mb-2"
                   />
+                </Col>
+                <Col
+                  md="3"
+                  sm="12"
+                  className="d-flex justify-content-md-end justify-content-start align-items-center gap-2"
+                >
+                  <Button
+                    color="success"
+                    onClick={navigateToCreateOrder}
+                    className="d-flex align-items-center py-2 fs-6"
+                    size="sm"
+                  >
+                    <i className="mdi mdi-plus" /> Tạo mới đơn hàng
+                  </Button>
                 </Col>
               </Row>
             </CardHeader>
@@ -377,7 +387,7 @@ const OrderIndex = () => {
                   </div>
                 </Col>
                 <Col md={2} className="text-end">
-                  <div className="d-flex gap-2">
+                  <div className="d-flex gap-2 justify-content-end">
                     {(dateFrom || dateTo) && (
                       <Button
                         color="outline-secondary"
@@ -399,7 +409,8 @@ const OrderIndex = () => {
                       style={{ minWidth: 140 }}
                       onClick={() => setShowFilter(true)}
                     >
-                      <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
+                      <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng
+                      cao
                     </Button>
                   </div>
                 </Col>
@@ -410,22 +421,38 @@ const OrderIndex = () => {
           {/* Thông báo khoảng ngày đang lọc */}
           {(dateFrom || dateTo) && (
             <div className="mb-3">
-              <div className="alert alert-info d-flex align-items-center" style={{ fontSize: 14 }}>
+              <div
+                className="alert alert-info d-flex align-items-center"
+                style={{ fontSize: 14 }}
+              >
                 <i className="mdi mdi-calendar-clock me-2"></i>
                 <div>
                   <strong>Đang lọc theo ngày:</strong>{" "}
                   {dateFrom && dateTo ? (
                     <>
-                      Từ <strong>{new Date(dateFrom).toLocaleDateString("vi-VN")}</strong> đến{" "}
-                      <strong>{new Date(dateTo).toLocaleDateString("vi-VN")}</strong>
+                      Từ{" "}
+                      <strong>
+                        {new Date(dateFrom).toLocaleDateString("vi-VN")}
+                      </strong>{" "}
+                      đến{" "}
+                      <strong>
+                        {new Date(dateTo).toLocaleDateString("vi-VN")}
+                      </strong>
                     </>
                   ) : dateFrom ? (
                     <>
-                      Từ <strong>{new Date(dateFrom).toLocaleDateString("vi-VN")}</strong> trở đi
+                      Từ{" "}
+                      <strong>
+                        {new Date(dateFrom).toLocaleDateString("vi-VN")}
+                      </strong>{" "}
+                      trở đi
                     </>
                   ) : (
                     <>
-                      Đến <strong>{new Date(dateTo).toLocaleDateString("vi-VN")}</strong>
+                      Đến{" "}
+                      <strong>
+                        {new Date(dateTo).toLocaleDateString("vi-VN")}
+                      </strong>
                     </>
                   )}
                 </div>
@@ -439,63 +466,30 @@ const OrderIndex = () => {
               <Spinner color="primary" />
             </div>
           ) : (
-            <OrderGrid
-              data={filteredData}
-              onDelete={handleDelete}
-              onUpdate={handleUpdate}
-              onEdit={handleEditOrder}
-              paginate={{
-                page: orderData.meta.current_page,
-                perPage: orderData.meta.per_page,
-                totalPage: orderData.meta.last_page,
-              }}
-              onPageChange={handlePageChange}
-            />
-          )}
-        </TabPane>
-
-        <TabPane tabId="2">
-          {/* Theo dõi đơn hàng */}
-          <Card className="mb-4">
-            <CardHeader className="bg-white border-bottom-0">
-              <Row className="align-items-center">
-                <Col>
-                  <h5 className="mb-0 text-info">
-                    <span className="me-2">Search</span> Theo dõi đơn hàng
-                  </h5>
-                </Col>
-              </Row>
-            </CardHeader>
-            <CardBody>
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label for="trackCode">Mã đơn hàng</Label>
-                    <div className="input-group">
-                      <Input
-                        id="trackCode"
-                        placeholder="Nhập mã đơn hàng..."
-                        value={trackCode}
-                        onChange={(e) => setTrackCode(e.target.value)}
+            <div>
+              <Card>
+                <CardBody>
+                  <OrderGrid
+                    data={filteredData}
+                    onDelete={handleDelete}
+                    onUpdate={handleUpdate}
+                    onEdit={handleEditOrder}
+                  />
+                </CardBody>
+                <CardFooter>
+                  {orderData.meta.last_page > 1 && (
+                    <div className="d-flex justify-content-center">
+                      <CustomPaginate
+                        currentPage={orderData.meta.current_page}
+                        totalPages={orderData.meta.last_page}
+                        onPageChange={handlePageChange}
                       />
-                      <Button color="primary" onClick={handleTrackOrder}>
-                        Search
-                      </Button>
                     </div>
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {trackResult && (
-                <Card className="mt-3">
-                  <CardBody>
-                    <h6>Kết quả theo dõi:</h6>
-                    <pre>{JSON.stringify(trackResult, null, 2)}</pre>
-                  </CardBody>
-                </Card>
-              )}
-            </CardBody>
-          </Card>
+                  )}
+                </CardFooter>
+              </Card>
+            </div>
+          )}
         </TabPane>
       </TabContent>
 
@@ -531,65 +525,6 @@ const OrderIndex = () => {
             <i className="bi bi-arrow-clockwise"></i>
           </Button>
         </OffcanvasHeader>
-        <OffcanvasBody>
-          <Form>
-            <FormGroup className="mb-3">
-              <Label for="orderType">Loại đơn hàng</Label>
-              <Input
-                type="select"
-                id="orderType"
-                value={orderType}
-                onChange={(e) => {
-                  setOrderType(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-100"
-              >
-                <option value="">Tất cả</option>
-                <option value="delivery">Giao hàng</option>
-                <option value="takeaway">Mang về</option>
-                <option value="pickup">Tại bàn</option>
-              </Input>
-            </FormGroup>
-
-            <FormGroup className="mb-3">
-              <Label for="orderCode">Mã đơn hàng</Label>
-              <Input
-                type="text"
-                id="orderCode"
-                value={orderCode}
-                onChange={(e) => {
-                  setOrderCode(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Nhập mã đơn"
-                className="w-100"
-              />
-            </FormGroup>
-
-            <FormGroup className="mb-3">
-              <Label for="status">Trạng thái</Label>
-              <Input
-                type="select"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-100"
-              >
-                <option value="all">Tất cả</option>
-                <option value="pending">Chờ xác nhận</option>
-                <option value="confirmed">Đã xác nhận</option>
-                <option value="preparing">Đang chuẩn bị</option>
-                <option value="ready">Sẵn sàng</option>
-                <option value="completed">Hoàn tất</option>
-                <option value="cancelled">Đã hủy</option>
-              </Input>
-            </FormGroup>
-
-          </Form>
-        </OffcanvasBody>
       </Offcanvas>
 
       {/* Modal Theo dõi đơn hàng */}
