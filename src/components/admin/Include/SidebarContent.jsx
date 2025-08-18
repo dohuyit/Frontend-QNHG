@@ -267,17 +267,7 @@ const SidebarContent = (props) => {
               </li>
             )}
 
-            <li>
-              <Link to="/#" className="has-arrow ">
-                <i className="bx bx-cart"></i>
-                <span>{props.t("Quản Lí Đơn Hàng")}</span>
-              </Link>
-              <ul className="sub-menu" aria-expanded="false">
-                <li>
-                  <Link to="/orders">{props.t("Danh Sách Đơn Hàng")}</Link>
-                </li>
-              </ul>
-            </li>
+            
 
             {hasPermission("discount.view") && (
                 <li>
@@ -306,11 +296,7 @@ const SidebarContent = (props) => {
                       {props.t("Danh Sách Khách Hàng")}
                     </Link>
                   </li>
-                  <li>
-                    <Link to="/invoices-detail">
-                      {props.t("Lịch sử Mua Hàng")}
-                    </Link>
-                  </li>
+                 
                 </ul>
               </li>
             )}

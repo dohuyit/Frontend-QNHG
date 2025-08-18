@@ -204,5 +204,5 @@ export const FACE_RECOGNITION_CONSTANTS = {
   MIN_ACCURACY: 20,
   MAX_IMAGES: 100,
   CAPTURE_INTERVAL: 20, // ms
-  ROLES: ['admin', 'bếp', 'nhân viên']
+  ROLES: ['Admin', 'Quản lý bếp', 'Nhân viên']
 };

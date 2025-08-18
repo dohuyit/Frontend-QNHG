@@ -175,6 +175,15 @@ const CategoryIndex = () => {
     if (newCategory.image instanceof File) {
       formData.append("image_url", newCategory.image);
     }
+    // Ép kiểu cooking_time về số nguyên hoặc null trước khi gửi
+    let cookingTime = newCategory.cooking_time;
+    if (cookingTime === "" || cookingTime === undefined || cookingTime === null) {
+      cookingTime = null;
+    } else {
+      cookingTime = parseInt(cookingTime, 10);
+      if (isNaN(cookingTime)) cookingTime = null;
+    }
+    formData.append("cooking_time", cookingTime);
 
     try {
       if (isEdit) {
