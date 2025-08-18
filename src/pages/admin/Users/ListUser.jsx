@@ -292,6 +292,7 @@ export default function ListUser() {
                                             size="sm"
                                             color="light"
                                             onClick={() => {
+                                                console.log('User data being passed to edit modal:', user);
                                                 setEditingUser(user);
                                                 setShowModal(true);
                                             }}

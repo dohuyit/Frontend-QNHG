@@ -36,7 +36,49 @@ export default function CreateUser({ user, onSuccess, onClose }) {
 
     useEffect(() => {
         if (user) {
-            setFormData({
+            console.log('User data for editing:', user);
+            console.log('Available role options:', roleOptions);
+            
+            // Xử lý role_id từ nhiều cấu trúc dữ liệu khác nhau
+            let roleId = "";
+            
+            // Trường hợp 1: có role_id trực tiếp
+            if (user.role_id) {
+                roleId = String(user.role_id);
+            } 
+            // Trường hợp 2: có role object với id
+            else if (user.role && typeof user.role === 'object' && user.role.id) {
+                roleId = String(user.role.id);
+            } 
+            // Trường hợp 3: có role_name hoặc role string
+            else if (user.role_name) {
+                const foundRole = roleOptions.find(role => role.role_name === user.role_name);
+                roleId = foundRole ? String(foundRole.id) : "";
+            }
+            else if (user.role && typeof user.role === 'string') {
+                const foundRole = roleOptions.find(role => role.role_name === user.role);
+                roleId = foundRole ? String(foundRole.id) : "";
+            }
+            // Trường hợp 4: có roles array (lấy role đầu tiên)
+            else if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
+                roleId = String(user.roles[0].id);
+            }
+            // Trường hợp 5: Backend chưa trả về thông tin role
+            else {
+                console.warn('Backend không trả về thông tin role cho user. Cần sửa backend để include role.');
+                // Để trống để user có thể chọn role mới
+                roleId = "";
+            }
+
+            console.log('Detected role_id:', roleId);
+            console.log('User has role info?', {
+                has_role_id: !!user.role_id,
+                has_role: !!user.role,
+                has_role_name: !!user.role_name,
+                has_roles: !!user.roles
+            });
+
+            setFormData(prev => ({
                 username: user.username || "",
                 password: "",
                 full_name: user.full_name || "",
@@ -44,14 +86,14 @@ export default function CreateUser({ user, onSuccess, onClose }) {
                 phone_number: user.phone_number || "",
                 avatar: null,
                 status: user.status || "active",
-                role_id: user.role_id || "",
-            });
+                role_id: roleId,
+            }));
 
             if (user.avatar) {
                 setPreviewAvatar(`http://localhost:8000/storage/${user.avatar}`);
             }
         }
-    }, [user]);
+    }, [user, roleOptions]);
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
