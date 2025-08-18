@@ -10,7 +10,7 @@ export default function CreateUser({ user, onSuccess, onClose }) {
         full_name: "",
         email: "",
         phone_number: "",
-        avatar: null,
+        avatar: null, // lưu File object
         role_id: "",
     });
 
@@ -19,77 +19,89 @@ export default function CreateUser({ user, onSuccess, onClose }) {
     const [loading, setLoading] = useState(false);
     const [previewAvatar, setPreviewAvatar] = useState(null);
 
+    // Lấy danh sách role
     useEffect(() => {
         async function fetchRoles() {
             try {
                 const res = await getRoles();
-                setRoleOptions(res.data.data.items || []);
+                const roles = (res.data.data.items || []).map(role => ({
+                    ...role,
+                    id: role.id.toString()
+                }));
+                setRoleOptions(roles);
             } catch (error) {
                 console.error("Không thể load vai trò", error);
                 setRoleOptions([]);
             }
         }
-
         fetchRoles();
     }, []);
 
 
+// ...existing code...
     useEffect(() => {
-        if (user) {
-            setFormData({
-                username: user.username || "",
-                password: "",
-                full_name: user.full_name || "",
-                email: user.email || "",
-                phone_number: user.phone_number || "",
-                avatar: null,
-                status: user.status || "active",
-                role_id: user.role_id || "",
-            });
-
-            if (user.avatar) {
-                setPreviewAvatar(`http://localhost:8000/storage/${user.avatar}`);
-            }
+        if (!user || roleOptions.length === 0) return;
+        console.log("user data:", user);
+        // Lấy role_id từ user.role (dữ liệu API trả về)
+        const roleIdFromBackend = user.role?.id?.toString() || "";
+        console.log("role_id set:", roleIdFromBackend);
+        setFormData(prev => ({
+            ...prev,
+            username: user.username || "",
+            password: "",
+            full_name: user.full_name || "",
+            email: user.email || "",
+            phone_number: user.phone_number || "",
+            avatar: null,
+            status: user.status || "active",
+            role_id: roleIdFromBackend,
+        }));
+        if (user.avatar) {
+            setPreviewAvatar(`http://localhost:8000/storage/${user.avatar}`);
         }
-    }, [user]);
+    }, [user, roleOptions]);
+// ...existing code...
 
+
+    // Xử lý thay đổi input
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
-        if (files) {
+        if (files && files[0]) {
             const file = files[0];
-            setFormData((prev) => ({
-                ...prev,
-                [name]: file,
-            }));
+            setFormData(prev => ({ ...prev, [name]: file }));
 
-            if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setPreviewAvatar(reader.result);
-                };
-                reader.readAsDataURL(file);
-            }
+            // Preview
+            const reader = new FileReader();
+            reader.onloadend = () => setPreviewAvatar(reader.result);
+            reader.readAsDataURL(file);
         } else {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
 
+    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrors({});
         setLoading(true);
 
         const payload = new FormData();
-        for (const key in formData) {
-            if (user && key === "password") continue; // Không gửi password khi cập nhật
-            if (formData[key]) {
-                payload.append(key, formData[key]);
+
+        Object.keys(formData).forEach(key => {
+            const value = formData[key];
+
+            // Không gửi password khi update
+            if (user && key === "password") return;
+
+            if (key === "avatar") {
+                if (value instanceof File) {
+                    payload.append(key, value); // chỉ gửi file khi là File object
+                }
+            } else if (value !== null && value !== undefined && value !== "") {
+                payload.append(key, value);
             }
-        }
+        });
 
         try {
             const res = user?.id
@@ -109,7 +121,6 @@ export default function CreateUser({ user, onSuccess, onClose }) {
             setLoading(false);
         }
     };
-
 
     return (
         <form onSubmit={handleSubmit} encType="multipart/form-data">
@@ -176,24 +187,25 @@ export default function CreateUser({ user, onSuccess, onClose }) {
                     {errors.phone_number && <div className="invalid-feedback">{errors.phone_number[0]}</div>}
                 </div>
 
-                <div className="col-md-6 mb-3">
-                    <label className="form-label">Vai trò</label>
-                    <select
-                        name="role_id"
-                        className={`form-select ${errors.role_id ? "is-invalid" : ""}`}
-                        value={formData.role_id}
-                        onChange={handleChange}
-                    >
-                        <option value="">-- Chọn vai trò --</option>
-                        {Array.isArray(roleOptions) &&
-                            roleOptions.map((role) => (
-                                <option key={role.id} value={role.id}>
-                                    {role.role_name}
-                                </option>
-                            ))}
-                    </select>
-                    {errors.role_id && <div className="invalid-feedback">{errors.role_id[0]}</div>}
-                </div>
+                {!user && (
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">Vai trò</label>
+                        <select
+                            name="role_id"
+                            className={`form-select ${errors.role_id ? "is-invalid" : ""}`}
+                            value={formData.role_id}
+                            onChange={handleChange}
+                        >
+                            <option value="">-- Chọn vai trò --</option>
+                            {Array.isArray(roleOptions) &&
+                                roleOptions.map(role => (
+                                    <option key={role.id} value={role.id}>{role.role_name}</option>
+                                ))}
+                        </select>
+                        {errors.role_id && <div className="invalid-feedback">{errors.role_id[0]}</div>}
+                    </div>
+                )}
+
 
                 <div className="col-md-6 mb-3">
                     <label className="form-label">Ảnh đại diện</label>
@@ -232,6 +244,5 @@ export default function CreateUser({ user, onSuccess, onClose }) {
                 </button>
             </div>
         </form>
-
     );
 }

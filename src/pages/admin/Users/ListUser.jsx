@@ -23,6 +23,7 @@ import {
     countUsersByStatus,
     blockUser,
     unblockUser,
+    getUserDetail,
 } from "@services/admin/userService";
 import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 import "@pages/admin/KitchenOrders/KitchenOrdersKanban.css";
@@ -53,6 +54,19 @@ export default function ListUser() {
         show: false,
         message: "",
     });
+    const handleEditUser = async (userId) => {
+        try {
+            const res = await getUserDetail(userId);
+            const userDetail = {
+                ...res.data.data.user,
+                role: res.data.data.role
+            };
+            setEditingUser(userDetail);
+            setShowModal(true);
+        } catch (err) {
+            console.error("Lỗi load user detail:", err);
+        }
+    };
 
     useEffect(() => {
         fetchUsers(currentPage);
@@ -291,13 +305,11 @@ export default function ListUser() {
                                         <Button
                                             size="sm"
                                             color="light"
-                                            onClick={() => {
-                                                setEditingUser(user);
-                                                setShowModal(true);
-                                            }}
+                                            onClick={() => handleEditUser(user.id)}
                                         >
                                             <i className="bi bi-pencil-square"></i>
                                         </Button>
+
                                         <Button
                                             size="sm"
                                             color="light"
