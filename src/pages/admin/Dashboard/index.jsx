@@ -121,6 +121,13 @@ const Dashboard = ({ t = (key) => key })  => {
     completed: "info",
   };
 
+  const statusLabelMap = {
+    cancelled: "Đã hủy",
+    confirmed: "Đã xác nhận",
+    pending: "Đang chờ",
+    completed: "Hoàn tất",
+  };
+
   return (
       <>
         <div className="page-content">
@@ -159,7 +166,7 @@ const Dashboard = ({ t = (key) => key })  => {
                   <Col md={3} key={status}>
                     <Card className={`mini-stats-wid border border-${statusColorMap[status] || "secondary"}`}>
                       <CardBody className="text-center">
-                        <p className="text-muted fw-medium text-capitalize">{status}</p>
+                        <p className="text-muted fw-medium">{statusLabelMap[status] || status}</p>
                         <h4 className={`text-${statusColorMap[status] || "secondary"}`}>{count}</h4>
                       </CardBody>
                     </Card>
