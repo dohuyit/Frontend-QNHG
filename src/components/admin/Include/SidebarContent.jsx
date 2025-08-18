@@ -185,18 +185,18 @@ const SidebarContent = (props) => {
 
             {hasPermission("reservation.view") && (
               <li>
-              <Link to="/#" className="has-arrow">
-                <i className="bx bx-task"></i>
-                <span>{props.t("Quản Lí Đơn Đặt Bàn")}</span>
-              </Link>
-              <ul className="sub-menu" aria-expanded="false">
-                <li>
-                  <Link to="/reservations">
-                    {props.t("Danh Sách Đơn Đặt Bàn")}
-                  </Link>
-                </li>
-              </ul>
-            </li>
+                <Link to="/#" className="has-arrow">
+                  <i className="bx bx-task"></i>
+                  <span>{props.t("Quản Lí Đơn Đặt Bàn")}</span>
+                </Link>
+                <ul className="sub-menu" aria-expanded="false">
+                  <li>
+                    <Link to="/reservations">
+                      {props.t("Danh Sách Đơn Đặt Bàn")}
+                    </Link>
+                  </li>
+                </ul>
+              </li>
             )}
 
             {hasPermission("category.view") && (
@@ -254,6 +254,18 @@ const SidebarContent = (props) => {
             )}
 
             {hasPermission("order.view") && (
+              <li>
+                <Link to="/#" className="has-arrow ">
+                  <i className="bx bx-cart"></i>
+                  <span>{props.t("Quản Lí Đơn Hàng")}</span>
+                </Link>
+                <ul className="sub-menu" aria-expanded="false">
+                  <li>
+                    <Link to="/orders">{props.t("Danh Sách Đơn Hàng")}</Link>
+                  </li>
+                </ul>
+              </li>
+            )}
 
             <li>
               <Link to="/#" className="has-arrow ">
@@ -266,7 +278,6 @@ const SidebarContent = (props) => {
                 </li>
               </ul>
             </li>
-            )}
 
             {hasPermission("discount.view") && (
                 <li>
@@ -284,22 +295,24 @@ const SidebarContent = (props) => {
 
 
             {hasPermission("customer.view") && (
-            <li>
-              <Link to="/#" className="has-arrow ">
-                <i className="bx bxs-user-detail"></i>
-                <span>{props.t("Quản Lí Khách Hàng")}</span>
-              </Link>
-              <ul className="sub-menu" aria-expanded="false">
-                <li>
-                  <Link to="/customer">{props.t("Danh Sách Khách Hàng")}</Link>
-                </li>
-                <li>
-                  <Link to="/invoices-detail">
-                    {props.t("Lịch sử Mua Hàng")}
-                  </Link>
-                </li>
-              </ul>
-            </li>
+              <li>
+                <Link to="/#" className="has-arrow ">
+                  <i className="bx bxs-user-detail"></i>
+                  <span>{props.t("Quản Lí Khách Hàng")}</span>
+                </Link>
+                <ul className="sub-menu" aria-expanded="false">
+                  <li>
+                    <Link to="/customer">
+                      {props.t("Danh Sách Khách Hàng")}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/invoices-detail">
+                      {props.t("Lịch sử Mua Hàng")}
+                    </Link>
+                  </li>
+                </ul>
+              </li>
             )}
 
             {(hasPermission("role.view") ||
@@ -353,6 +366,10 @@ const SidebarContent = (props) => {
                     <Link to="/users">{props.t("Danh sách nhân viên")}</Link>
                   </li>
                 </ul>
+                <Link to="/face-auth-test">
+                  <i className="bx bxs-user"></i>
+                  <span>{props.t("Quản lý khuôn mặt")}</span>
+                </Link>
               </li>
             )}
           </ul>

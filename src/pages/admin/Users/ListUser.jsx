@@ -305,7 +305,11 @@ export default function ListUser() {
                                         <Button
                                             size="sm"
                                             color="light"
-                                            onClick={() => handleEditUser(user.id)}
+                                            onClick={() => {
+                                                console.log('User data being passed to edit modal:', user);
+                                                setEditingUser(user);
+                                                setShowModal(true);
+                                            }}
                                         >
                                             <i className="bi bi-pencil-square"></i>
                                         </Button>

@@ -8,9 +8,6 @@ import {
   Input,
   Label,
   Spinner,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
   Modal,
   ModalHeader,
   ModalBody,
@@ -103,9 +100,8 @@ const FormOrderUpdate = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [activeTableId, setActiveTableId] = useState(null);
-  const [priority, setPriority] = useState(false);
+  const [priority] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [reservationId, setReservationId] = useState(null);
   const [hasReservation, setHasReservation] = useState(false);
   const [nextItemId, setNextItemId] = useState(1);
   const [categories, setCategories] = useState([]);
@@ -1022,7 +1018,6 @@ const FormOrderUpdate = () => {
                   Chỉnh sửa đơn hàng
                 </div>
               </div>
-
               <div className="order-sidebar-section mb-3">
                 <Label className="order-sidebar-label mb-2">
                   Thông tin khách hàng
@@ -1066,7 +1061,6 @@ const FormOrderUpdate = () => {
                   </div>
                 )}
               </div>
-
               <div className="order-sidebar-section mb-3">
                 {orderMethod === "Dine In" && (
                   <div className="order-table-box d-flex align-items-center justify-content-between py-2 mb-2">
@@ -1705,7 +1699,25 @@ const FormOrderUpdate = () => {
               <PaymentModal
                 isOpen={showPaymentModal}
                 toggle={() => setShowPaymentModal(false)}
-                orderItems={orderItems}
+                orderItems={(() => {
+                  // Lọc các items không ở trạng thái chờ bếp
+                  const nonPendingItems = orderItems.filter(
+                    (item) => item.kitchen_status !== "pending"
+                  );
+
+                  // Gộp các items giống nhau và cộng dồn số lượng
+                  const mergedItems = nonPendingItems.reduce((acc, item) => {
+                    const existingItem = acc.find((i) => i.name === item.name);
+                    if (existingItem) {
+                      existingItem.quantity += item.quantity;
+                    } else {
+                      acc.push({ ...item });
+                    }
+                    return acc;
+                  }, []);
+
+                  return mergedItems;
+                })()}
                 subtotal={subtotal}
                 vat={vat}
                 total={total}
@@ -1713,7 +1725,6 @@ const FormOrderUpdate = () => {
                 setIsSubmitting={setIsSubmitting}
                 orderMethod={orderMethod}
                 selectedTables={selectedTables}
-                tableAreas={tableAreas}
                 selectedPaymentMethod={selectedPaymentMethod}
                 setSelectedPaymentMethod={setSelectedPaymentMethod}
                 fullUrl={fullUrl}
@@ -1723,6 +1734,9 @@ const FormOrderUpdate = () => {
                 toast={toast}
                 orderNotes={orderNotes}
                 orderData={orderDataState}
+                contactName={contactName}
+                contactPhone={contactPhone}
+                contactEmail={contactEmail}
               />
             </div>
           </Col>
