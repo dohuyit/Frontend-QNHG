@@ -223,9 +223,9 @@ const ReservationCard = ({
                             .padStart(2, "0")}`;
                         }
                       }
-                      return "09:00"; // Giờ mở cửa
+                      return "08:00"; // Giờ mở cửa
                     })()}
-                    max="20:00" // Giờ đóng cửa
+                    max="23:00" // Giờ đóng cửa
                     style={{ fontSize: 16, padding: "2px 8px" }}
                   />
                 ) : (

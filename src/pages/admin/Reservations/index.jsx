@@ -752,10 +752,10 @@ const TableBookingIndex = () => {
                   >
                     <option value="">Chọn giờ</option>
                     {(() => {
-                      // Tạo các mốc giờ từ 09:00 đến 20:00, mỗi 30 phút
+                      // Tạo các mốc giờ từ 08:00 đến 23:00, mỗi 30 phút
                       const times = [];
-                      let start = 9 * 60; // 9:00
-                      let end = 20 * 60; // 20:00
+                      let start = 8 * 60; // 8:00
+                      let end = 23 * 60; // 23:00
 
                       // Lấy giờ hiện tại để so sánh
                       const now = new Date();
