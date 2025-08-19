@@ -134,7 +134,7 @@ const DishIndex = () => {
       const params = {
         page,
         per_page: 10,
-        name: nameFilter || undefined,
+        name: search || undefined, // dùng search
         category_id: categoryFilter || undefined,
         status: status !== "all" ? status : undefined,
         price_from: priceFrom || undefined,
@@ -143,7 +143,6 @@ const DishIndex = () => {
 
       const res = await getDishes(params);
       const items = res.data?.data?.items;
-      console.log(res.data.data.meta);
       if (Array.isArray(items)) {
         setDishes(items);
         setMeta(res.data.data.meta);
@@ -159,6 +158,7 @@ const DishIndex = () => {
       setLoadingDishes(false);
     }
   };
+
 
   const handleDishClick = async (id) => {
     try {

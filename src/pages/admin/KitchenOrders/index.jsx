@@ -58,11 +58,21 @@ const KitchenOrdersPage = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-
   const fetchOrders = async (filterParams = filter, date = filterDate) => {
     try {
       const params = { ...filterParams };
-      
+      // ✅ Thêm searchTerm vào params gửi backend
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+
+      // Nếu có khoảng ngày thì ưu tiên khoảng ngày
+      if (dateFrom || dateTo) {
+        if (dateFrom) params.date_from = dateFrom;
+        if (dateTo) params.date_to = dateTo;
+      } else {
+        params.created_at = date;
+      }
       // Nếu có khoảng ngày thì ưu tiên khoảng ngày
       if (dateFrom || dateTo) {
         if (dateFrom) params.date_from = dateFrom;
@@ -71,7 +81,7 @@ const KitchenOrdersPage = () => {
         // Nếu không có khoảng ngày thì dùng ngày đơn lẻ
         params.created_at = date;
       }
-      
+
       const res = await getListKitchenOrders(params);
       const items =
         res.data.data && Array.isArray(res.data.data.items)
@@ -84,7 +94,9 @@ const KitchenOrdersPage = () => {
     }
   };
 
-
+  useEffect(() => {
+    fetchOrders(filter, filterDate);
+  }, [searchTerm, filter, filterDate]);
 
   useEffect(() => {
     fetchOrders(filter, filterDate);
@@ -173,17 +185,22 @@ const KitchenOrdersPage = () => {
       String(order.order_id || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
+      String(order.order_code || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) || // ✅ thêm mã đơn bếp
       String(order.table_number || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       String(order.item_name || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-    
+
     // Lọc theo ngày (client-side fallback nếu backend chưa lọc)
     const orderDate = order.created_at || order.order_time;
-    const orderDateStr = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : "";
-    
+    const orderDateStr = orderDate
+      ? new Date(orderDate).toISOString().slice(0, 10)
+      : "";
+
     // Nếu có khoảng ngày thì ưu tiên khoảng ngày
     let matchesDate = true;
     if (dateFrom || dateTo) {
@@ -194,7 +211,7 @@ const KitchenOrdersPage = () => {
       // Nếu không có khoảng ngày thì dùng ngày đơn lẻ
       matchesDate = !filterDate || orderDateStr === filterDate;
     }
-    
+
     return matchesSearch && matchesDate;
   });
 
@@ -455,7 +472,7 @@ const KitchenOrdersPage = () => {
                         Hôm nay
                       </Button>
                     )}
-                    <div className="row align-items-center">
+                    <div className="row align-items">
                       <div className="col">{/* ... */}</div>
                       <div className="col-auto ms-auto pe-3">
                         <Button

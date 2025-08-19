@@ -7,7 +7,6 @@ import {
   Col,
   Spinner,
   Button,
-  Badge,
   Nav,
   NavItem,
   NavLink,
@@ -20,8 +19,6 @@ import {
   FormGroup,
   Label,
   Input,
-  InputGroup,
-  InputGroupText,
 } from "reactstrap";
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListCategory from "@components/admin/Categories/ListCategory";
@@ -67,7 +64,7 @@ const CategoryIndex = () => {
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
 
-  const [showFilter, setShowFilter] = useState(false); // Thêm state showFilter
+  const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [filterParent, setFilterParent] = useState("");
 
@@ -83,17 +80,18 @@ const CategoryIndex = () => {
     { value: "inactive", label: "Không hoạt động", badgeColor: "danger" },
   ];
 
+  // ✅ fetch categories với params chuẩn
   const fetchCategories = async (page = 1) => {
     setLoadingCategories(true);
     try {
       const params = {
         page,
         per_page: 10,
-        search: search || undefined,
-        status: status !== "all" ? status : undefined,
-        name: filterName || undefined,
-        parent: filterParent || undefined,
+        name: search || filterName || undefined,
+        is_active: status !== "all" ? status : undefined,
+        parent_id: filterParent || undefined,
       };
+
       const res = await getCategories(params);
       const items = res.data?.data?.items;
       if (Array.isArray(items)) {
@@ -126,10 +124,14 @@ const CategoryIndex = () => {
   };
 
   useEffect(() => {
-    if (activeTab === "list") {
-      fetchCategories(currentPage);
-      fetchCategoryStatusCounts();
-    }
+    const delayDebounce = setTimeout(() => {
+      if (activeTab === "list") {
+        fetchCategories(currentPage);
+        fetchCategoryStatusCounts();
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
   }, [currentPage, search, status, activeTab, filterName, filterParent]);
 
   const handleCategoryClick = async (categoryId) => {
@@ -175,15 +177,6 @@ const CategoryIndex = () => {
     if (newCategory.image instanceof File) {
       formData.append("image_url", newCategory.image);
     }
-    // Ép kiểu cooking_time về số nguyên hoặc null trước khi gửi
-    let cookingTime = newCategory.cooking_time;
-    if (cookingTime === "" || cookingTime === undefined || cookingTime === null) {
-      cookingTime = null;
-    } else {
-      cookingTime = parseInt(cookingTime, 10);
-      if (isNaN(cookingTime)) cookingTime = null;
-    }
-    formData.append("cooking_time", cookingTime);
 
     try {
       if (isEdit) {
@@ -283,7 +276,7 @@ const CategoryIndex = () => {
         </CardHeader>
       </Card>
 
-      {/* ✅ Offcanvas bộ lọc nâng cao */}
+      {/* Offcanvas bộ lọc nâng cao */}
       <Offcanvas
         direction="end"
         isOpen={showFilter}
@@ -348,6 +341,9 @@ const CategoryIndex = () => {
                   <StatusFilterGroup
                     options={statusOptions.map((opt) => ({
                       ...opt,
+                      label: `${opt.label} (${
+                        categoryStatusCounts[opt.value] || 0
+                      })`,
                       badgeCount:
                         opt.value === "all"
                           ? (categoryStatusCounts.active || 0) +
@@ -383,11 +379,7 @@ const CategoryIndex = () => {
               <SearchAndStatusFilterBar
                 searchValue={search}
                 onSearchChange={setSearch}
-                statusValue={status}
-                onStatusChange={handleStatusChange}
-                statusOptions={statusOptions}
                 searchPlaceholder="Tìm kiếm danh mục..."
-                statusPlaceholder="Tất cả trạng thái"
                 rightContent={
                   <Button
                     color="light"
