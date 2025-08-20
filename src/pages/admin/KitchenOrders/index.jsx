@@ -265,8 +265,8 @@ const KitchenOrdersPage = () => {
       order.status === "pending"
         ? "preparing"
         : order.status === "preparing"
-        ? "ready"
-        : null;
+          ? "ready"
+          : null;
     const statusInfo = STATUS_LIST.find((s) => s.key === order.status);
 
     return (
@@ -613,79 +613,48 @@ const KitchenOrdersPage = () => {
           </div>
         </TabPane>
       </TabContent>
-      {/* Offcanvas bộ lọc nâng cao */}
-      <Offcanvas
-        direction="end"
-        isOpen={showFilter}
-        toggle={() => setShowFilter(false)}
-      >
-        <OffcanvasHeader toggle={() => setShowFilter(false)}>
-          <span>Bộ lọc nâng cao</span>
-          <Button
-            color="light"
-            size="sm"
-            style={{
-              position: "absolute",
-              right: 48,
-              top: 12,
-              boxShadow: "none",
-              zIndex: 1,
-            }}
-            onClick={() => {
-              setFilter({});
-              setStatusFilter("all");
-              setFilterDate(todayStr);
-              setDateFrom("");
-              setDateTo("");
-              setSearchTerm("");
-              fetchOrders({}, todayStr);
-            }}
-            title="Làm mới bộ lọc"
-          >
-            <i className="bi bi-arrow-clockwise"></i>
-          </Button>
-        </OffcanvasHeader>
-        <OffcanvasBody>
-          <Form>
-            <FormGroup>
-              <Label for="filterItem">Tên món</Label>
-              <Input
-                id="filterItem"
-                name="item_name"
-                value={filter.item_name || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const updatedFilter = { ...filter, item_name: value };
-                  setFilter(updatedFilter);
-                  fetchOrders(updatedFilter, filterDate);
-                }}
-                placeholder="Nhập tên món..."
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label for="filterStatus">Trạng thái</Label>
-              <Input
-                id="filterStatus"
-                type="select"
-                name="status"
-                value={filter.status || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const updatedFilter = { ...filter, status: value };
-                  setFilter(updatedFilter);
-                  fetchOrders(updatedFilter, filterDate);
-                }}
-              >
-                <option value="">Tất cả</option>
-                <option value="pending">Pending</option>
-                <option value="preparing">In Progress</option>
-                <option value="ready">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </Input>
-            </FormGroup>
-          </Form>
-        </OffcanvasBody>
-      </Offcanvas>
+
+
+      <OffcanvasBody>
+        <Form>
+          <FormGroup>
+            <Label for="filterItem">Tên món</Label>
+            <Input
+              id="filterItem"
+              name="item_name"
+              value={filter.item_name || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                const updatedFilter = { ...filter, item_name: value };
+                setFilter(updatedFilter);
+                fetchOrders(updatedFilter, filterDate);
+              }}
+              placeholder="Nhập tên món..."
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label for="filterStatus">Trạng thái</Label>
+            <Input
+              id="filterStatus"
+              type="select"
+              name="status"
+              value={filter.status || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                const updatedFilter = { ...filter, status: value };
+                setFilter(updatedFilter);
+                fetchOrders(updatedFilter, filterDate);
+              }}
+            >
+              <option value="">Tất cả</option>
+              <option value="pending">Pending</option>
+              <option value="preparing">In Progress</option>
+              <option value="ready">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </Input>
+          </FormGroup>
+        </Form>
+      </OffcanvasBody>
     </div>
   );
 };
