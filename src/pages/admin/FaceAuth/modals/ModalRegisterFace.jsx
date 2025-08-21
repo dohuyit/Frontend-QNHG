@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, ModalHeader, ModalBody, Button, Alert, Input, Label, FormGroup } from 'reactstrap';
 import { toast } from 'react-toastify';
-// import { registerFaceDirect } from '@services/admin/faceService';
-// Sử dụng fetch trực tiếp tới Flask backend
+import { faceRecognitionService } from '@services/admin/faceRecognitionService';
+// Modal sử dụng backend Laravel, không gọi trực tiếp Python API
 
 const ModalRegisterFace = ({ isOpen, toggle, onSuccess }) => {
-  const [userId, setUserId] = useState('');
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
   const [capturedImages, setCapturedImages] = useState([]);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -18,6 +19,7 @@ const ModalRegisterFace = ({ isOpen, toggle, onSuccess }) => {
 useEffect(() => {
         let started = false;
         if (isOpen) {
+            fetchAvailableUsers();
             start();
             started = true;
         }
@@ -25,6 +27,19 @@ useEffect(() => {
             if (started) stop();
         };
     }, [isOpen]);
+
+  const fetchAvailableUsers = async () => {
+    try {
+      const res = await faceRecognitionService.getAvailableUsers();
+      if (res.success) {
+        setAvailableUsers(res.data || []);
+      } else {
+        toast.error(res.message || 'Không thể tải danh sách người dùng');
+      }
+    } catch (e) {
+      toast.error('Lỗi kết nối server khi tải danh sách người dùng');
+    }
+  };
 
   const start = async () => {
     try {
@@ -61,7 +76,7 @@ useEffect(() => {
     }
     setCapturedImages([]);
     setProgress(0);
-    setUserId('');
+    setSelectedUser('');
     setError('');
   };
 
@@ -98,37 +113,23 @@ useEffect(() => {
   };
 
   const handleSubmit = async () => {
-    if (!userId) return setError('Vui lòng nhập User ID');
-    if (!capturedImages.length) return setError('Vui lòng chụp đủ 10 ảnh');
+    if (!selectedUser) return setError('Vui lòng chọn nhân viên');
+    if (capturedImages.length !== 10) return setError('Vui lòng chụp đủ 10 ảnh');
     setIsProcessing(true);
     setError('');
     try {
       for (let i = 0; i < capturedImages.length; i++) {
-        const payload = {
-          user_id: parseInt(userId, 10),
+        const resp = await faceRecognitionService.captureface({
+          user_id: parseInt(selectedUser, 10),
           image: capturedImages[i],
           image_count: i + 1,
-          user_info: {} // Có thể bổ sung thêm thông tin nếu cần
-        };
-        const response = await fetch('http://localhost:5000/api/face/capture', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
         });
-        const resJson = await response.json();
-        if (!resJson.success) throw new Error(resJson.message || 'Lỗi khi gửi ảnh');
+        if (!resp.success) throw new Error(resp.message || 'Lỗi khi gửi ảnh');
         setProgress(i + 1);
       }
-      // Gọi train model sau khi upload ảnh xong
-      const trainRes = await fetch('http://localhost:5000/api/face/train', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: parseInt(userId, 10) })
-      });
-      const trainJson = await trainRes.json();
-      if (!trainJson.success) throw new Error(trainJson.message || 'Training model thất bại');
+      // Gọi train model sau khi upload ảnh xong (qua backend Laravel)
+      const trainResp = await faceRecognitionService.trainFaces(parseInt(selectedUser, 10));
+      if (!trainResp.success) throw new Error(trainResp.message || 'Training model thất bại');
 
       toast.success('Đăng ký và training khuôn mặt thành công!');
       onSuccess && onSuccess();
@@ -148,8 +149,19 @@ useEffect(() => {
       <ModalBody>
         {error && <Alert color="danger" timeout={3000}>{error}</Alert>}
         <FormGroup>
-          <Label>User ID</Label>
-          <Input type="number" value={userId} onChange={(e) => setUserId(e.target.value)} />
+          <Label>Chọn nhân viên</Label>
+          <Input
+            type="select"
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+          >
+            <option value="">-- Chọn người dùng --</option>
+            {availableUsers.map(u => (
+              <option key={u.id} value={u.id} disabled={u.has_face_registered}>
+                {u.full_name || u.username} ({u.email}) {u.has_face_registered ? ' - Đã đăng ký' : ''}
+              </option>
+            ))}
+          </Input>
         </FormGroup>
         {capturedImages.length === 0 ? (
           <div>

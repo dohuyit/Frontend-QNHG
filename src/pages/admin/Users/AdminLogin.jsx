@@ -100,28 +100,39 @@ export default function AdminLogin() {
     // Face recognition functions
     const startFaceRecognition = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    width: 640, 
+            // Bật overlay trước để phần tử <video> được mount vào DOM
+            setIsFaceRecognizing(true)
+
+            // Chờ 1 tick để React render overlay và gán ref
+            await new Promise(resolve => setTimeout(resolve, 0))
+
+            // Đợi ref video sẵn sàng (tối đa ~1s)
+            for (let i = 0; i < 20 && !videoRef.current; i++) {
+                await new Promise(r => setTimeout(r, 50))
+            }
+
+            // Xin quyền camera và gán stream cho video
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 640,
                     height: 480,
                     facingMode: 'user'
-                } 
-            })
-            
-            if (!videoRef.current) return
-            
-            videoRef.current.srcObject = stream
-            // Đảm bảo video phát
-            try {
-                videoRef.current.setAttribute('playsinline', '')
-                videoRef.current.muted = true
-                const p = videoRef.current.play()
-                if (p && typeof p.then === 'function') {
-                    p.catch(() => {})
                 }
-            } catch (e) {}
+            })
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream
+                // Đảm bảo video phát
+                try {
+                    videoRef.current.setAttribute('playsinline', '')
+                    videoRef.current.muted = true
+                    const p = videoRef.current.play()
+                    if (p && typeof p.then === 'function') {
+                        p.catch(() => {})
+                    }
+                } catch (e) {}
+            }
             streamRef.current = stream
-            setIsFaceRecognizing(true)
 
             // Đợi camera sẵn sàng một chút
             await new Promise(resolve => setTimeout(resolve, 500))
@@ -396,6 +407,14 @@ export default function AdminLogin() {
         }
     }
 
+    const stopFaceRecognition = () => {
+        setIsFaceRecognizing(false)
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+    }
+
     return (
         <div className="admin-login-container">
             <div className="admin-login-card">
@@ -488,24 +507,26 @@ export default function AdminLogin() {
                 </div>
             </div>
 
-            {/* Hidden elements for face recognition */}
-            <div style={{ marginTop: 16 }}>
-                <video
-                    ref={videoRef}
-                    style={{
-                        display: isFaceRecognizing ? 'block' : 'none',
-                        width: 320,
-                        height: 240,
-                        borderRadius: 8,
-                        border: '1px solid #e5e7eb',
-                        objectFit: 'cover'
-                    }}
-                    autoPlay
-                    muted
-                    width="320"
-                    height="240"
-                />
-            </div>
+            {/* Overlay camera centered */}
+            {isFaceRecognizing && (
+                <div className="admin-face-overlay">
+                    <div className="admin-face-modal">
+                        <div className="admin-face-modal-header">
+                            <h3>Đang nhận diện khuôn mặt</h3>
+                            <button type="button" className="admin-face-close-btn" onClick={stopFaceRecognition}>
+                                Đóng
+                            </button>
+                        </div>
+                        <video
+                            ref={videoRef}
+                            className="admin-face-video"
+                            autoPlay
+                            muted
+                            playsInline
+                        />
+                    </div>
+                </div>
+            )}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
     )
