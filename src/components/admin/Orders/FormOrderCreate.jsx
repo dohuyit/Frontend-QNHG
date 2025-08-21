@@ -40,7 +40,7 @@ const FormOrderCreate = () => {
   const [orderNotes, setOrderNotes] = useState("");
   const [orderMethod, setOrderMethod] = useState("Dine In");
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [priority, setPriority] = useState(0);
+  const [priority, setPriority] = useState(false);
   const [selectedTables, setSelectedTables] = useState([]); // [{id, table_number, ...}]
   const [dishes, setDishes] = useState([]);
   const [search, setSearch] = useState("");
@@ -118,15 +118,15 @@ const FormOrderCreate = () => {
     fetchCategories();
   }, []);
 
-  const fetchDishes = async (page = 1) => {
+  const fetchDishes = async () => {
     setLoadingDishes(true);
     try {
       const params = {
-        page,
-        per_page: 10,
-        search: search || undefined,
+        name: search || undefined,
         category_id: categoryFilter || undefined,
       };
+
+      console.log(params);
 
       const res = await getDishes(params);
       const items = res.data?.data?.items;
@@ -226,9 +226,15 @@ const FormOrderCreate = () => {
   const updateQuantity = (id, quantity, comboId = null) => {
     setOrderItems((prevItems) => {
       if (quantity <= 0) {
-        return prevItems.filter((item) =>
-          comboId ? item.combo_id !== comboId : item.id !== id && !item.combo_id
-        );
+        if (comboId) {
+          // Nếu là combo, chỉ xóa combo có combo_id tương ứng
+          return prevItems.filter((item) => !(item.combo_id === comboId));
+        } else {
+          // Nếu là món ăn thường, chỉ xóa món có id tương ứng và không phải là combo
+          return prevItems.filter(
+            (item) => !(item.id === id && !item.combo_id)
+          );
+        }
       }
       return prevItems.map((item) =>
         comboId

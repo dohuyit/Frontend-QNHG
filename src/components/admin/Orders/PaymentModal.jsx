@@ -180,24 +180,6 @@ const PaymentModal = ({
                   </div>
               )}
 
-              {/* Select mã giảm giá */}
-              <div className="payment-modal-section discount-section mt-3">
-                <h5 className="payment-section-title">
-                  <i className="ri-discount-line me-2"></i>Mã giảm giá
-                </h5>
-                <Input type="select" value={selectedDiscount} onChange={(e) => setSelectedDiscount(e.target.value)}>
-                  <option value="">Chọn mã giảm giá</option>
-                  {discountList.length === 0 && <option disabled>Không có mã giảm giá</option>}
-                  {discountList.map((d) => (
-                      <option key={d.id} value={d.code}>
-                        {d.code} - Giảm {formatPriceToVND(parseFloat(d.value))}
-                      </option>
-                  ))}
-                </Input>
-
-
-              </div>
-
               <div className="payment-modal-section payment-method-section mt-3">
                 <h5 className="payment-section-title">
                   <i className="ri-wallet-line me-2"></i>Phương thức thanh toán
@@ -305,6 +287,23 @@ const PaymentModal = ({
                       </div>
                   ))}
                 </div>
+
+                {/* Select mã giảm giá */}
+                <div className="payment-modal-section discount-section mb-3">
+                  <h5 className="payment-section-title">
+                    <i className="ri-discount-line me-2"></i>Mã giảm giá
+                  </h5>
+                  <Input type="select" value={selectedDiscount} onChange={(e) => setSelectedDiscount(e.target.value)}>
+                    <option value="">Chọn mã giảm giá</option>
+                    {discountList.length === 0 && <option disabled>Không có mã giảm giá</option>}
+                    {discountList.map((d) => (
+                      <option key={d.id} value={d.code}>
+                        {d.code} - Giảm {formatPriceToVND(parseFloat(d.value))}
+                      </option>
+                    ))}
+                  </Input>
+                </div>
+
                 <div className="order-summary-totals">
                   <div className="summary-row">
                     <span className="summary-label">Tạm tính:</span>

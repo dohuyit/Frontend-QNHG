@@ -277,13 +277,11 @@ const FormOrderUpdate = () => {
     comboCategoryFilter,
   ]);
 
-  const fetchDishes = async (page = 1) => {
+  const fetchDishes = async () => {
     setLoadingDishes(true);
     try {
       const params = {
-        page,
-        per_page: 10,
-        search: search || undefined,
+        name: search || undefined,
         category_id: categoryFilter || undefined,
       };
       const res = await getDishes(params);
@@ -1675,16 +1673,20 @@ const FormOrderUpdate = () => {
                 >
                   {isSubmitting ? <Spinner size="sm" /> : "Lưu lại"}
                 </button>
-                {orderItems.length > 0 && total > 0 && (
-                  <button
-                    type="button"
-                    className="btn btn-danger w-100"
-                    onClick={() => setShowPaymentModal(true)}
-                    disabled={isSubmitting}
-                  >
-                    Lưu & Thanh toán
-                  </button>
-                )}
+                {orderItems.length > 0 &&
+                  total > 0 &&
+                  orderItems.some(
+                    (item) => item.kitchen_status !== "pending"
+                  ) && (
+                    <button
+                      type="button"
+                      className="btn btn-danger w-100"
+                      onClick={() => setShowPaymentModal(true)}
+                      disabled={isSubmitting}
+                    >
+                      Lưu & Thanh toán
+                    </button>
+                  )}
                 {(orderItems.length === 0 || total === 0) && (
                   <button
                     type="button"
