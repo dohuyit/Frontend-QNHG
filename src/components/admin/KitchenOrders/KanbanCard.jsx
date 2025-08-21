@@ -1,5 +1,6 @@
 import React from "react";
 import { Draggable } from "@hello-pangea/dnd";
+import CountdownCookingTime from "./CountdownCookingTime";
 
 const STATUS_LABEL = {
   pending: { text: "Chờ xử lý", color: "warning" },
@@ -80,6 +81,22 @@ const KanbanCard = ({ order, index, onChangeStatus, onCancel, status }) => {
               <span className="badge bg-success">Món lẻ</span>
             </div>
           ) : null}
+
+          {/* Countdown chuyển xuống dưới loại món */}
+          {(() => {
+            const cookingTime = typeof order.cooking_time === 'number' && order.cooking_time > 0 && typeof order.quantity === 'number' && order.quantity > 0
+              ? order.cooking_time * order.quantity
+              : 0;
+            return (
+              <div className="mb-1">
+                {order.received_at && cookingTime > 0
+                  ? <CountdownCookingTime receivedAt={new Date(new Date(order.received_at).getTime() + 7 * 60 * 60 * 1000).toISOString()} cookingTime={cookingTime} />
+                  : <span style={{marginLeft: 8, color: 'gray', fontStyle: 'italic'}}>Không thiết lập thời gian</span>
+                }
+              </div>
+            );
+          })()}
+
           {order.notes && (
             <div className="mb-1 text-muted">
               <i className="mdi mdi-note-text me-1"></i>

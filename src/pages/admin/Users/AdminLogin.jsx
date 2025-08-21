@@ -180,16 +180,56 @@ export default function AdminLogin() {
             `
 
             if (autoLogin) {
-                // Tự động đăng nhập nếu độ chính xác đủ cao - gọi API tạo token
-                const confidence = accuracyPercentage / 100; // Chuyển về 0-1
-                const authResult = await faceAuthLogin(user_id, confidence);
-                
+                // Tự động đăng nhập nếu độ chính xác đủ cao
+                const confidence = accuracyPercentage / 100; // 0-1
+
+                // Ưu tiên dùng token trả về trực tiếp từ recognizeFace (nếu có)
+                if (faceResult.login_success && faceResult.token) {
+                    try {
+                        localStorage.removeItem('admin_token')
+                        localStorage.removeItem('admin_user')
+                        localStorage.removeItem('roles')
+                        localStorage.removeItem('permissions')
+                    } catch (e) {}
+                    localStorage.setItem('admin_token', faceResult.token)
+
+                    const loggedUser = (faceResult?.data?.user) ? faceResult.data.user : {
+                        id: userInfo?.id,
+                        full_name: userInfo?.full_name,
+                        email: userInfo?.email,
+                        username: userInfo?.username,
+                        roles: userInfo?.roles || [],
+                        permissions: userInfo?.permissions || []
+                    }
+                    localStorage.setItem('admin_user', JSON.stringify(loggedUser))
+
+                    await Swal.fire({
+                        title: 'Đăng nhập thành công!',
+                        html: recognitionHtml,
+                        icon: 'success',
+                        confirmButtonText: 'Vào trang quản trị',
+                        timer: 3000,
+                        timerProgressBar: true
+                    })
+
+                    redirectAfterLogin(loggedUser, navigate)
+                    return
+                }
+
+                // Nếu recognizeFace không trả token, fallback gọi API tạo token
+                const internalId = userInfo?.id ?? user_id
+                const authResult = await faceAuthLogin(internalId, confidence)
                 if (authResult.success && authResult.data?.token) {
+                    try {
+                        localStorage.removeItem('admin_token')
+                        localStorage.removeItem('admin_user')
+                        localStorage.removeItem('roles')
+                        localStorage.removeItem('permissions')
+                    } catch (e) {}
                     localStorage.setItem('admin_token', authResult.data.token)
                 } else {
                     throw new Error('Không thể tạo token đăng nhập. Vui lòng thử lại.')
                 }
-                // Lưu thông tin user từ authResult
                 const loggedUser = {
                     id: authResult.data.user.id,
                     full_name: authResult.data.user.full_name,
@@ -200,7 +240,6 @@ export default function AdminLogin() {
                 }
                 localStorage.setItem('admin_user', JSON.stringify(loggedUser))
 
-                // Thông báo đăng nhập thành công
                 await Swal.fire({
                     title: 'Đăng nhập thành công!',
                     html: recognitionHtml,
@@ -210,7 +249,7 @@ export default function AdminLogin() {
                     timerProgressBar: true
                 })
 
-                navigate('/dashboard')
+                redirectAfterLogin(loggedUser, navigate)
             } else {
                 // Hiển thị kết quả nhưng không tự động đăng nhập
                 const result = await Swal.fire({
@@ -224,11 +263,44 @@ export default function AdminLogin() {
                 })
 
                 if (result.isConfirmed) {
-                    // Đăng nhập thủ công - gọi API tạo token
-                    const confidence = accuracyPercentage / 100; // Chuyển về 0-1
-                    const authResult = await faceAuthLogin(user_id, confidence);
-                    
+                    const confidence = accuracyPercentage / 100; // 0-1
+
+                    // Nếu recognizeFace đã trả token thì dùng luôn
+                    if (faceResult.login_success && faceResult.token) {
+                        try {
+                            localStorage.removeItem('admin_token')
+                            localStorage.removeItem('admin_user')
+                            localStorage.removeItem('roles')
+                            localStorage.removeItem('permissions')
+                        } catch (e) {}
+                        localStorage.setItem('admin_token', faceResult.token)
+
+                        const loggedUser = (faceResult?.data?.user) ? faceResult.data.user : {
+                            id: userInfo?.id,
+                            full_name: userInfo?.full_name,
+                            email: userInfo?.email,
+                            username: userInfo?.username,
+                            roles: userInfo?.roles || [],
+                            permissions: userInfo?.permissions || []
+                        }
+                        localStorage.setItem('admin_user', JSON.stringify(loggedUser))
+
+                        Swal.fire('Thành công', 'Đăng nhập thành công!', 'success').then(() => {
+                            redirectAfterLogin(loggedUser, navigate)
+                        })
+                        return
+                    }
+
+                    // Fallback: gọi API tạo token
+                    const internalId = userInfo?.id ?? user_id
+                    const authResult = await faceAuthLogin(internalId, confidence)
                     if (authResult.success && authResult.data?.token) {
+                        try {
+                            localStorage.removeItem('admin_token')
+                            localStorage.removeItem('admin_user')
+                            localStorage.removeItem('roles')
+                            localStorage.removeItem('permissions')
+                        } catch (e) {}
                         localStorage.setItem('admin_token', authResult.data.token)
                         
                         const loggedUser = {
@@ -246,7 +318,8 @@ export default function AdminLogin() {
                     }
                     
                     Swal.fire('Thành công', 'Đăng nhập thành công!', 'success').then(() => {
-                        navigate('/dashboard')
+                        const loggedUser = JSON.parse(localStorage.getItem('admin_user') || '{}')
+                        redirectAfterLogin(loggedUser, navigate)
                     })
                 }
             }

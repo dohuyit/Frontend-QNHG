@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardBody, Row, Col, Badge, Button, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
 import { FaStar, FaEye, FaTrash, FaEdit, FaPlus, FaPowerOff, FaEllipsisV } from "react-icons/fa";
 
-const fullUrl = "http://localhost:8000/storage/";
+
 
 const ComboCardGrid = ({ data = [], onDetail, onEdit, onDelete, onAddDish, onToggleStatus }) => {
    
@@ -31,16 +31,19 @@ const ComboCard = ({ combo, onDetail, onEdit, onDelete, onAddDish  }) => {
                     <div style={{ width: "100%", height: 150, background: combo.image_url ? undefined : "#eee", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", borderTopLeftRadius: 8, borderTopRightRadius: 8, overflow: "hidden" }}>
                         {!imgError && combo.image_url ? (
                             <img
-                                src={
-                                    combo.image_url.startsWith("http")
-                                        ? combo.image_url
-                                        : `${fullUrl}${combo.image_url}`
-                                }
+                                src={(() => {
+                                    const url = combo.image_url || "";
+                                    if (url.startsWith("http")) return url;
+                                    let imgPath = url;
+                                    if (!imgPath.startsWith("/storage")) {
+                                        imgPath = "/storage/" + imgPath.replace(/^\/+/, "");
+                                    }
+                                    return `http://localhost:8000${imgPath}`;
+                                })()}
                                 alt={combo.name}
                                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                                 onError={() => setImgError(true)}
-                                // Thêm key để React unmount/mount lại img khi combo.id đổi (chặn lặp do re-render)
-                                key={combo.id}
+                                key={`${combo.id}-${combo.image_url || ''}`}
                             />
                         ) : (
                             <span style={{ fontSize: 32, color: "#bbb" }}>Không có ảnh</span>

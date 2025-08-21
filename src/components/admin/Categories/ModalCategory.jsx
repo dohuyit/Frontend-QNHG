@@ -160,6 +160,26 @@ const ModalCategory = ({
               </FormGroup>
             </Col>
 
+            <Col md={6}>
+              <FormGroup>
+                <Label for="cooking_time">
+                  Thời gian chế biến (phút) <span className="text-danger">*</span>
+                </Label>
+                <Input
+                  id="cooking_time"
+                  type="number"
+                  min={0}
+                  value={newCategory.cooking_time || ""}
+                  onChange={(e) =>
+                    setNewCategory({ ...newCategory, cooking_time: e.target.value })
+                  }
+                  placeholder="Nhập số phút chế biến"
+                  invalid={!!errors.cooking_time}
+                />
+                {errors.cooking_time && <FormFeedback>{errors.cooking_time}</FormFeedback>}
+              </FormGroup>
+            </Col>
+
             <Col md={12}>
               <FormGroup>
                 <div className="d-flex align-items-center justify-content-between p-2 border rounded">

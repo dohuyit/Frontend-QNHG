@@ -36,6 +36,7 @@ const ListCategory = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit
                 <th>Ảnh</th>
                 <th>Tên danh mục</th>
                 <th>Mô tả</th>
+                <th>Thời gian chế biến (phút)</th>
                 <th>Danh mục cha</th>
                 <th>Trạng thái</th>
                 <th style={{ width: 120 }}>Hành động</th>
@@ -60,11 +61,12 @@ const ListCategory = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit
                           style={{ width: 50, height: 50, objectFit: "cover" }}
                         />
                       ) : (
-                        <span>Không có ảnh</span>
+                        <span className="text-muted">Không có ảnh</span>
                       )}
                     </td>
                     <td>{category.name}</td>
-                    <td>{category.description || "N/A"}</td>
+                    <td>{category.description}</td>
+                    <td>{category.cooking_time !== undefined && category.cooking_time !== null ? `${category.cooking_time} phút` : <span className="text-muted">Chưa thiết lập</span>}</td>
                     <td>{category.parent?.name || "Không có"}</td>
                     <td>
                       {category.is_active ? (

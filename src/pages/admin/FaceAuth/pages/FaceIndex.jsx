@@ -410,8 +410,8 @@ const FaceIndex = () => {
                         <td>
                           <Badge
                             color={
-                              face.role_name === 'admin' ? 'danger' :
-                                face.role_name === 'bếp' ? 'warning' : 'info'
+                              face.role_name === 'Admin' ? 'danger' :
+                                face.role_name === 'Quản lý bếp' ? 'warning' : 'info'
                             }
                           >
                             {face.role_name}
