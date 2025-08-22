@@ -83,19 +83,58 @@ const KanbanCard = ({ order, index, onChangeStatus, onCancel, status }) => {
           ) : null}
 
           {/* Countdown chuyển xuống dưới loại món */}
-          {(() => {
-            const cookingTime = typeof order.cooking_time === 'number' && order.cooking_time > 0 && typeof order.quantity === 'number' && order.quantity > 0
-              ? order.cooking_time * order.quantity
-              : 0;
-            return (
-              <div className="mb-1">
-                {order.received_at && cookingTime > 0
-                  ? <CountdownCookingTime receivedAt={new Date(new Date(order.received_at).getTime() + 7 * 60 * 60 * 1000).toISOString()} cookingTime={cookingTime} />
-                  : <span style={{marginLeft: 8, color: 'gray', fontStyle: 'italic'}}>Không thiết lập thời gian</span>
-                }
-              </div>
-            );
-          })()}
+          {/* Hiển thị thời gian theo trạng thái đơn */}
+{(() => {
+  const cookingTime = typeof order.cooking_time === 'number' && order.cooking_time > 0 && typeof order.quantity === 'number' && order.quantity > 0
+    ? order.cooking_time * order.quantity
+    : 0;
+  // Nếu bị hủy thì ẩn toàn bộ
+  if (order.status === 'cancelled') return null;
+
+  // Trạng thái "pending" hoặc "preparing": đều dùng created_at làm mốc countdown
+  if (['pending', 'preparing'].includes(order.status)) {
+    return (
+      <div className="mb-1">
+        {order.created_at && cookingTime > 0 ? (
+          <CountdownCookingTime receivedAt={order.created_at} cookingTime={cookingTime} />
+        ) : (
+          <span style={{marginLeft: 8, color: 'gray', fontStyle: 'italic'}}>Không thiết lập thời gian</span>
+        )}
+      </div>
+    );
+  }
+  // Hoàn thành: ẩn đồng hồ, hiển thị thời gian hoàn thành hoặc tổng thời gian chế biến
+  if (order.status === 'ready') {
+    // Nếu có completed_at và received_at, chỉ hiển thị tổng thời gian chế biến
+    if (order.completed_at && order.received_at) {
+      return (
+        <div className="mb-1">
+          <span className="badge rounded-pill bg-info" style={{fontSize: 13, fontWeight: 600}}>
+            Thời gian chế biến: {Math.round((new Date(order.completed_at).getTime() - new Date(order.received_at).getTime())/60000)} phút
+          </span>
+        </div>
+      );
+    }
+    // Nếu không có đủ dữ liệu, chỉ hiển thị "Đã hoàn thành"
+    return (
+      <div className="mb-1">
+        <span className="badge rounded-pill bg-success" style={{fontSize: 13, fontWeight: 600}}>
+          Đã hoàn thành
+        </span>
+      </div>
+    );
+  }
+  // Trạng thái khác: hiện như cũ
+  return (
+    <div className="mb-1">
+      {order.received_at && cookingTime > 0 ? (
+        <CountdownCookingTime receivedAt={new Date(new Date(order.received_at).getTime() + 7 * 60 * 60 * 1000).toISOString()} cookingTime={cookingTime} />
+      ) : (
+        <span style={{marginLeft: 8, color: 'gray', fontStyle: 'italic'}}>Không thiết lập thời gian</span>
+      )}
+    </div>
+  );
+})()}
 
           {order.notes && (
             <div className="mb-1 text-muted">

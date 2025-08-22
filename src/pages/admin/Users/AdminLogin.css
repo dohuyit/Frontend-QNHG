@@ -10,6 +10,79 @@
     overflow: hidden;
 }
 
+/* ===== Face recognition overlay ===== */
+.admin-face-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.admin-face-modal {
+    background: #0b1220;
+    color: #e5e7eb;
+    width: 92%;
+    max-width: 860px;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 1rem 1rem 1.25rem;
+}
+
+.admin-face-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.admin-face-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+.admin-face-close-btn {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.admin-face-close-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.admin-face-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #111827;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .admin-face-modal {
+        max-width: 96%;
+        padding: 0.75rem;
+    }
+    .admin-face-modal-header h3 {
+        font-size: 1rem;
+    }
+}
+
 /* Background patterns */
 .admin-login-container::before {
     content: '';

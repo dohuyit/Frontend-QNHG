@@ -7,14 +7,19 @@ export const faceRecognitionService = {
   /**
    * Chụp và lưu ảnh khuôn mặt
    */
-  captureface: async (userId, imageData, imageCount, userInfo = {}) => {
+  captureface: async (arg1, imageData, imageCount) => {
     try {
-      const response = await api.post(`${FACE_API_BASE}/capture`, {
-        user_id: userId,
-        image: imageData,
-        image_count: imageCount,
-        user_info: userInfo
-      });
+      // Hỗ trợ gọi theo 2 dạng:
+      // 1) captureface({ user_id, image, image_count })
+      // 2) captureface(userId, imageData, imageCount)
+      let payload;
+      if (typeof arg1 === 'object' && arg1 !== null) {
+        const { user_id, image, image_count } = arg1;
+        payload = { user_id, image, image_count };
+      } else {
+        payload = { user_id: arg1, image: imageData, image_count: imageCount };
+      }
+      const response = await api.post(`${FACE_API_BASE}/capture`, payload);
       return response.data;
     } catch (error) {
       console.error('Capture face error:', error);
@@ -48,6 +53,19 @@ export const faceRecognitionService = {
       return response.data;
     } catch (error) {
       console.error('Recognize face error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lấy danh sách users có thể đăng ký khuôn mặt
+   */
+  getAvailableUsers: async () => {
+    try {
+      const response = await api.get(`${FACE_API_BASE}/available-users`);
+      return response.data;
+    } catch (error) {
+      console.error('Get available users error:', error);
       throw error;
     }
   },
