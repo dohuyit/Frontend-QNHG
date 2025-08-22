@@ -17,7 +17,11 @@ import {
   Input,
 } from "reactstrap";
 import { formatPriceToVND } from "@helpers/formatPriceToVND";
-import { getBillDetails } from "@services/admin/orderService";
+import {
+  getBillDetails,
+  exportBill,
+  BASE_URL,
+} from "@services/admin/orderService";
 import { toast } from "react-toastify";
 import {
   FaInfoCircle,
@@ -26,6 +30,7 @@ import {
   FaMoneyBillWave,
   FaClipboardList,
   FaHandshake,
+  FaFilePdf,
 } from "react-icons/fa";
 import dishDefaultImg from "@assets/admin/images/dish/dish-default.webp";
 import "./BillDetailModal.scss";
@@ -43,7 +48,36 @@ const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("info");
+  const [isExporting, setIsExporting] = useState(false);
 
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      const response = await exportBill(orderId);
+
+      if (response.data?.code === "SUCCESS" && response.data?.data?.pdf_url) {
+        const pdfUrl = response.data.data.pdf_url;
+        toast.success("Xuất hóa đơn PDF thành công!");
+
+        // Đợi 1 giây sau khi hiển thị toast rồi mới mở PDF
+        setTimeout(() => {
+          const newWindow = window.open(pdfUrl, "_blank");
+          if (newWindow) {
+            newWindow.focus();
+          } else {
+            toast.warning("Vui lòng cho phép trình duyệt mở popup để xem PDF");
+          }
+        }, 2000);
+      } else {
+        throw new Error("Không nhận được URL của file PDF");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xuất PDF:", error);
+      toast.error("Không thể xuất hóa đơn PDF. Vui lòng thử lại!");
+    } finally {
+      setIsExporting(false);
+    }
+  };
   useEffect(() => {
     const fetchBillDetails = async () => {
       if (!orderId) {
@@ -432,6 +466,19 @@ const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
         </TabContent>
       </ModalBody>
       <ModalFooter className="border-top-0 pt-0">
+        <Button
+          color="success"
+          onClick={handleExportPDF}
+          className="me-2"
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <Spinner size="sm" className="me-1" />
+          ) : (
+            <FaFilePdf className="me-1" />
+          )}
+          Xuất PDF
+        </Button>
         <Button
           color="primary"
           onClick={toggle}

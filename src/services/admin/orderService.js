@@ -5,81 +5,85 @@ const API_URL = `${BASE_URL}/api/admin`;
 
 // Lấy token từ localStorage
 const getToken = () => {
-    const adminToken = localStorage.getItem("admin_token");
-    return adminToken || null;
+  const adminToken = localStorage.getItem("admin_token");
+  return adminToken || null;
 };
 
 // Tạo axios instance dùng chung
 const apiClient = axios.create({
-    baseURL: API_URL,
-    headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    },
+  baseURL: API_URL,
+  headers: {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
 });
 
 // Interceptor thêm Authorization header trước khi gửi request
 apiClient.interceptors.request.use((config) => {
-    const token = getToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // Các hàm gọi API
 
 // Lấy toàn bộ lịch sử thay đổi đơn hàng
 export const getOrderChangeLogs = async (orderId) => {
-    if (!orderId) return [];
-    const res = await apiClient.get(`/orders/${orderId}/change-logs`);
-    return res.data.data || res.data;
+  if (!orderId) return [];
+  const res = await apiClient.get(`/orders/${orderId}/change-logs`);
+  return res.data.data || res.data;
 };
 
 export const getOrders = (params) => {
-    return apiClient.get("/orders/list", { params });
+  return apiClient.get("/orders/list", { params });
 };
 
 export const getListOrders = (params) => {
-    return apiClient.get("/orders/list", { params });
+  return apiClient.get("/orders/list", { params });
 };
 
 export const getOrderDetail = (id) => {
-    return apiClient.get(`/orders/${id}/detail`);
+  return apiClient.get(`/orders/${id}/detail`);
 };
 
 export const createOrder = (data) => {
-    return apiClient.post("/orders/create", data);
+  return apiClient.post("/orders/create", data);
 };
 
 export const updateOrder = (id, data) => {
-    return apiClient.post(`/orders/${id}/update`, data);
+  return apiClient.post(`/orders/${id}/update`, data);
 };
 
 export const updateItemStatus = (orderItemId, status) => {
-    return apiClient.post(`/orders/items/${orderItemId}/status`, { status });
+  return apiClient.post(`/orders/items/${orderItemId}/status`, { status });
 };
 
 export const getOrderItemHistory = (orderItemId) => {
-    return apiClient.get(`/orders/items/${orderItemId}/history`);
+  return apiClient.get(`/orders/items/${orderItemId}/history`);
 };
 
 export const trackOrder = (orderCode) => {
-    return apiClient.get(`/orders/track/${orderCode}`);
+  return apiClient.get(`/orders/track/${orderCode}`);
 };
 
 export const getOrderByTableId = (tableId) => {
-    return apiClient.get(`/orders/table/${tableId}`);
+  return apiClient.get(`/orders/table/${tableId}`);
 };
 
 export const paymentOrder = (id, data) => {
-    return apiClient.post(`/orders/${id}/pay`, data);
+  return apiClient.post(`/orders/${id}/pay`, data);
 };
 
 export const getBillDetails = (id) => {
-    return apiClient.get(`/bills/${id}/detail`);
+  return apiClient.get(`/bills/${id}/detail`);
 };
 
 export const countOrder = () => {
-    return apiClient.get(`/orders/count-by-status`);
+  return apiClient.get(`/orders/count-by-status`);
+};
+
+export const exportBill = (id) => {
+  return apiClient.get(`/bills/${id}/export-pdf`);
 };

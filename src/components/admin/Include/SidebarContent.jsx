@@ -217,7 +217,7 @@ const SidebarContent = (props) => {
             {hasPermission("dish.view") && (
               <li>
                 <Link to="/#" className="has-arrow ">
-                  <i className="bx bx-dish"></i>
+                  <i className="bx bx-restaurant"></i>
                   <span>{props.t("Quản Lí Món Ăn")}</span>
                 </Link>
                 <ul className="sub-menu" aria-expanded="false">
@@ -267,22 +267,21 @@ const SidebarContent = (props) => {
               </li>
             )}
 
-            
-
             {hasPermission("discount.view") && (
-                <li>
-                  <Link to="/#" className="has-arrow ">
-                    <i className="bx bxs-discount"></i>
-                    <span>{props.t("Quản Lí Mã giảm giá")}</span>
-                  </Link>
-                  <ul className="sub-menu" aria-expanded="false">
-                    <li>
-                      <Link to="/discount-code">{props.t("Danh Sách Mã Giảm giá")}</Link>
-                    </li>
-                  </ul>
-                </li>
+              <li>
+                <Link to="/#" className="has-arrow ">
+                  <i className="bx bxs-discount"></i>
+                  <span>{props.t("Quản Lí Mã giảm giá")}</span>
+                </Link>
+                <ul className="sub-menu" aria-expanded="false">
+                  <li>
+                    <Link to="/discount-code">
+                      {props.t("Danh Sách Mã Giảm giá")}
+                    </Link>
+                  </li>
+                </ul>
+              </li>
             )}
-
 
             {hasPermission("customer.view") && (
               <li>
@@ -296,7 +295,6 @@ const SidebarContent = (props) => {
                       {props.t("Danh Sách Khách Hàng")}
                     </Link>
                   </li>
-                 
                 </ul>
               </li>
             )}
@@ -353,7 +351,7 @@ const SidebarContent = (props) => {
                   </li>
                 </ul>
                 <Link to="/face-auth-test">
-                  <i className="bx bxs-user"></i>
+                  <i class="bx  bx-happy-beaming"></i>
                   <span>{props.t("Quản lý khuôn mặt")}</span>
                 </Link>
               </li>
