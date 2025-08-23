@@ -42,6 +42,10 @@ const PaymentModal = ({
   const [selectedDiscount, setSelectedDiscount] = useState("");
   const [filteredOrderItems, setFilteredOrderItems] = useState([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
+  const [discountValue, setDiscountValue] = useState(0);
+  const [totalAfterDiscount, setTotalAfterDiscount] = useState(0);
+  const discountObj = discountList.find((d) => d.code === selectedDiscount);
+  const baseTotal = totalAfterDiscount ?? calculatedTotal;
 
   // Lọc các món ăn theo trạng thái và tính lại tổng tiền
   useEffect(() => {
@@ -62,11 +66,16 @@ const PaymentModal = ({
   }, [orderItems, vat]);
 
   // Lấy danh sách mã giảm giá khi modal mở
+  // Khi modal mở hoặc tổng tiền tính xong, khởi tạo totalAfterDiscount
+
   useEffect(() => {
     if (isOpen) {
       fetchDiscountCodes();
+      setTotalAfterDiscount(calculatedTotal);
+      setSelectedDiscount(""); // reset mã giảm giá khi mở modal
+      setDiscountValue(0); // reset giá trị giảm giá
     }
-  }, [isOpen]);
+  }, [isOpen, calculatedTotal]);
 
   const fetchDiscountCodes = async () => {
     try {
@@ -101,13 +110,16 @@ const PaymentModal = ({
         return;
       }
 
-      const finalAmount = calculatedTotal * (1 + vat / 100);
+      const amountAfterDiscount =
+        (totalAfterDiscount || calculatedTotal) * (1 + vat / 100);
+
       const paymentPayload = {
         payment_method: selectedPaymentMethod,
-        amount_paid: finalAmount,
+        amount_paid: amountAfterDiscount,
         discount_code: selectedDiscount || null,
+        discount_amount: discountValue,
+        type: discountObj?.type || null,
         notes: orderNotes || "",
-        discount_amount: 0,
         delivery_fee: 0,
         user_id: currentUserId,
         items: filteredOrderItems.map((item) => ({
@@ -153,6 +165,30 @@ const PaymentModal = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+  const handleDiscountChange = (e) => {
+    const code = e.target.value;
+    setSelectedDiscount(code);
+
+    const discountObj = discountList.find((d) => d.code === code);
+
+    if (!discountObj) {
+      setDiscountValue(0);
+      setTotalAfterDiscount(calculatedTotal); 
+      return;
+    }
+
+    let discount = 0;
+    if (discountObj.type === "percentage") {
+      discount = (calculatedTotal * discountObj.value) / 100;
+    } else if (discountObj.type === "fixed") {
+      discount = discountObj.value;
+    }
+
+    if (discount > calculatedTotal) discount = calculatedTotal;
+
+    setDiscountValue(discount);
+    setTotalAfterDiscount(calculatedTotal - discount);
   };
 
   const displayContactName = contactName || "Khách hàng chưa nhập";
@@ -336,38 +372,63 @@ const PaymentModal = ({
                 <Input
                   type="select"
                   value={selectedDiscount}
-                  onChange={(e) => setSelectedDiscount(e.target.value)}
+                  onChange={handleDiscountChange}
                 >
                   <option value="">Chọn mã giảm giá</option>
                   {discountList.length === 0 && (
                     <option disabled>Không có mã giảm giá</option>
                   )}
-                  {discountList.map((d) => (
-                    <option key={d.id} value={d.code}>
-                      {d.code} - Giảm {formatPriceToVND(parseFloat(d.value))}
-                    </option>
-                  ))}
+                  {discountList.map((d) => {
+                    const valueNumber = Number(d.value) || 0; // ép sang number, fallback 0
+                    return (
+                      <option key={d.id} value={d.code}>
+                        {d.code} -{" "}
+                        {d.type === "percentage"
+                          ? `Giảm ${
+                              Number.isInteger(valueNumber)
+                                ? valueNumber
+                                : valueNumber.toFixed(2)
+                            }%`
+                          : `Giảm ${formatPriceToVND(valueNumber)}`}
+                      </option>
+                    );
+                  })}
                 </Input>
               </div>
 
               <div className="order-summary-totals">
-                <div className="summary-row">
-                  <span className="summary-label">Tạm tính:</span>
-                  <span className="summary-value">
-                    {formatPriceToVND(calculatedTotal)}
-                  </span>
-                </div>
-                <div className="summary-row">
-                  <span className="summary-label">VAT ({vat}%):</span>
-                  <span className="summary-value">
-                    {formatPriceToVND(calculatedTotal * (vat / 100))}
-                  </span>
-                </div>
-                <div className="summary-row total-row">
-                  <span className="summary-label total-label">Tổng cộng:</span>
-                  <span className="summary-value total-value">
-                    {formatPriceToVND(calculatedTotal * (1 + vat / 100))}
-                  </span>
+                <div className="order-summary-totals">
+                  <div className="summary-row">
+                    <span className="summary-label">Tạm tính:</span>
+                    <span className="summary-value">
+                      {formatPriceToVND(calculatedTotal)}
+                    </span>
+                  </div>
+
+                  {discountValue > 0 && (
+                    <div className="summary-row text-success">
+                      <span className="summary-label">Giảm giá:</span>
+                      <span className="summary-value">
+                        - {formatPriceToVND(discountValue)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="summary-row">
+                    <span className="summary-label">VAT ({vat}%):</span>
+                    <span className="summary-value">
+                      {formatPriceToVND(baseTotal * (vat / 100))}
+                    </span>
+                  </div>
+
+                  <div className="summary-row total-row">
+                    <span className="summary-label total-label">
+                      Tổng cộng:
+                    </span>
+                    <span className="summary-value total-value">
+                      {formatPriceToVND(baseTotal * (1 + vat / 100))}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
