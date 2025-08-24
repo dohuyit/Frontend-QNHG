@@ -2,14 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Row,
   Col,
-  Spinner,
   Button,
-  Offcanvas,
-  OffcanvasHeader,
-  OffcanvasBody,
-  Form,
-  FormGroup,
-  Label,
   Input,
   Card,
   CardHeader,
@@ -20,11 +13,8 @@ import {
   TabContent,
   TabPane,
   Badge,
-  InputGroup,
-  InputGroupText,
 } from "reactstrap";
 import KanbanColumn from "@components/admin/KitchenOrders/KanbanColumn";
-import FilterBar from "@components/admin/KitchenOrders/FilterBar";
 import {
   getListKitchenOrders,
   updateKitchenOrderStatus,
@@ -50,7 +40,6 @@ const KitchenOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState({});
   const [filterDate, setFilterDate] = useState(todayStr);
-  const [showFilter, setShowFilter] = useState(false);
   const [activeTab, setActiveTab] = useState("1");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -265,8 +254,8 @@ const KitchenOrdersPage = () => {
       order.status === "pending"
         ? "preparing"
         : order.status === "preparing"
-          ? "ready"
-          : null;
+        ? "ready"
+        : null;
     const statusInfo = STATUS_LIST.find((s) => s.key === order.status);
 
     return (
@@ -472,20 +461,6 @@ const KitchenOrdersPage = () => {
                         Hôm nay
                       </Button>
                     )}
-                    <div className="row align-items">
-                      <div className="col">{/* ... */}</div>
-                      <div className="col-auto ms-auto pe-3">
-                        <Button
-                          color="light"
-                          className="border"
-                          style={{ minWidth: 140 }}
-                          onClick={() => setShowFilter(true)}
-                        >
-                          <i className="mdi mdi-filter-variant me-1"></i> Lọc
-                          nâng cao
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 </Col>
               </Row>
@@ -613,48 +588,6 @@ const KitchenOrdersPage = () => {
           </div>
         </TabPane>
       </TabContent>
-
-
-      <OffcanvasBody>
-        <Form>
-          <FormGroup>
-            <Label for="filterItem">Tên món</Label>
-            <Input
-              id="filterItem"
-              name="item_name"
-              value={filter.item_name || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                const updatedFilter = { ...filter, item_name: value };
-                setFilter(updatedFilter);
-                fetchOrders(updatedFilter, filterDate);
-              }}
-              placeholder="Nhập tên món..."
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label for="filterStatus">Trạng thái</Label>
-            <Input
-              id="filterStatus"
-              type="select"
-              name="status"
-              value={filter.status || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                const updatedFilter = { ...filter, status: value };
-                setFilter(updatedFilter);
-                fetchOrders(updatedFilter, filterDate);
-              }}
-            >
-              <option value="">Tất cả</option>
-              <option value="pending">Pending</option>
-              <option value="preparing">In Progress</option>
-              <option value="ready">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </Input>
-          </FormGroup>
-        </Form>
-      </OffcanvasBody>
     </div>
   );
 };

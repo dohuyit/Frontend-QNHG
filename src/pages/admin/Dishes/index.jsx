@@ -34,6 +34,7 @@ import {
   updateDish,
   deleteSoftDish,
   getDish,
+  updateFeaturedDish,
 } from "@services/admin/dishService";
 import { getCategories } from "@services/admin/categoryService";
 import { toast } from "react-toastify";
@@ -45,6 +46,7 @@ import CustomPaginate from "@components/admin/ui/CustomPaginate";
 const DishIndex = () => {
   const [dishes, setDishes] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [updatingFeature, setUpdatingFeature] = useState(false);
   const [loadingDishes, setLoadingDishes] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -159,6 +161,26 @@ const DishIndex = () => {
     }
   };
 
+  const handleFeatureToggle = async (dishId, newValue) => {
+    try {
+      setUpdatingFeature(true);
+      await updateFeaturedDish(dishId);
+      // Update local state
+      setDishes(
+        dishes.map((dish) =>
+          dish.id === dishId
+            ? { ...dish, is_featured: !dish.is_featured }
+            : dish
+        )
+      );
+      toast.success("Cập nhật trạng thái nổi bật thành công!");
+    } catch (error) {
+      toast.error("Lỗi khi cập nhật trạng thái nổi bật!");
+      console.error("Error updating featured status:", error);
+    } finally {
+      setUpdatingFeature(false);
+    }
+  };
 
   const handleDishClick = async (id) => {
     try {
@@ -385,6 +407,7 @@ const DishIndex = () => {
                     data={dishes}
                     onDelete={handleDeleteClick}
                     onEdit={handleDishClick}
+                    onFeatureToggle={handleFeatureToggle}
                   />
                 </>
               )}

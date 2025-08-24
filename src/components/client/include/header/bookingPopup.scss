@@ -9,23 +9,23 @@
   display: flex;
   justify-content: center;
   align-items: stretch; // Đổi từ center sang stretch để popup chiếm full chiều cao
-  padding: 0;           // Bỏ padding để popup sát mép trên/dưới
+  padding: 0; // Bỏ padding để popup sát mép trên/dưới
 }
 
 .popup {
   background: #fff;
   border-radius: 12px;
   width: 95vw;
-  max-width: 500px;      // Tăng chiều rộng tối đa
-  min-width: 320px;      // Có thể tăng min-width nếu muốn
-  height: 100vh;         // Chiều cao bằng tầm nhìn trình duyệt
-  padding: 32px 32px;    // Tăng padding cho thoáng
+  max-width: 500px; // Tăng chiều rộng tối đa
+  min-width: 320px; // Có thể tăng min-width nếu muốn
+  height: 100vh; // Chiều cao bằng tầm nhìn trình duyệt
+  padding: 32px 32px; // Tăng padding cho thoáng
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
   animation: fadeIn 0.3s ease;
   font-family: "Segoe UI", sans-serif;
   border-top: 5px solid #f39c12;
-  overflow-y: auto;      // Cho phép scroll nếu nội dung dài
-  display: flex;         // Để căn giữa nội dung theo chiều dọc
+  overflow-y: auto; // Cho phép scroll nếu nội dung dài
+  display: flex; // Để căn giữa nội dung theo chiều dọc
   flex-direction: column;
   justify-content: flex-start;
 }
@@ -213,9 +213,6 @@ textarea {
   }
 }
 
-
-
-
 .actions {
   display: flex;
   justify-content: space-between;
@@ -265,68 +262,111 @@ textarea {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.35);
+  background: #18432c; // Màu xanh lục phù với opacity
   display: flex;
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.3s;
 }
+
 .booking-loading-popup {
-  background: #fff;
-  border-radius: 14px;
-  padding: 36px 44px 28px 44px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-.booking-loading-popup .spinner {
-  width: 58px;
-  height: 58px;
-  border: 7px solid #f3f3f3;
-  border-top: 7px solid #f39c12;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 18px;
-  box-shadow: 0 2px 16px rgba(243, 156, 18, 0.18);
-}
-.booking-loading-popup span {
-  color: #f39c12;
-  font-weight: bold;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 8px rgba(243,156,18,0.09);
+  gap: 20px;
 }
 
-/* --- Loading đặt bàn (BookingPopup) --- */
-.booking-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 16px;
-  animation: fadeIn 0.5s;
+.booking-loading-popup img {
+  width: 500px;
+  height: auto;
+  margin-bottom: 20px;
 }
 
-.booking-loading .spinner {
-  width: 44px;
-  height: 44px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #f39c12;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 12px rgba(243, 156, 18, 0.18);
+/* From Uiverse.io by Bethel-nz */
+.pl,
+.pl__worm {
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
 }
 
-.booking-loading span {
-  color: #f39c12;
-  font-weight: bold;
-  font-size: 16px;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 8px rgba(243,156,18,0.09);
+.pl {
+  animation-name: bump9;
+  animation-timing-function: linear;
+  width: 8em;
+  height: 8em;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.pl__ring {
+  stroke: rgba(243, 156, 18, 0.2); // Màu vàng với opacity thấp
+  transition: stroke 0.3s;
+}
+
+.pl__worm {
+  animation-name: worm9;
+  animation-timing-function: cubic-bezier(0.42, 0.17, 0.75, 0.83);
+  stroke: url(#pl-grad-yellow); // Sử dụng gradient màu mới
+}
+
+/* Animations */
+@keyframes bump9 {
+  from,
+  42%,
+  46%,
+  51%,
+  55%,
+  59%,
+  63%,
+  67%,
+  71%,
+  74%,
+  78%,
+  81%,
+  85%,
+  88%,
+  92%,
+  to {
+    transform: translate(0, 0);
+  }
+
+  44% {
+    transform: translate(1.33%, 6.75%);
+  }
+
+  53% {
+    transform: translate(-16.67%, -0.54%);
+  }
+
+  61% {
+    transform: translate(3.66%, -2.46%);
+  }
+
+  69% {
+    transform: translate(-0.59%, 15.27%);
+  }
+
+  76% {
+    transform: translate(-1.92%, -4.68%);
+  }
+
+  83% {
+    transform: translate(9.38%, 0.96%);
+  }
+
+  90% {
+    transform: translate(-4.55%, 1.98%);
+  }
+}
+
+@keyframes worm9 {
+  from {
+    stroke-dashoffset: 10;
+  }
+
+  25% {
+    stroke-dashoffset: 295;
+  }
+
+  to {
+    stroke-dashoffset: 1165;
+  }
 }
