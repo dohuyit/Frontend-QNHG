@@ -63,7 +63,7 @@ const ComboCard = ({ combo, onDetail, onEdit, onDelete }) => {
     <Card className="combo-card">
       <CardBody>
         <Row className="combo-header">
-          <Col xs={3} className="pe-0">
+          <Col md={4} className="pe-0">
             <div className="combo-image">
               <img
                 src={
@@ -78,7 +78,7 @@ const ComboCard = ({ combo, onDetail, onEdit, onDelete }) => {
             </div>
           </Col>
 
-          <Col xs={9} className="ps-3">
+          <Col md={8} className="ps-3">
             <div className="d-flex align-items-center justify-content-between mb-2">
               <h5 className="combo-title mb-0">{combo.name}</h5>
               <Badge
