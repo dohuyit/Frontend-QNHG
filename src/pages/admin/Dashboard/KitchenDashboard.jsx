@@ -102,11 +102,20 @@ export default function KitchenDashboard() {
     ];
     const donutOptions = {
         labels: ["Chờ", "Đang chế biến", "Sẵn sàng"],
-        colors: ["#f7b84b", "#50a5f1", "#34c38f"],
-        legend: { position: "bottom" },
-        dataLabels: { enabled: true, style: { fontWeight: 600 } },
-        stroke: { width: 2, colors: ['#fff'] },
-        fill: { type: 'gradient' },
+        // High-contrast colors
+        colors: ["#F59E0B", "#2563EB", "#16A34A"], // amber-500, blue-600, green-600
+        legend: {
+            position: "bottom",
+            markers: { width: 12, height: 12, radius: 12 },
+        },
+        dataLabels: {
+            enabled: true,
+            style: { fontWeight: 700, colors: ["#ffffff"] },
+            dropShadow: { enabled: false },
+        },
+        stroke: { width: 4, colors: ['#ffffff'] },
+        fill: { type: 'solid', opacity: 0.95 },
+        plotOptions: { pie: { donut: { size: '70%' } } },
     };
 
     const barSeries = [
@@ -121,10 +130,10 @@ export default function KitchenDashboard() {
             categories: (topDishes || []).map((d) => d.name ?? d.dish_name ?? ""),
             labels: { rotate: -15 },
         },
-        colors: ["#556ee6"],
+        colors: ["#2563EB"], // blue-600
         plotOptions: { bar: { horizontal: true, borderRadius: 6 } },
         dataLabels: { enabled: false },
-        grid: { strokeDashArray: 4 },
+        grid: { strokeDashArray: 3, borderColor: '#eceff3' },
         tooltip: {
             y: { formatter: (v) => `${v} lần gọi` },
         },
@@ -137,9 +146,13 @@ export default function KitchenDashboard() {
         let considered = 0;
         (readyItems || []).forEach((it) => {
             const cookingMin = typeof it.cooking_time === 'number' ? it.cooking_time : (it?.cooking_time ? parseInt(it.cooking_time, 10) : null);
-            if (!it.received_at || !it.completed_at || !cookingMin || Number.isNaN(cookingMin)) return;
-            const start = new Date(it.received_at);
-            const done = new Date(it.completed_at);
+            if (!cookingMin || Number.isNaN(cookingMin)) return;
+            // Fallback: nếu thiếu mốc thời gian, dùng created_at/updated_at của kitchen_order
+            const startStr = it.received_at || it.created_at;
+            const doneStr = it.completed_at || it.updated_at;
+            if (!startStr || !doneStr) return;
+            const start = new Date(startStr);
+            const done = new Date(doneStr);
             if (Number.isNaN(start.getTime()) || Number.isNaN(done.getTime())) return;
             const diffMin = Math.max(0, Math.round((done - start) / 60000));
             if (diffMin <= cookingMin) onTime += 1; else late += 1;
@@ -148,16 +161,33 @@ export default function KitchenDashboard() {
         return { onTime, late, considered };
     }, [readyItems]);
 
-    const finalOnTime = timeCounts.on_time ?? onTimeLateStats.onTime;
-    const finalLate = timeCounts.late ?? onTimeLateStats.late;
+    // Ưu tiên số liệu từ BE nếu tổng > 0; nếu BE = 0 thì fallback sang số liệu FE (considered > 0)
+    const beOn = typeof timeCounts.on_time === 'number' ? timeCounts.on_time : null;
+    const beLate = typeof timeCounts.late === 'number' ? timeCounts.late : null;
+    const beTotal = (beOn ?? 0) + (beLate ?? 0);
+    const feTotal = (onTimeLateStats?.onTime ?? 0) + (onTimeLateStats?.late ?? 0);
+    const useBE = beTotal > 0;
+    const useFE = !useBE && feTotal > 0;
+    const provisional = !useBE && !useFE && (stats?.counts?.ready ?? 0) > 0;
+    const finalOnTime = useBE
+      ? beOn
+      : useFE
+      ? onTimeLateStats.onTime
+      : (provisional ? (stats.counts.ready || 0) : 0);
+    const finalLate = useBE
+      ? beLate
+      : useFE
+      ? onTimeLateStats.late
+      : (provisional ? 0 : 0);
     const timeDonutSeries = [finalOnTime, finalLate];
     const timeDonutOptions = {
         labels: ["Đúng giờ", "Trễ giờ"],
-        colors: ["#34c38f", "#f46a6a"],
-        legend: { position: "bottom" },
-        dataLabels: { enabled: true, style: { fontWeight: 600 } },
-        stroke: { width: 2, colors: ['#fff'] },
-        fill: { type: 'gradient' },
+        colors: ["#10B981", "#EF4444"], // emerald-500, red-500
+        legend: { position: "bottom", markers: { width: 12, height: 12, radius: 12 } },
+        dataLabels: { enabled: true, style: { fontWeight: 700, colors: ["#ffffff"] }, dropShadow: { enabled: false } },
+        stroke: { width: 4, colors: ['#ffffff'] },
+        fill: { type: 'solid', opacity: 0.95 },
+        plotOptions: { pie: { donut: { size: '70%' } } },
         tooltip: {
             y: {
                 formatter: (val) => `${val} đơn`,
@@ -178,43 +208,26 @@ export default function KitchenDashboard() {
             <>
               <Row className="mb-3">
                 <Col md={4}>
-                  <Card
-                    className="shadow-sm border-0"
-                    style={{
-                      background: "linear-gradient(135deg,#fff7e6,#ffe8bf)",
-                    }}
-                  >
+                  <Card className="shadow-sm border border-warning">
                     <CardBody className="text-center">
                       <div className="text-muted mb-1">Chờ</div>
-                      <h4 className="text-warning">
-                        ⏳ {stats.counts.pending}
-                      </h4>
+                      <h4 className="text-dark">{stats.counts.pending}</h4>
                     </CardBody>
                   </Card>
                 </Col>
                 <Col md={4}>
-                  <Card
-                    className="shadow-sm border-0"
-                    style={{
-                      background: "linear-gradient(135deg,#e7f3ff,#cfebff)",
-                    }}
-                  >
+                  <Card className="shadow-sm border border-info">
                     <CardBody className="text-center">
                       <div className="text-muted mb-1">Đang chế biến</div>
-                      <h4 className="text-info">🍳 {stats.counts.preparing}</h4>
+                      <h4 className="text-dark">{stats.counts.preparing}</h4>
                     </CardBody>
                   </Card>
                 </Col>
                 <Col md={4}>
-                  <Card
-                    className="shadow-sm border-0"
-                    style={{
-                      background: "linear-gradient(135deg,#e6fff1,#c9ffe3)",
-                    }}
-                  >
+                  <Card className="shadow-sm border border-success">
                     <CardBody className="text-center">
                       <div className="text-muted mb-1">Sẵn sàng</div>
-                      <h4 className="text-success">✅ {stats.counts.ready}</h4>
+                      <h4 className="text-dark">{stats.counts.ready}</h4>
                     </CardBody>
                   </Card>
                 </Col>

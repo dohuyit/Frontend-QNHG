@@ -36,18 +36,20 @@ function CountdownCookingTime({
     let badgeClass = "badge rounded-pill bg-primary";
 
     if (completedAt) {
-      // Hiển thị thời gian ready thực tế
+      // Yêu cầu: nếu khi đang chế biến đã quá hạn rồi chuyển sang hoàn thành,
+      // thì hiển thị: thời gian = thời gian quá hạn tại thời điểm hoàn thành + cooking_time
+      const cookingMin = Number(cookingTime) || 0;
       const start = new Date(receivedAt).getTime();
       const completed = new Date(completedAt).getTime();
-      const actualTimeMs = completed - start;
-      const actualMin = Math.floor(actualTimeMs / 1000 / 60);
-      const actualSec = Math.floor((actualTimeMs / 1000) % 60);
-      content = `ready: ${actualMin}:${actualSec
-        .toString()
-        .padStart(2, "0")} phút`;
+      const totalMs = cookingMin * 60 * 1000;
+      const overdueMs = Math.max(0, completed - (start + totalMs));
+      const overdueMin = Math.floor(overdueMs / 1000 / 60);
+      const totalDisplayMin = cookingMin + overdueMin;
+      content = `Thời gian chế biến: ${totalDisplayMin} phút`;
     } else {
-      // Hiển thị tổng thời gian chế biến dự kiến
-      content = `ready: ${cookingTime} phút`;
+      // Không có completedAt: hiển thị thời gian dự kiến
+      const cookingMin = Number(cookingTime) || 0;
+      content = `Thời gian chế biến: ${cookingMin} phút`;
     }
 
     return (
@@ -65,11 +67,8 @@ function CountdownCookingTime({
     );
   }
 
-  // Logic đếm ngược như cũ khi chưa ready
-  const start = new Date(receivedAt).getTime();
-  const now = new Date().getTime();
-  const totalMs = cookingTime * 60 * 1000;
-  const remainMs = start + totalMs - now;
+  // Logic đếm ngược khi chưa ready (dựa trên `remaining` để vừa hiển thị vừa kích re-render)
+  const remainMs = remaining * 1000; // có thể âm nếu đã quá hạn
 
   let content = "";
   let badgeClass = "";
