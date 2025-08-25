@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Row,
   Col,
@@ -21,7 +21,6 @@ const PaymentModal = ({
   isOpen,
   toggle,
   orderItems,
-  vat,
   isSubmitting,
   setIsSubmitting,
   orderMethod,
@@ -38,10 +37,13 @@ const PaymentModal = ({
   toast,
   orderNotes,
 }) => {
+  const VAT_RATE = 5; // Định nghĩa VAT mặc định là 8%
   const [discountList, setDiscountList] = useState([]);
   const [selectedDiscount, setSelectedDiscount] = useState("");
+  const [selectedDiscountAmount, setSelectedDiscountAmount] = useState(0);
   const [filteredOrderItems, setFilteredOrderItems] = useState([]);
   const [calculatedTotal, setCalculatedTotal] = useState(0);
+  const [discountedTotal, setDiscountedTotal] = useState(0);
 
   // Lọc các món ăn theo trạng thái và tính lại tổng tiền
   useEffect(() => {
@@ -56,19 +58,22 @@ const PaymentModal = ({
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-    const newVatAmount = newSubtotal * (vat / 100);
+    const newVatAmount = newSubtotal * (VAT_RATE / 100);
     const newTotal = newSubtotal + newVatAmount;
-    setCalculatedTotal(newTotal);
-  }, [orderItems, vat]);
+    setCalculatedTotal(newSubtotal); // Lưu subtotal trước VAT
+
+    // Tính lại tổng tiền sau khi áp dụng giảm giá
+    const discount = discountList.find((d) => d.code === selectedDiscount);
+    const discountValue = discount ? parseFloat(discount.value) : 0;
+    setSelectedDiscountAmount(discountValue);
+
+    const afterDiscount = Math.max(0, newSubtotal - discountValue);
+    const afterVat = afterDiscount * (1 + VAT_RATE / 100);
+    setDiscountedTotal(afterVat);
+  }, [orderItems, selectedDiscount, discountList]);
 
   // Lấy danh sách mã giảm giá khi modal mở
-  useEffect(() => {
-    if (isOpen) {
-      fetchDiscountCodes();
-    }
-  }, [isOpen]);
-
-  const fetchDiscountCodes = async () => {
+  const fetchDiscountCodes = useCallback(async () => {
     try {
       const res = await getDiscountCodes();
       console.log("API trả về items:", res.data.data.items);
@@ -79,7 +84,13 @@ const PaymentModal = ({
       console.error("Lỗi khi lấy mã giảm giá:", error);
       toast.error("Không lấy được danh sách mã giảm giá");
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchDiscountCodes();
+    }
+  }, [isOpen, fetchDiscountCodes]);
 
   const handlePaymentConfirmation = async () => {
     setIsSubmitting(true);
@@ -101,13 +112,14 @@ const PaymentModal = ({
         return;
       }
 
-      const finalAmount = calculatedTotal * (1 + vat / 100);
+      const finalAmount = discountedTotal;
       const paymentPayload = {
         payment_method: selectedPaymentMethod,
         amount_paid: finalAmount,
+        sub_total: calculatedTotal, // Thêm tổng tiền hàng
         discount_code: selectedDiscount || null,
         notes: orderNotes || "",
-        discount_amount: 0,
+        discount_amount: selectedDiscountAmount,
         delivery_fee: 0,
         user_id: currentUserId,
         items: filteredOrderItems.map((item) => ({
@@ -357,16 +369,35 @@ const PaymentModal = ({
                     {formatPriceToVND(calculatedTotal)}
                   </span>
                 </div>
+                {selectedDiscountAmount > 0 && (
+                  <div className="summary-row discount-row">
+                    <span className="summary-label">Giảm giá:</span>
+                    <span className="summary-value text-success">
+                      - {formatPriceToVND(selectedDiscountAmount)}
+                    </span>
+                  </div>
+                )}
                 <div className="summary-row">
-                  <span className="summary-label">VAT ({vat}%):</span>
+                  <span className="summary-label">Sau giảm giá:</span>
                   <span className="summary-value">
-                    {formatPriceToVND(calculatedTotal * (vat / 100))}
+                    {formatPriceToVND(
+                      Math.max(0, calculatedTotal - selectedDiscountAmount)
+                    )}
+                  </span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">VAT ({VAT_RATE}%):</span>
+                  <span className="summary-value">
+                    {formatPriceToVND(
+                      Math.max(0, calculatedTotal - selectedDiscountAmount) *
+                        (VAT_RATE / 100)
+                    )}
                   </span>
                 </div>
                 <div className="summary-row total-row">
                   <span className="summary-label total-label">Tổng cộng:</span>
                   <span className="summary-value total-value">
-                    {formatPriceToVND(calculatedTotal * (1 + vat / 100))}
+                    {formatPriceToVND(discountedTotal)}
                   </span>
                 </div>
               </div>

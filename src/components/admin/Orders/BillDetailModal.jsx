@@ -453,12 +453,32 @@ const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
                   )}
                 </tbody>
               </Table>
-              <div className="bill-items-total-box mt-4">
-                <div className="bill-items-total-label">
-                  Tổng cộng ({totalQuantity} món):
+              <div className="bill-items-summary mt-4">
+                <div className="bill-items-subtotal d-flex justify-content-between align-items-center mb-2">
+                  <div className="bill-items-total-label">
+                    Tiền hàng ({totalQuantity} món):
+                  </div>
+                  <div className="bill-items-total-value">
+                    {formatPriceToVND(bill.sub_total)}
+                  </div>
                 </div>
-                <div className="bill-items-total-value">
-                  {formatPriceToVND(bill.final_amount)}
+                {bill.discount_amount > 0 && (
+                  <div className="bill-items-discount d-flex justify-content-between align-items-center mb-2">
+                    <div className="bill-items-total-label text-success">
+                      Giảm giá:
+                    </div>
+                    <div className="bill-items-total-value text-success">
+                      - {formatPriceToVND(bill.discount_amount)}
+                    </div>
+                  </div>
+                )}
+                <div className="bill-items-total d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                  <div className="bill-items-total-label fw-bold">
+                    Tổng thanh toán:
+                  </div>
+                  <div className="bill-items-total-value fs-5 fw-bold text-primary">
+                    {formatPriceToVND(bill.final_amount)}
+                  </div>
                 </div>
               </div>
             </div>
