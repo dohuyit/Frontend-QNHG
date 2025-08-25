@@ -31,7 +31,9 @@ apiClient.interceptors.request.use((config) => {
 export const getCategories = (params) => apiClient.get(`/list`, { params });
 export const getTrashedCategory = (params) => apiClient.get(`/trash`, { params });
 export const getCategory = (id) => apiClient.get(`/${id}/detail`);
-export const createCategory = (data) => apiClient.post(`/create`, data);
+export const createCategory = (data) => apiClient.post(`/create`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+});
 export const updateCategory = (id, data) => apiClient.post(`/${id}/update`, data, {
     headers: { "Content-Type": "multipart/form-data" },
 });

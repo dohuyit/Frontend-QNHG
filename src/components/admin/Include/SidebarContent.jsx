@@ -351,7 +351,7 @@ const SidebarContent = (props) => {
                   </li>
                 </ul>
                 <Link to="/face-auth-test">
-                  <i class="bx  bx-happy-beaming"></i>
+                  <i className="bx  bx-happy-beaming"></i>
                   <span>{props.t("Quản lý khuôn mặt")}</span>
                 </Link>
               </li>

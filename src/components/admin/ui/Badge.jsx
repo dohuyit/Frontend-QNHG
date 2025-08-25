@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const Badge = ({ children, type }) => {
+const Badge = ({ children, type = 'primary' }) => {
   const badgeStyles = {
     base: {
       display: 'inline-block',
@@ -60,8 +60,4 @@ Badge.propTypes = {
   type: PropTypes.oneOf(['primary', 'success', 'info', 'warning', 'danger', 'secondary']),
 };
 
-Badge.defaultProps = {
-  type: 'primary',
-};
-
-export default Badge; 
+export default Badge;
