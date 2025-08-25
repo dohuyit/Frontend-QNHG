@@ -349,6 +349,17 @@ const FormOrderUpdate = () => {
   };
 
   const addToOrder = (item, isCombo = false) => {
+    // Kiểm tra nếu món ăn thuộc danh mục Đồ uống
+    const isDrinkCategory =
+      !isCombo &&
+      item.category &&
+      (item.category.name === "Đồ uống" ||
+        item.category_id ===
+          categories.find((cat) => cat.name === "Đồ uống")?.id);
+
+    // Xác định trạng thái nhà bếp dựa vào danh mục
+    const initialKitchenStatus = isDrinkCategory ? "preparing" : "pending";
+
     setOrderItems((prevItems) => {
       const sameIdItems = prevItems.filter((i) =>
         isCombo
@@ -366,7 +377,7 @@ const FormOrderUpdate = () => {
             quantity: 1,
             price: item.selling_price ?? item.price ?? 0,
             combo_id: isCombo ? item.id : null,
-            kitchen_status: "pending",
+            kitchen_status: initialKitchenStatus,
             is_additional: 1,
             name:
               (item.name ||
@@ -387,7 +398,7 @@ const FormOrderUpdate = () => {
             quantity: 1,
             price: item.selling_price ?? item.price ?? 0,
             combo_id: isCombo ? item.id : null,
-            kitchen_status: "pending",
+            kitchen_status: initialKitchenStatus,
             is_additional: 1,
             name:
               (item.name ||
@@ -416,12 +427,29 @@ const FormOrderUpdate = () => {
             quantity: 1,
             price: item.selling_price ?? item.price ?? 0,
             combo_id: isCombo ? item.id : null,
-            kitchen_status: "pending",
+            kitchen_status: initialKitchenStatus,
             temp_id: `temp_${Date.now()}_${nextItemId}`,
           },
         ];
       }
     });
+
+    // Hiển thị thông báo nếu là đồ uống
+    if (
+      !isCombo &&
+      item.category &&
+      (item.category.name === "Đồ uống" ||
+        item.category.slug === "do-uong" ||
+        item.category_id ===
+          categories.find(
+            (cat) => cat.name === "Đồ uống" || cat.slug === "do-uong"
+          )?.id)
+    ) {
+      toast.success(
+        "Đồ uống đã được tự động chuyển sang trạng thái đang chuẩn bị"
+      );
+    }
+
     setNextItemId((prev) => prev + 1);
   };
 
@@ -765,6 +793,7 @@ const FormOrderUpdate = () => {
           unit_price: Number(item.unit_price || item.price),
           is_additional: item.is_additional ? 1 : 0,
           is_priority: item.is_priority ? 1 : 0,
+          kitchen_status: item.kitchen_status || "pending",
         })),
       };
 

@@ -20,7 +20,6 @@ import "./PaymentModal.scss";
 const PaymentModal = ({
   isOpen,
   toggle,
-  orderItems,
   orderItems = [],
   isSubmitting,
   setIsSubmitting,
@@ -57,12 +56,11 @@ const PaymentModal = ({
 
     // Tính lại tổng tiền (subtotal + VAT)
     const newSubtotal = filtered.reduce(
-      (sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 0),
+      (sum, item) =>
+        sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 0),
       0
     );
-    const newVatAmount = newSubtotal * (VAT_RATE / 100);
 
-    const newTotal = newSubtotal + newVatAmount;
     setCalculatedTotal(newSubtotal); // Lưu subtotal trước VAT
 
     // Tính lại tổng tiền sau khi áp dụng giảm giá
@@ -213,7 +211,7 @@ const PaymentModal = ({
                 <h5 className="payment-section-title">
                   <i className="ri-map-pin-line me-2"></i>Thông tin đặt bàn
                 </h5>
-                <div className="table-info-box">
+                <div className="payment-table-display-container">
                   <p>
                     {Array.isArray(selectedTables) && selectedTables.length > 0
                       ? selectedTables.map((t) => t?.table_number).join(", ")
@@ -380,14 +378,16 @@ const PaymentModal = ({
                     </span>
                   </div>
                 )}
-                <div className="summary-row">
-                  <span className="summary-label">Sau giảm giá:</span>
-                  <span className="summary-value">
-                    {formatPriceToVND(
-                      Math.max(0, calculatedTotal - selectedDiscountAmount)
-                    )}
-                  </span>
-                </div>
+                {selectedDiscountAmount > 0 && (
+                  <div className="summary-row">
+                    <span className="summary-label">Sau giảm giá:</span>
+                    <span className="summary-value">
+                      {formatPriceToVND(
+                        Math.max(0, calculatedTotal - selectedDiscountAmount)
+                      )}
+                    </span>
+                  </div>
+                )}
                 <div className="summary-row">
                   <span className="summary-label">VAT ({VAT_RATE}%):</span>
                   <span className="summary-value">
