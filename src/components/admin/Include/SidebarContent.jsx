@@ -12,10 +12,19 @@ import withRouter from "../ui/withRouter";
 import { withTranslation } from "react-i18next";
 import { useCallback } from "react";
 import { hasPermission } from "@services/admin/permissionUtils";
+import { getRouteForUser, getUserPrimaryRole } from "@services/admin/authRoutingService";
 
 const SidebarContent = (props) => {
   const ref = useRef();
   const path = useLocation();
+  const userDashboardRoute = getRouteForUser();
+  const primaryRole = (getUserPrimaryRole() || "").toLowerCase();
+  const dashboardLabel =
+    primaryRole.includes("bếp")
+      ? props.t("Dashboard Bếp")
+      : primaryRole.includes("nhân viên")
+      ? props.t("Dashboard Nhân viên")
+      : props.t("Dashboards");
 
   const activateParentDropdown = useCallback((item) => {
     item.classList.add("active");
@@ -157,9 +166,9 @@ const SidebarContent = (props) => {
 
             {hasPermission("dashboard.view") && (
               <li>
-                <Link to="/dashboard">
+                <Link to={userDashboardRoute}>
                   <i className="bx bx-home-circle"></i>
-                  <span>{props.t("Dashboards")}</span>
+                  <span>{dashboardLabel}</span>
                 </Link>
               </li>
             )}
@@ -351,7 +360,7 @@ const SidebarContent = (props) => {
                   </li>
                 </ul>
                 <Link to="/face-auth-test">
-                  <i class="bx  bx-happy-beaming"></i>
+                  <i className="bx  bx-happy-beaming"></i>
                   <span>{props.t("Quản lý khuôn mặt")}</span>
                 </Link>
               </li>

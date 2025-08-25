@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   Card, CardBody, Button, Table, Badge, Spinner, Form, FormGroup, Label, Input,
   Modal, ModalHeader, ModalBody, ModalFooter, Progress, Alert, Row, Col
@@ -39,6 +39,34 @@ const FaceIndex = () => {
   const [cameraStream, setCameraStream] = useState(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [cameraError, setCameraError] = useState(null);
+
+  // Tìm kiếm & Lọc
+  const [searchText, setSearchText] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all'); // all | trained | untrained
+
+  // Danh sách vai trò có trong dữ liệu (để render select)
+  const roleOptions = useMemo(() => {
+    const set = new Set((faces || []).map(f => f.role_name).filter(Boolean));
+    return ['all', ...Array.from(set)];
+  }, [faces]);
+
+  // Áp dụng tìm kiếm và bộ lọc
+  const filteredFaces = useMemo(() => {
+    const text = (searchText || '').toLowerCase().trim();
+    return (faces || []).filter(f => {
+      // filter theo vai trò
+      if (filterRole !== 'all' && f.role_name !== filterRole) return false;
+      // filter theo trạng thái training
+      if (filterStatus === 'trained' && !f.is_trained) return false;
+      if (filterStatus === 'untrained' && f.is_trained) return false;
+      // tìm theo tên hoặc email
+      if (!text) return true;
+      const name = (f.full_name || '').toLowerCase();
+      const email = (f.email || '').toLowerCase();
+      return name.includes(text) || email.includes(text);
+    });
+  }, [faces, searchText, filterRole, filterStatus]);
 
   // Fetch danh sách users có thể đăng ký
   const fetchAvailableUsers = async () => {
@@ -291,8 +319,8 @@ const FaceIndex = () => {
             <Col md={3}>
               <Card><CardBody className="text-center">
                 <h4 className="text-info">
-                  <Badge color={statistics.api_status === 'connected' ? 'success' : 'danger'}>
-                    {statistics.api_status === 'connected' ? 'Kết nối' : 'Mất kết nối'}
+                  <Badge color={statistics.api_connected ? 'success' : 'danger'}>
+                    {statistics.api_connected ? 'Kết nối' : 'Mất kết nối'}
                   </Badge>
                 </h4>
                 <p className="mb-0">API Python</p>
@@ -310,6 +338,38 @@ const FaceIndex = () => {
                 <i className="fas fa-plus me-1"></i>Đăng ký mới
               </Button>
             </div>
+            {/* Bộ lọc và tìm kiếm */}
+            <Row className="g-2 mb-3">
+              <Col md={4}>
+                <Input
+                  type="text"
+                  placeholder="Tìm theo họ tên hoặc email..."
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
+                />
+              </Col>
+              <Col md={3}>
+                <Input type="select" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+                  {roleOptions.map(opt => (
+                    <option key={opt} value={opt}>
+                      {opt === 'all' ? 'Tất cả quyền' : opt}
+                    </option>
+                  ))}
+                </Input>
+              </Col>
+              <Col md={3}>
+                <Input type="select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="trained">Đã training</option>
+                  <option value="untrained">Chưa training</option>
+                </Input>
+              </Col>
+              <Col md={2} className="d-grid">
+                <Button color="secondary" onClick={() => { setSearchText(''); setFilterRole('all'); setFilterStatus('all'); }}>
+                  Xóa bộ lọc
+                </Button>
+              </Col>
+            </Row>
             {loading ? (
               <div className="text-center py-4">
                 <Spinner color="primary" />
@@ -319,19 +379,19 @@ const FaceIndex = () => {
               <Table responsive hover>
                 <thead>
                   <tr>
-                    <th>ID</th><th>Họ tên</th><th>Email</th>
+                    <th>STT</th><th>Họ tên</th><th>Email</th>
                     <th>Quyền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {faces.length === 0 ? (
+                  {filteredFaces.length === 0 ? (
                     <tr><td colSpan="7" className="text-center py-4">
                       <i className="fas fa-user-slash fa-3x text-muted mb-3"></i>
                       <p className="text-muted">Chưa có dữ liệu khuôn mặt nào</p>
                     </td></tr>
-                  ) : faces.map(face => (
+                  ) : filteredFaces.map((face, idx) => (
                     <tr key={face.id}>
-                      <td>{face.user_id}</td>
+                      <td>{idx + 1}</td>
                       <td>{face.full_name}</td>
                       <td>{face.email}</td>
                       <td>

@@ -58,6 +58,7 @@ const CategoryIndex = () => {
     image_url: "",
     is_active: true,
     parent_id: "",
+    cooking_time: "",
   });
   const [errors, setErrors] = useState({});
   const [isEdit, setIsEdit] = useState(false);
@@ -144,6 +145,7 @@ const CategoryIndex = () => {
         image_url: category.image_url || "",
         is_active: !!category.is_active,
         parent_id: category.parent_id ? String(category.parent_id) : "",
+        cooking_time: category.cooking_time ?? "",
       });
       setEditCategoryId(category.id);
       setIsEdit(true);
@@ -174,6 +176,10 @@ const CategoryIndex = () => {
     formData.append("is_active", newCategory.is_active ? "1" : "0");
     if (newCategory.parent_id)
       formData.append("parent_id", newCategory.parent_id);
+    // gửi cooking_time nếu người dùng nhập
+    if (newCategory.cooking_time !== "" && newCategory.cooking_time !== null && newCategory.cooking_time !== undefined) {
+      formData.append("cooking_time", String(newCategory.cooking_time));
+    }
     if (newCategory.image instanceof File) {
       formData.append("image_url", newCategory.image);
     }
@@ -226,6 +232,7 @@ const CategoryIndex = () => {
       image_url: "",
       is_active: true,
       parent_id: "",
+      cooking_time: "",
     });
     setErrors({});
     setIsEdit(false);
