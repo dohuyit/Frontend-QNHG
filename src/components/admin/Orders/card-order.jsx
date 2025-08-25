@@ -168,7 +168,7 @@ const OrderCard = ({ order, onEdit, onDelete }) => {
                   className="w-100 border"
                   onClick={() => onDelete(order)}
                 >
-                  <MdDelete className="me-1" /> Xóa
+                  <MdVisibility className="me-1" /> Xem lịch sử thay đổi
                 </Button>
               )}
             </div>

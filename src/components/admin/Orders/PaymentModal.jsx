@@ -21,10 +21,11 @@ const PaymentModal = ({
   isOpen,
   toggle,
   orderItems,
+  orderItems = [],
   isSubmitting,
   setIsSubmitting,
   orderMethod,
-  selectedTables,
+  selectedTables = [],
   contactName,
   contactPhone,
   contactEmail,
@@ -48,17 +49,19 @@ const PaymentModal = ({
   // Lọc các món ăn theo trạng thái và tính lại tổng tiền
   useEffect(() => {
     const validStatuses = ["preparing", "ready"]; // Trạng thái hợp lệ
-    const filtered = orderItems.filter((item) =>
-      validStatuses.includes(item.kitchen_status)
+    const srcItems = Array.isArray(orderItems) ? orderItems : [];
+    const filtered = srcItems.filter((item) =>
+      validStatuses.includes(item?.kitchen_status)
     );
     setFilteredOrderItems(filtered);
 
-    // Tính lại tổng tiền
+    // Tính lại tổng tiền (subtotal + VAT)
     const newSubtotal = filtered.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 0),
       0
     );
     const newVatAmount = newSubtotal * (VAT_RATE / 100);
+
     const newTotal = newSubtotal + newVatAmount;
     setCalculatedTotal(newSubtotal); // Lưu subtotal trước VAT
 
@@ -212,8 +215,8 @@ const PaymentModal = ({
                 </h5>
                 <div className="table-info-box">
                   <p>
-                    {selectedTables.length > 0
-                      ? selectedTables.map((t) => t.table_number).join(", ")
+                    {Array.isArray(selectedTables) && selectedTables.length > 0
+                      ? selectedTables.map((t) => t?.table_number).join(", ")
                       : "---"}
                   </p>
                 </div>

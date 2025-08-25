@@ -4,12 +4,12 @@
  * Định nghĩa các route cho từng role
  */
 export const ROLE_ROUTES = {
-  'Admin': '/dashboard',           // Admin vào dashboard chính
-  'admin': '/dashboard',           // Fallback cho lowercase
-  'Quản lý bếp': '/dashboard',       // Quản lý bếp vào trang bếp
-  'bếp': '/dashboard',           // Fallback cho role từ admin_faces
-  'Nhân viên': '/dashboard',       // Nhân viên vào dashboard (tạm thời)
-  'nhân viên': '/dashboard',       // Fallback cho role từ admin_faces
+  'Admin': '/dashboard',                 // Admin vào dashboard chính
+  'admin': '/dashboard',                 // Fallback cho lowercase
+  'Quản lý bếp': '/dashboard-kitchen',   // Quản lý bếp vào dashboard bếp
+  'bếp': '/dashboard-kitchen',           // Fallback cho role từ admin_faces
+  'Nhân viên': '/dashboard-staff',       // Nhân viên vào dashboard phục vụ
+  'nhân viên': '/dashboard-staff',       // Fallback cho role từ admin_faces
   'default': '/dashboard'          // Route mặc định
 };
 
