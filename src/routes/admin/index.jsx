@@ -20,6 +20,8 @@ import PaymentResult from "@components/admin/Orders/PaymentResult";
 
 // Dashboard
 import Dashboard from "@pages/admin/Dashboard/index";
+import KitchenDashboard from "@pages/admin/Dashboard/KitchenDashboard";
+import StaffDashboard from "@pages/admin/Dashboard/StaffDashboard";
 
 import PageCustomer from "@pages/admin/Customers/index";
 import UpdateCustomer from "@components/admin/Customers/UpdateCustomer";
@@ -49,6 +51,8 @@ import FaceAuthPage from "@pages/admin/FaceAuth";
 import ListDiscountCode from "@pages/admin/DiscountCode/index.jsx"
 const authProtectedRoutes = [
   { path: "/dashboard", component: <Dashboard />, permission: "dashboard.view" },
+  { path: "/dashboard-kitchen", component: <KitchenDashboard />, permission: "dashboard.view" },
+  { path: "/dashboard-staff", component: <StaffDashboard />, permission: "dashboard.view" },
 
   // Customer routes
   { path: "/customer", component: <PageCustomer />, permission: "customer.view" },

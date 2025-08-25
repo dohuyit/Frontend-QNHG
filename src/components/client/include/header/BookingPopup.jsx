@@ -5,6 +5,7 @@ import { createBooking } from "../../../../services/client/bookingService";
 import SuccessModal from "./SuccessModal";
 import ArrivalTimeSelect from "./ArrivalTimeSelect";
 import { toast } from "react-toastify";
+import logo from "@assets/client/images/header/logo.png";
 
 const convertTo24Hour = (time12h) => {
   if (!time12h) return "";
@@ -79,7 +80,7 @@ const BookingPopup = ({ isOpen, onClose }) => {
           ...prev,
           customer_id: userObj.id || "",
           customer_name: userObj.full_name || "", // Đổi name thành full_name
-          customer_phone: userObj.phone || "",    // Nếu có phone thì lấy, không thì để ""
+          customer_phone: userObj.phone || "", // Nếu có phone thì lấy, không thì để ""
           customer_email: userObj.email || "",
         }));
       } else {
@@ -103,8 +104,46 @@ const BookingPopup = ({ isOpen, onClose }) => {
       {loading && (
         <div className="booking-loading-overlay">
           <div className="booking-loading-popup">
-            <div className="spinner"></div>
-            <span>Đang xử lý đặt bàn, vui lòng chờ trong giây lát...</span>
+            <img src={logo} alt="Restaurant Logo" />
+            <svg
+              className="pl"
+              viewBox="0 0 128 128"
+              width="128px"
+              height="128px"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="pl-grad-yellow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f39c12"></stop>
+                  <stop offset="100%" stopColor="#e67e22"></stop>
+                </linearGradient>
+              </defs>
+              <circle
+                className="pl__ring"
+                r="56"
+                cx="64"
+                cy="64"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="16"
+                strokeLinecap="round"
+              ></circle>
+              <path
+                className="pl__worm"
+                d="M92,15.492S78.194,4.967,66.743,16.887c-17.231,17.938-28.26,96.974-28.26,96.974L119.85,59.892l-99-31.588,57.528,89.832L97.8,19.349,13.636,88.51l89.012,16.015S81.908,38.332,66.1,22.337C50.114,6.156,36,15.492,36,15.492a56,56,0,1,0,56,0Z"
+                fill="none"
+                strokeWidth="16"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray="44 1111"
+                strokeDashoffset="10"
+              ></path>
+            </svg>
+            <span
+              style={{ color: "#fff", marginTop: "10px", fontSize: "16px" }}
+            >
+              Đang xử lý đặt bàn...
+            </span>
           </div>
         </div>
       )}
@@ -121,7 +160,9 @@ const BookingPopup = ({ isOpen, onClose }) => {
                 value={orderTable.customer_name}
                 onChange={handleChange}
               />
-              {errors.customer_name && <p className="error">{errors.customer_name}</p>}
+              {errors.customer_name && (
+                <p className="error">{errors.customer_name}</p>
+              )}
 
               <input
                 type="tel"
@@ -130,7 +171,9 @@ const BookingPopup = ({ isOpen, onClose }) => {
                 value={orderTable.customer_phone}
                 onChange={handleChange}
               />
-              {errors.customer_phone && <p className="error">{errors.customer_phone}</p>}
+              {errors.customer_phone && (
+                <p className="error">{errors.customer_phone}</p>
+              )}
 
               <input
                 type="email"
@@ -139,7 +182,9 @@ const BookingPopup = ({ isOpen, onClose }) => {
                 value={orderTable.customer_email}
                 onChange={handleChange}
               />
-              {errors.customer_email && <p className="error">{errors.customer_email}</p>}
+              {errors.customer_email && (
+                <p className="error">{errors.customer_email}</p>
+              )}
             </div>
 
             <div className="form-group">
@@ -187,7 +232,9 @@ const BookingPopup = ({ isOpen, onClose }) => {
                     min={minDate}
                     onChange={handleChange}
                   />
-                  {errors.reservation_date && <p className="error">{errors.reservation_date}</p>}
+                  {errors.reservation_date && (
+                    <p className="error">{errors.reservation_date}</p>
+                  )}
                 </div>
 
                 <div className="form-field">
@@ -201,7 +248,9 @@ const BookingPopup = ({ isOpen, onClose }) => {
                     }
                     reservationDate={orderTable.reservation_date}
                   />
-                  {errors.reservation_time && <p className="error">{errors.reservation_time}</p>}
+                  {errors.reservation_time && (
+                    <p className="error">{errors.reservation_time}</p>
+                  )}
                 </div>
               </div>
 
@@ -219,9 +268,8 @@ const BookingPopup = ({ isOpen, onClose }) => {
                 Đóng
               </button>
               <button type="submit" disabled={loading}>
-                {loading ? 'Đang xử lý...' : 'ĐẶT BÀN NGAY'}
+                {loading ? "Đang xử lý..." : "ĐẶT BÀN NGAY"}
               </button>
-              
             </div>
           </form>
         </div>

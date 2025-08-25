@@ -42,3 +42,30 @@ export const getReservationTimeStats = (params = {}) => {
 export const getOrderRevenueStats = (params = {}) => {
     return apiClient.get(`/orders/revenue`, { params });
 };
+
+// ========== Dashboard chuyên biệt ==========
+// Sử dụng axios trực tiếp với URL tuyệt đối để tránh baseURL '/statistics'
+export const getKitchenDashboard = (params = {}) => {
+    const url = `${BASE_URL}/api/admin/dashboard/kitchen`;
+    const token = getToken();
+    return axios.get(url, {
+        params,
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+};
+
+export const getStaffDashboard = () => {
+    const url = `${BASE_URL}/api/admin/dashboard/staff`;
+    const token = getToken();
+    return axios.get(url, {
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+};
