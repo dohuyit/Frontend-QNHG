@@ -166,104 +166,162 @@ export default function KitchenDashboard() {
     };
 
     return (
-        <div className="page-content">
-            <Container fluid>
-                <Breadcrumbs title="Dashboard" breadcrumbItem="Bếp" />
+      <div className="page-content">
+        <Container fluid>
+          <Breadcrumbs title="Dashboard" breadcrumbItem="Bếp" />
 
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner color="primary" />
+            </div>
+          ) : (
+            <>
+              <Row className="mb-3">
+                <Col md={4}>
+                  <Card
+                    className="shadow-sm border-0"
+                    style={{
+                      background: "linear-gradient(135deg,#fff7e6,#ffe8bf)",
+                    }}
+                  >
+                    <CardBody className="text-center">
+                      <div className="text-muted mb-1">Chờ</div>
+                      <h4 className="text-warning">
+                        ⏳ {stats.counts.pending}
+                      </h4>
+                    </CardBody>
+                  </Card>
+                </Col>
+                <Col md={4}>
+                  <Card
+                    className="shadow-sm border-0"
+                    style={{
+                      background: "linear-gradient(135deg,#e7f3ff,#cfebff)",
+                    }}
+                  >
+                    <CardBody className="text-center">
+                      <div className="text-muted mb-1">Đang chế biến</div>
+                      <h4 className="text-info">🍳 {stats.counts.preparing}</h4>
+                    </CardBody>
+                  </Card>
+                </Col>
+                <Col md={4}>
+                  <Card
+                    className="shadow-sm border-0"
+                    style={{
+                      background: "linear-gradient(135deg,#e6fff1,#c9ffe3)",
+                    }}
+                  >
+                    <CardBody className="text-center">
+                      <div className="text-muted mb-1">Sẵn sàng</div>
+                      <h4 className="text-success">✅ {stats.counts.ready}</h4>
+                    </CardBody>
+                  </Card>
+                </Col>
+              </Row>
+              {/* Bộ lọc ngày + preset nhanh */}
+              <Row className="mb-3 align-items-end">
+                <Col md={3} sm={6} className="mb-2">
+                  <Label className="form-label">Từ ngày</Label>
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                  />
+                </Col>
+                <Col md={3} sm={6} className="mb-2">
+                  <Label className="form-label">Đến ngày</Label>
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                  />
+                </Col>
+                <Col md={3} sm={6} className="d-flex align-items-end mb-2">
+                  <Button
+                    color="secondary"
+                    onClick={() => {
+                      const t = formatYMD(new Date());
+                      setDateFrom(t);
+                      setDateTo(t);
+                    }}
+                  >
+                    Hôm nay
+                  </Button>
+                </Col>
+              </Row>
+              {/* Biểu đồ trạng thái và Top món */}
+              <Row className="mb-4">
+                <Col lg={6} className="mb-4 mb-lg-0">
+                  <Card className="h-100">
+                    <CardBody>
+                      <h5 className="mb-3">Tỉ lệ trạng thái món bếp</h5>
+                      <ReactApexChart
+                        options={donutOptions}
+                        series={donutSeries}
+                        type="donut"
+                        height={260}
+                      />
+                    </CardBody>
+                  </Card>
+                </Col>
+                <Col lg={6}>
+                  <Card className="h-100">
+                    <CardBody>
+                      <h5 className="mb-3">Top món gọi nhiều</h5>
+                      {topDishes.length === 0 ? (
+                        <div className="text-muted text-center py-3">
+                          Chưa có dữ liệu
+                        </div>
+                      ) : (
+                        <ReactApexChart
+                          options={barOptions}
+                          series={barSeries}
+                          type="bar"
+                          height={260}
+                        />
+                      )}
+                    </CardBody>
+                  </Card>
+                </Col>
+              </Row>
 
-
-                {loading ? (
-                    <div className="text-center py-5"><Spinner color="primary" /></div>
-                ) : (
-                    <>
-                        <Row className="mb-3">
-                            <Col md={4}>
-                                <Card className="shadow-sm border-0" style={{background: 'linear-gradient(135deg,#fff7e6,#ffe8bf)'}}>
-                                    <CardBody className="text-center">
-                                        <div className="text-muted mb-1">Chờ</div>
-                                        <h4 className="text-warning">⏳ {stats.counts.pending}</h4>
-                                    </CardBody>
-                                </Card>
-                            </Col>
-                            <Col md={4}>
-                                <Card className="shadow-sm border-0" style={{background: 'linear-gradient(135deg,#e7f3ff,#cfebff)'}}>
-                                    <CardBody className="text-center">
-                                        <div className="text-muted mb-1">Đang chế biến</div>
-                                        <h4 className="text-info">🍳 {stats.counts.preparing}</h4>
-                                    </CardBody>
-                                </Card>
-                            </Col>
-                            <Col md={4}>
-                                <Card className="shadow-sm border-0" style={{background: 'linear-gradient(135deg,#e6fff1,#c9ffe3)'}}>
-                                    <CardBody className="text-center">
-                                        <div className="text-muted mb-1">Sẵn sàng</div>
-                                        <h4 className="text-success">✅ {stats.counts.ready}</h4>
-                                    </CardBody>
-                                </Card>
-                            </Col>
-                        </Row>
-                        {/* Bộ lọc ngày + preset nhanh */}
-                        <Row className="mb-3 align-items-end">
-                            <Col md={3} sm={6} className="mb-2">
-                                <Label className="form-label">Từ ngày</Label>
-                                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-                            </Col>
-                            <Col md={3} sm={6} className="mb-2">
-                                <Label className="form-label">Đến ngày</Label>
-                                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-                            </Col>
-                            <Col md={3} sm={6} className="d-flex align-items-end mb-2">
-                                <Button color="secondary" onClick={() => { const t = formatYMD(new Date()); setDateFrom(t); setDateTo(t); }}>
-                                    Hôm nay
-                                </Button>
-                            </Col>
-                        </Row>
-                        {/* Biểu đồ trạng thái và Top món */}
-                        <Row className="mb-4">
-                            <Col lg={6} className="mb-4 mb-lg-0">
-                                <Card className="h-100"><CardBody>
-                                    <h5 className="mb-3">Tỉ lệ trạng thái món bếp</h5>
-                                    <ReactApexChart options={donutOptions} series={donutSeries} type="donut" height={260} />
-                                </CardBody></Card>
-                            </Col>
-                            <Col lg={6}>
-                                <Card className="h-100"><CardBody>
-                                    <h5 className="mb-3">Top món gọi nhiều</h5>
-                                    {topDishes.length === 0 ? (
-                                        <div className="text-muted text-center py-3">Chưa có dữ liệu</div>
-                                    ) : (
-                                        <ReactApexChart options={barOptions} series={barSeries} type="bar" height={260} />
-                                    )}
-                                </CardBody></Card>
-                            </Col>
-                        </Row>
-
-                        <Row className="mb-4">
-                            <Col md={12}>
-                                <Card className="h-100 border border-success"><CardBody>
-                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <h5 className="mb-0">Tỉ lệ đơn hoàn thành đúng giờ vs trễ giờ</h5>
-                                        <Badge color={finalLate > 0 ? "danger" : "success"}>
-                                            Tổng {finalOnTime + finalLate} đơn
-                                        </Badge>
-                                    </div>
-                                    {(finalOnTime + finalLate) === 0 ? (
-                                        <div className="text-muted text-center py-3">Chưa có dữ liệu</div>
-                                    ) : (
-                                        <ReactApexChart options={timeDonutOptions} series={timeDonutSeries} type="donut" height={280} />
-                                    )}
-                                    <div className="text-muted small mt-2">
-                                        • Đúng giờ: thời gian thực tế ≤ thời gian chế biến tiêu chuẩn. • Trễ giờ: thời gian thực tế > tiêu chuẩn.
-                                    </div>
-                                </CardBody></Card>
-                            </Col>
-                        </Row>
-
-
-
-                    </>
-                )}
-            </Container>
-        </div>
+              <Row className="mb-4">
+                <Col md={12}>
+                  <Card className="h-100 border border-success">
+                    <CardBody>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <h5 className="mb-0">
+                          Tỉ lệ đơn hoàn thành đúng giờ vs trễ giờ
+                        </h5>
+                        <Badge color={finalLate > 0 ? "danger" : "success"}>
+                          Tổng {finalOnTime + finalLate} đơn
+                        </Badge>
+                      </div>
+                      {finalOnTime + finalLate === 0 ? (
+                        <div className="text-muted text-center py-3">
+                          Chưa có dữ liệu
+                        </div>
+                      ) : (
+                        <ReactApexChart
+                          options={timeDonutOptions}
+                          series={timeDonutSeries}
+                          type="donut"
+                          height={280}
+                        />
+                      )}
+                      <div className="text-muted small mt-2">
+                        {
+                          "• Đúng giờ: thời gian thực tế ≤ thời gian chế biến tiêu chuẩn. • Trễ giờ: thời gian thực tế > tiêu chuẩn."
+                        }
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              </Row>
+            </>
+          )}
+        </Container>
+      </div>
     );
 }
