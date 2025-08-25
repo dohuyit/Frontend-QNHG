@@ -1649,12 +1649,6 @@ const FormOrderUpdate = () => {
                     {formatPriceToVND(subtotal)}
                   </span>
                 </div>
-                <div className="order-totals-row">
-                  <span className="order-totals-label">VAT</span>
-                  <span className="order-totals-value">
-                    {formatPriceToVND(vat)}
-                  </span>
-                </div>
                 <div className="order-totals-row order-totals-total">
                   <span className="order-totals-label order-totals-label-total">
                     Tổng cộng
