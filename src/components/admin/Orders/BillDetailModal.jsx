@@ -462,6 +462,12 @@ const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
                     {formatPriceToVND(bill.sub_total)}
                   </div>
                 </div>
+                <div className="bill-items-vat d-flex justify-content-between align-items-center mb-2">
+                  <div className="bill-items-total-label">VAT (5%):</div>
+                  <div className="bill-items-total-value">
+                    {formatPriceToVND(bill.sub_total * 0.05)}
+                  </div>
+                </div>
                 {bill.discount_amount > 0 && (
                   <div className="bill-items-discount d-flex justify-content-between align-items-center mb-2">
                     <div className="bill-items-total-label text-success">
