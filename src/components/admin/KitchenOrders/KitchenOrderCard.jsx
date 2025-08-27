@@ -29,7 +29,12 @@ const KitchenOrderCard = ({ order, onChangeStatus, onCancel, status }) => {
                     if (order.received_at && totalCookingTime > 0) {
                         console.log('[DEBUG] CountdownCookingTime props:', { receivedAt: order.received_at, cookingTime: totalCookingTime });
                         return <>
-                            <CountdownCookingTime receivedAt={new Date(new Date(order.received_at).getTime() + 7 * 60 * 60 * 1000).toISOString()} cookingTime={totalCookingTime} />
+                            <CountdownCookingTime 
+                                receivedAt={new Date(new Date(order.received_at).getTime() + 7 * 60 * 60 * 1000).toISOString()} 
+                                cookingTime={totalCookingTime} 
+                                status={status}
+                                completedAt={order.completed_at}
+                            />
                             <span style={{marginLeft: 8, color: 'gray', fontSize: 12}}>[Debug: {order.received_at} | Tổng phút: {totalCookingTime}]</span>
                         </>;
                     }
@@ -45,7 +50,12 @@ const KitchenOrderCard = ({ order, onChangeStatus, onCancel, status }) => {
                             <li key={idx}>
                                 {item.item_name} x{item.quantity} {item.notes && <span>({item.notes})</span>}
                                 {item.received_at && (typeof item.cooking_time === 'number' && item.cooking_time >= 0) ? (
-                                    <CountdownCookingTime receivedAt={item.received_at} cookingTime={item.cooking_time} />
+                                    <CountdownCookingTime 
+                                        receivedAt={item.received_at} 
+                                        cookingTime={item.cooking_time} 
+                                        status={status}
+                                        completedAt={order.completed_at}
+                                    />
                                 ) : (
                                     <span style={{marginLeft: 8, color: 'gray', fontStyle: 'italic'}}>Không thiết lập thời gian</span>
                                 )}
@@ -64,7 +74,7 @@ const KitchenOrderCard = ({ order, onChangeStatus, onCancel, status }) => {
     );
 };
 
-function CountdownCookingTime({ receivedAt, cookingTime }) {
+function CountdownCookingTime({ receivedAt, cookingTime, status, completedAt }) {
     const [remaining, setRemaining] = useState(0);
 
     useEffect(() => {
@@ -74,23 +84,79 @@ function CountdownCookingTime({ receivedAt, cookingTime }) {
             const now = new Date().getTime();
             const totalMs = cookingTime * 60 * 1000;
             const remainMs = start + totalMs - now;
-            return Math.max(0, Math.floor(remainMs / 1000));
+            return Math.floor(remainMs / 1000);
         }
-        setRemaining(calcRemaining());
-        const timer = setInterval(() => {
+
+        // Chỉ chạy timer khi chưa hoàn thành và chưa hủy
+        if (status !== "ready" && status !== "cancelled") {
             setRemaining(calcRemaining());
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [receivedAt, cookingTime]);
+            const timer = setInterval(() => {
+                setRemaining(calcRemaining());
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [receivedAt, cookingTime, status]);
 
     if (!cookingTime || !receivedAt) return null;
-    const min = Math.floor(remaining / 60);
-    const sec = remaining % 60;
+    
+    // Nếu trạng thái là "cancelled", không hiển thị gì
+    if (status === "cancelled") {
+        return null;
+    }
+
+    // Nếu trạng thái là "ready", hiển thị thời gian hoàn thành
+    if (status === "ready") {
+        let content = "";
+        
+        if (completedAt) {
+            // Hiển thị thời gian hoàn thành thực tế
+            const start = new Date(receivedAt).getTime();
+            const completed = new Date(completedAt).getTime();
+            const actualTimeMs = completed - start;
+            const actualMin = Math.floor(actualTimeMs / 1000 / 60);
+            const actualSec = Math.floor((actualTimeMs / 1000) % 60);
+            content = `Hoàn thành: ${actualMin}:${actualSec.toString().padStart(2, "0")} phút`;
+        } else {
+            // Hiển thị tổng thời gian chế biến dự kiến
+            content = `Hoàn thành: ${cookingTime} phút`;
+        }
+
+        return (
+            <span style={{marginLeft: 8, color: 'blue', fontWeight: 600}}>
+                [{content}]
+            </span>
+        );
+    }
+
+    // Logic đếm ngược như cũ khi chưa hoàn thành
+    const start = new Date(receivedAt).getTime();
+    const now = new Date().getTime();
+    const totalMs = cookingTime * 60 * 1000;
+    const remainMs = start + totalMs - now;
+
+    let content = "";
+    let color = "";
+
+    if (remainMs >= 0) {
+        // Đếm ngược bình thường
+        const min = Math.floor(remainMs / 1000 / 60);
+        const sec = Math.floor((remainMs / 1000) % 60);
+        content = `Còn lại: ${min}:${sec.toString().padStart(2, "0")} phút`;
+        color = "green";
+    } else {
+        // Quá giờ: số phút tăng dần
+        const overMs = Math.abs(remainMs);
+        const min = Math.floor(overMs / 1000 / 60);
+        const sec = Math.floor((overMs / 1000) % 60);
+        content = `Quá hạn: ${min}:${sec.toString().padStart(2, "0")} phút`;
+        color = "red";
+    }
+
     return (
-        <span style={{marginLeft: 8, color: remaining === 0 ? 'red' : 'green', fontWeight: 500}}>
-            [Còn lại: {min}:{sec.toString().padStart(2, '0')} phút]
+        <span style={{marginLeft: 8, color: color, fontWeight: 500}}>
+            [{content}]
         </span>
     );
 }
 
-export default KitchenOrderCard; 
+export default KitchenOrderCard;
