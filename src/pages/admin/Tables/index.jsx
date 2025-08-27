@@ -555,11 +555,6 @@ const TableIndex = () => {
                   </div>
                 )}
               </div>
-              <CustomPaginate
-                currentPage={currentPage}
-                totalPages={meta.last_page}
-                onPageChange={handlePageChange}
-              />
             </>
           )}
         </CardBody>
