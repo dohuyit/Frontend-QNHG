@@ -93,6 +93,15 @@ const TableIndex = () => {
     out_of_service: 0,
   });
 
+  // Lọc client-side theo từ khóa tìm kiếm (React)
+  const filteredTables = React.useMemo(() => {
+    const keyword = (search || "").toLowerCase().trim();
+    if (!keyword) return tables;
+    return tables.filter((t) =>
+      String(t.table_number || "").toLowerCase().includes(keyword)
+    );
+  }, [tables, search]);
+
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
     { value: "available", label: "Trống", badgeColor: "success" },
@@ -146,8 +155,8 @@ const TableIndex = () => {
     setCurrentPage(1);
   };
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
+  const handleSearchChange = (value) => {
+    setSearch(value);
     setCurrentPage(1);
   };
 
@@ -263,9 +272,10 @@ const TableIndex = () => {
 
   // Fetch tables
   useEffect(() => {
+    // Không gửi search lên API nữa, chỉ fetch theo trang/tham số khác
     fetchTables();
     fetchTableStatusCounts();
-  }, [currentPage, search, status, selectedAreaIds]);
+  }, [currentPage, /* search, */ status, selectedAreaIds]);
 
   // Auto filter when advanced filter values change
   useEffect(() => {
@@ -604,7 +614,7 @@ const TableIndex = () => {
           ) : (
             <>
               <div style={tableListContainerStyle}>
-                {tables.map((table) => (
+                {filteredTables.map((table) => (
                   <TableCard
                     key={table.id}
                     tableId={table.id}
@@ -617,7 +627,7 @@ const TableIndex = () => {
                     hideMenu={false}
                   />
                 ))}
-                {tables.length === 0 && (
+                {filteredTables.length === 0 && (
                   <div className="text-center text-muted">
                     Không tìm thấy bàn nào.
                   </div>

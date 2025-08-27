@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     Card,
     CardHeader,
@@ -60,6 +60,15 @@ const TableAreaIndex = () => {
         all: 0,
     });
 
+    // Lọc client-side theo từ khóa tìm kiếm (React) cho Khu vực bàn
+    const filteredAreas = useMemo(() => {
+        const keyword = (search || "").toLowerCase().trim();
+        if (!keyword) return areaData.items;
+        return (areaData.items || []).filter((a) =>
+            String(a.name || "").toLowerCase().includes(keyword)
+        );
+    }, [areaData.items, search]);
+
     const statusOptions = [
         { value: "all", label: "Tất cả", badgeColor: "secondary" },
         { value: "active", label: "Hoạt động", badgeColor: "success" },
@@ -72,8 +81,7 @@ const TableAreaIndex = () => {
             const params = {
                 page,
                 per_page: 10,
-                // Nếu filterName có giá trị thì không gửi query (search)
-                query: filterName ? undefined : (search || undefined),
+                // Không gửi tham số search (query) nữa - tìm kiếm client-side
                 status: status !== "all" ? status : undefined,
                 name: filterName || undefined,
                 capacity: filterCapacity || undefined,
@@ -116,7 +124,7 @@ const TableAreaIndex = () => {
     useEffect(() => {
         fetchTableAreas(currentPage);
         fetchAreaStatusCounts();
-    }, [currentPage, search, status, filterName, filterCapacity]);
+    }, [currentPage, status, filterName, filterCapacity]);
 
     const openAddModal = () => {
         setIsEdit(false);
@@ -138,7 +146,7 @@ const TableAreaIndex = () => {
             setErrors(validationErrors);
             return;
         }
-        
+
         // Success case - refresh data and close modal
         fetchTableAreas(currentPage);
         setModalOpen(false);
@@ -346,14 +354,14 @@ const TableAreaIndex = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {areaData.items.length === 0 ? (
+                                {filteredAreas.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="text-center text-muted">
                                             Không có dữ liệu
                                         </td>
                                     </tr>
                                 ) : (
-                                    areaData.items.map((area, idx) => (
+                                    filteredAreas.map((area, idx) => (
                                         <tr key={area.id}>
                                             <td>{idx + 1}</td>
                                             <td>{area.name}</td>
