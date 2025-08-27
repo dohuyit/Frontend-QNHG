@@ -1,6 +1,6 @@
-import api from './api';
+import api from "./api";
 
-const FACE_API_BASE = '/admin/face';
+const FACE_API_BASE = "/admin/face";
 
 // Service để kết nối với Laravel API (không trực tiếp với Python)
 export const faceRecognitionService = {
@@ -13,7 +13,7 @@ export const faceRecognitionService = {
       // 1) captureface({ user_id, image, image_count })
       // 2) captureface(userId, imageData, imageCount)
       let payload;
-      if (typeof arg1 === 'object' && arg1 !== null) {
+      if (typeof arg1 === "object" && arg1 !== null) {
         const { user_id, image, image_count } = arg1;
         payload = { user_id, image, image_count };
       } else {
@@ -22,7 +22,7 @@ export const faceRecognitionService = {
       const response = await api.post(`${FACE_API_BASE}/capture`, payload);
       return response.data;
     } catch (error) {
-      console.error('Capture face error:', error);
+      console.error("Capture face error:", error);
       throw error;
     }
   },
@@ -33,11 +33,11 @@ export const faceRecognitionService = {
   trainFaces: async (userId = null) => {
     try {
       const response = await api.post(`${FACE_API_BASE}/train`, {
-        user_id: userId
+        user_id: userId,
       });
       return response.data;
     } catch (error) {
-      console.error('Train faces error:', error);
+      console.error("Train faces error:", error);
       throw error;
     }
   },
@@ -48,11 +48,11 @@ export const faceRecognitionService = {
   recognizeFace: async (imageData) => {
     try {
       const response = await api.post(`${FACE_API_BASE}/recognize`, {
-        image: imageData
+        image: imageData,
       });
       return response.data;
     } catch (error) {
-      console.error('Recognize face error:', error);
+      console.error("Recognize face error:", error);
       throw error;
     }
   },
@@ -65,7 +65,7 @@ export const faceRecognitionService = {
       const response = await api.get(`${FACE_API_BASE}/available-users`);
       return response.data;
     } catch (error) {
-      console.error('Get available users error:', error);
+      console.error("Get available users error:", error);
       throw error;
     }
   },
@@ -78,7 +78,7 @@ export const faceRecognitionService = {
       const response = await api.get(`${FACE_API_BASE}/users`);
       return response.data;
     } catch (error) {
-      console.error('Get registered users error:', error);
+      console.error("Get registered users error:", error);
       throw error;
     }
   },
@@ -91,7 +91,7 @@ export const faceRecognitionService = {
       const response = await api.delete(`${FACE_API_BASE}/users/${userId}`);
       return response.data;
     } catch (error) {
-      console.error('Delete user face error:', error);
+      console.error("Delete user face error:", error);
       throw error;
     }
   },
@@ -104,7 +104,7 @@ export const faceRecognitionService = {
       const response = await api.get(`${FACE_API_BASE}/statistics`);
       return response.data;
     } catch (error) {
-      console.error('Get statistics error:', error);
+      console.error("Get statistics error:", error);
       throw error;
     }
   },
@@ -117,10 +117,10 @@ export const faceRecognitionService = {
       const response = await api.get(`${FACE_API_BASE}/check-connection`);
       return response.data;
     } catch (error) {
-      console.error('Check API connection error:', error);
+      console.error("Check API connection error:", error);
       throw error;
     }
-  }
+  },
 };
 
 // Utility functions cho xử lý camera và ảnh
@@ -128,27 +128,45 @@ export const cameraUtils = {
   /**
    * Khởi tạo camera
    */
-  initCamera: async (videoElement, constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }) => {
+  initCamera: async (
+    videoElement,
+    constraints = {
+      video: {
+        facingMode: "user",
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    }
+  ) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoElement) {
         // Thiết lập thuộc tính video đảm bảo phát trong modal/mobile
-        try { videoElement.setAttribute('playsinline', ''); } catch (e) {}
-        try { videoElement.playsInline = true; } catch (e) {}
-        try { videoElement.muted = true; } catch (e) {}
+        try {
+          videoElement.setAttribute("playsinline", "");
+        } catch (e) {}
+        try {
+          videoElement.playsInline = true;
+        } catch (e) {}
+        try {
+          videoElement.muted = true;
+        } catch (e) {}
         videoElement.srcObject = stream;
         // Thử play tránh bị treo khung đen
         try {
           const p = videoElement.play();
-          if (p && typeof p.then === 'function') {
+          if (p && typeof p.then === "function") {
             p.catch(() => {});
           }
         } catch (e) {}
       }
       return stream;
     } catch (error) {
-      console.error('Camera init error:', error);
-      throw new Error('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.');
+      console.error("Camera init error:", error);
+      throw new Error(
+        "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập."
+      );
     }
   },
 
@@ -157,7 +175,7 @@ export const cameraUtils = {
    */
   stopCamera: (stream) => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
     }
   },
 
@@ -166,17 +184,17 @@ export const cameraUtils = {
    */
   captureImage: (videoElement, canvasElement) => {
     if (!videoElement || !canvasElement) {
-      throw new Error('Video hoặc Canvas element không tồn tại');
+      throw new Error("Video hoặc Canvas element không tồn tại");
     }
 
-    const context = canvasElement.getContext('2d');
+    const context = canvasElement.getContext("2d");
     canvasElement.width = videoElement.videoWidth;
     canvasElement.height = videoElement.videoHeight;
-    
+
     context.drawImage(videoElement, 0, 0);
-    
+
     // Trả về base64 string
-    return canvasElement.toDataURL('image/jpeg', 0.8);
+    return canvasElement.toDataURL("image/jpeg", 0.8);
   },
 
   /**
@@ -184,27 +202,27 @@ export const cameraUtils = {
    */
   resizeImage: (imageData, maxWidth = 640, maxHeight = 480, quality = 0.8) => {
     return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       const img = new Image();
-      
+
       img.onload = () => {
         // Tính toán kích thước mới
         let { width, height } = img;
-        
+
         if (width > maxWidth || height > maxHeight) {
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           width *= ratio;
           height *= ratio;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
-      
+
       img.src = imageData;
     });
   },
@@ -214,13 +232,13 @@ export const cameraUtils = {
    */
   isCameraSupported: () => {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  }
+  },
 };
 
 // Constants
 export const FACE_RECOGNITION_CONSTANTS = {
   MIN_ACCURACY: 20,
-  MAX_IMAGES: 100,
-  CAPTURE_INTERVAL: 20, // ms
-  ROLES: ['Admin', 'Quản lý bếp', 'Nhân viên']
+  MAX_IMAGES: 20,
+  CAPTURE_INTERVAL: 1, // ms
+  ROLES: ["Admin", "Quản lý bếp", "Nhân viên"],
 };
