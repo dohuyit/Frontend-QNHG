@@ -22,7 +22,7 @@ import ModalTable from "@components/admin/Table/ModalTable";
 import TableDetailModal from "@components/admin/Table/TableDetailModal";
 import SearchAndStatusFilterBar from "@components/admin/ui/SearchAndStatusFilterBar";
 import DeleteModal from "@components/admin/ui/DeleteModal";
-import PaginateUi from "@components/admin/ui/paginateUi";
+import CustomPaginate from "@components/admin/ui/CustomPaginate";
 import { toast } from "react-toastify";
 import {
   getTables,
@@ -79,12 +79,12 @@ const TableIndex = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTableId, setDeleteTableId] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
-  
+
   // Advanced filter states
   const [filterTableNumber, setFilterTableNumber] = useState("");
   const [filterTableType, setFilterTableType] = useState("");
   const [filterTableArea, setFilterTableArea] = useState("");
-  
+
   // Table status counts
   const [tableStatusCounts, setTableStatusCounts] = useState({
     available: 0,
@@ -132,7 +132,7 @@ const TableIndex = () => {
   };
 
   const handleViewDetail = (tableId) => {
-    const table = tables.find(t => t.id === tableId);
+    const table = tables.find((t) => t.id === tableId);
     if (table) {
       setSelectedTable(table);
       setDetailModalOpen(true);
@@ -207,20 +207,18 @@ const TableIndex = () => {
     try {
       const params = {
         page: currentPage,
+        per_page: 6,
         search: search || undefined,
         status: status !== "all" ? status : undefined,
-        table_area_id: selectedAreaIds.length > 0 ? selectedAreaIds.join(',') : undefined,
+        table_area_id:
+          selectedAreaIds.length > 0 ? selectedAreaIds.join(",") : undefined,
       };
-      
-      // Add advanced filter params
       if (filterTableNumber) params.table_number = filterTableNumber;
       if (filterTableType) params.table_type = filterTableType;
       if (filterTableArea) params.table_area_id = filterTableArea;
-      
       Object.keys(params).forEach(
         (key) => params[key] === undefined && delete params[key]
       );
-      
       const res = await getTables(params);
       setTables(res.data.data.items || []);
       setMeta(res.data.data.meta || {});
@@ -228,7 +226,7 @@ const TableIndex = () => {
       setTables([]);
       setMeta({
         current_page: 1,
-        per_page: 10,
+        per_page: 6,
         total: 0,
         last_page: 1,
       });
@@ -243,7 +241,7 @@ const TableIndex = () => {
       const res = await countTable();
       setTableStatusCounts(res.data.data || {});
     } catch (error) {
-      console.error('Error fetching table status counts:', error);
+      console.error("Error fetching table status counts:", error);
     }
   };
 
@@ -255,7 +253,7 @@ const TableIndex = () => {
         const res = await getTableAreas();
         const areas = res.data.data.items || [];
         setTableAreas(areas);
-        
+
         // Auto-select the first area if areas exist and no area is currently selected
         if (areas.length > 0 && selectedAreaIds.length === 0) {
           setSelectedAreaIds([areas[0].id]);
@@ -282,17 +280,6 @@ const TableIndex = () => {
     fetchTables();
     setCurrentPage(1);
   }, [filterTableNumber, filterTableType, filterTableArea]);
-
-  const areaStats = tableAreas.reduce((acc, area) => {
-    const tablesInArea = tables.filter(
-      (t) => String(t.table_area_id) === String(area.id)
-    );
-    const total = tablesInArea.length;
-    const available = tablesInArea.filter((t) => t.status === "available").length;
-    const occupied = tablesInArea.filter((t) => t.status === "occupied").length;
-    acc[area.id] = { total, available, occupied };
-    return acc;
-  }, {});
 
   const handleDeleteClick = (tableId) => {
     setDeleteTableId(tableId);
@@ -361,20 +348,12 @@ const TableIndex = () => {
               }}
             >
               {tableAreas.map((area) => {
-                const stats = areaStats[area.id] || {
-                  total: 0,
-                  available: 0,
-                  occupied: 0,
-                };
-                const fillRate =
-                  stats.total > 0
-                    ? ((stats.occupied / stats.total) * 100).toFixed(0)
-                    : 0;
-
                 return (
                   <SwiperSlide key={area.id}>
                     <Card
-                      className={`h-100 area-card${selectedAreaIds.includes(area.id) ? " selected" : ""}`}
+                      className={`h-100 area-card${
+                        selectedAreaIds.includes(area.id) ? " selected" : ""
+                      }`}
                       style={{
                         border: "1px solid #dee2e6",
                         cursor: "pointer",
@@ -416,72 +395,9 @@ const TableIndex = () => {
                             <h5 className="mb-0 fw-bold">{area.name}</h5>
                           </div>
                         </div>
-                        <p className="text-muted small mb-3">{area.description}</p>
-                        <div className="d-flex justify-content-around text-center mb-3">
-                          <div
-                            className="p-2"
-                            style={{
-                              backgroundColor: "#f8f9fa",
-                              borderRadius: "5px",
-                              flex: 1,
-                              margin: "0 5px",
-                            }}
-                          >
-                            <h6 className="mb-0 fw-bold">{stats.total}</h6>
-                            <small className="text-muted">Tổng</small>
-                          </div>
-                          <div
-                            className="p-2"
-                            style={{
-                              backgroundColor: "#e8f5e8",
-                              borderRadius: "5px",
-                              flex: 1,
-                              margin: "0 5px",
-                            }}
-                          >
-                            <h6 className="mb-0 text-success fw-bold">
-                              {stats.available}
-                            </h6>
-                            <small className="text-muted">Trống</small>
-                          </div>
-                          <div
-                            className="p-2"
-                            style={{
-                              backgroundColor: "#ffe6e6",
-                              borderRadius: "5px",
-                              flex: 1,
-                              margin: "0 5px",
-                            }}
-                          >
-                            <h6 className="mb-0 text-danger fw-bold">
-                              {stats.occupied}
-                            </h6>
-                            <small className="text-muted">Đang dùng</small>
-                          </div>
-                        </div>
-                        <div className="mb-3">
-                          <div className="d-flex justify-content-between align-items-center mb-1">
-                            <small className="text-muted">Tỷ lệ lấp đầy</small>
-                            <small className="fw-bold">{fillRate}%</small>
-                          </div>
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "8px",
-                              backgroundColor: "#e9ecef",
-                              borderRadius: "4px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: `${fillRate}%`,
-                                height: "100%",
-                                backgroundColor: "#343a40",
-                                borderRadius: "4px",
-                              }}
-                            ></div>
-                          </div>
-                        </div>
+                        <p className="text-muted small mb-3">
+                          {area.description}
+                        </p>
                         <div>
                           <p className="mb-0">
                             <span className="text-muted">Sức chứa:</span>{" "}
@@ -513,7 +429,10 @@ const TableIndex = () => {
                   ...opt,
                   badgeCount:
                     opt.value === "all"
-                      ? Object.values(tableStatusCounts).reduce((a, b) => a + b, 0)
+                      ? Object.values(tableStatusCounts).reduce(
+                          (a, b) => a + b,
+                          0
+                        )
                       : tableStatusCounts[opt.value] || 0,
                 }))}
                 value={status}
@@ -584,10 +503,13 @@ const TableIndex = () => {
               {selectedAreaIds.length > 0 && (
                 <div className="d-flex justify-content-center mt-2 mb-0 flex-wrap">
                   {selectedAreaIds.map((id) => {
-                    const area = tableAreas.find(a => a.id === id);
+                    const area = tableAreas.find((a) => a.id === id);
                     if (!area) return null;
                     return (
-                      <span key={id} className="badge-area-selected badge rounded-pill px-3 py-2 d-flex align-items-center m-1">
+                      <span
+                        key={id}
+                        className="badge-area-selected badge rounded-pill px-3 py-2 d-flex align-items-center m-1"
+                      >
                         <span className="me-2">
                           <span>Hiển thị bàn cho khu vực:</span>
                           <strong className="ms-1">{area.name}</strong>
@@ -633,7 +555,7 @@ const TableIndex = () => {
                   </div>
                 )}
               </div>
-              <PaginateUi
+              <CustomPaginate
                 currentPage={currentPage}
                 totalPages={meta.last_page}
                 onPageChange={handlePageChange}
@@ -642,8 +564,6 @@ const TableIndex = () => {
           )}
         </CardBody>
       </Card>
-
-      
 
       <ModalTable
         modalOpen={modalOpen}

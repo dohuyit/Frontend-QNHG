@@ -277,10 +277,12 @@ const FormOrderUpdate = () => {
     comboCategoryFilter,
   ]);
 
-  const fetchDishes = async () => {
+  const fetchDishes = async (page = 1) => {
     setLoadingDishes(true);
     try {
       const params = {
+        page,
+        per_page: meta.per_page || 10,
         name: search || undefined,
         category_id: categoryFilter || undefined,
       };
@@ -294,7 +296,6 @@ const FormOrderUpdate = () => {
           total: res.data.data.meta.total || 0,
           last_page: res.data.data.meta.totalPage || 1,
         });
-        setCurrentPage(res.data.data.meta.page || 1);
       } else {
         setDishes([]);
         setMeta({
@@ -501,14 +502,13 @@ const FormOrderUpdate = () => {
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setCurrentPage(1);
-    fetchDishes(1);
   };
 
   const handleCategoryFilterChange = (e) => {
     setCategoryFilter(e.target.value);
     setCurrentPage(1);
-    fetchDishes(1);
   };
+
 
   const handleComboSearchChange = (e) => {
     setComboSearch(e.target.value);
@@ -1031,7 +1031,12 @@ const FormOrderUpdate = () => {
                   <CustomPaginate
                     currentPage={comboCurrentPage}
                     totalPages={comboMeta.last_page}
-                    onPageChange={setComboCurrentPage}
+                    onPageChange={(pageNumber) => {
+                      if (pageNumber > 0 && pageNumber <= comboMeta.last_page) {
+                        setComboCurrentPage(pageNumber);
+                        fetchCombos(pageNumber);
+                      }
+                    }}
                   />
                 </div>
               </>

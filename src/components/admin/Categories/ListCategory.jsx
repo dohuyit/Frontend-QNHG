@@ -12,9 +12,14 @@ import { FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const ROWS_PER_PAGE = 10;
-const fullUrl = `http://localhost:8000/storage/`;
 
-const ListCategory = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit }) => {
+const ListCategory = ({
+  paginate = {},
+  data = [],
+  onDelete,
+  onPageChange,
+  onEdit,
+}) => {
   const currentPage = paginate.page || 1;
   const perPage = paginate.perPage || ROWS_PER_PAGE;
   const totalPages = paginate.totalPage || 1;
@@ -33,7 +38,6 @@ const ListCategory = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit
             <thead className="table-light">
               <tr>
                 <th style={{ width: 60 }}>#</th>
-                <th>Ảnh</th>
                 <th>Tên danh mục</th>
                 <th>Mô tả</th>
                 <th>Thời gian chế biến (phút)</th>
@@ -53,20 +57,16 @@ const ListCategory = ({ paginate = {}, data = [], onDelete, onPageChange, onEdit
                 data.map((category, idx) => (
                   <tr key={category.id}>
                     <td>{(currentPage - 1) * perPage + idx + 1}</td>
-                    <td>
-                      {category.image_url ? (
-                        <img
-                          src={`${fullUrl}${category.image_url}`}
-                          alt={category.name}
-                          style={{ width: 50, height: 50, objectFit: "cover" }}
-                        />
-                      ) : (
-                        <span className="text-muted">Không có ảnh</span>
-                      )}
-                    </td>
                     <td>{category.name}</td>
                     <td>{category.description}</td>
-                    <td>{category.cooking_time !== undefined && category.cooking_time !== null ? `${category.cooking_time} phút` : <span className="text-muted">Chưa thiết lập</span>}</td>
+                    <td>
+                      {category.cooking_time !== undefined &&
+                      category.cooking_time !== null ? (
+                        `${category.cooking_time} phút`
+                      ) : (
+                        <span className="text-muted">Chưa thiết lập</span>
+                      )}
+                    </td>
                     <td>{category.parent?.name || "Không có"}</td>
                     <td>
                       {category.is_active ? (

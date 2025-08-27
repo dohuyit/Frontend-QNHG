@@ -40,16 +40,16 @@ const FormOrderCreate = () => {
   const [orderNotes, setOrderNotes] = useState("");
   const [orderMethod, setOrderMethod] = useState("Dine In");
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [priority, setPriority] = useState(false);
+  const [priority] = useState(false);
   const [selectedTables, setSelectedTables] = useState([]); // [{id, table_number, ...}]
   const [dishes, setDishes] = useState([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [meta, setMeta] = useState({
-    current_page: 1,
-    per_page: 10,
+    page: 1,
+    perPage: 10,
     total: 0,
-    last_page: 1,
+    totalPage: 1,
   });
   const fullUrl = `http://localhost:8000/storage/`;
 
@@ -72,10 +72,10 @@ const FormOrderCreate = () => {
   const [comboSearch, setComboSearch] = useState("");
   const [comboCategoryFilter, setComboCategoryFilter] = useState("");
   const [comboMeta, setComboMeta] = useState({
-    current_page: 1,
-    per_page: 10,
+    page: 1,
+    perPage: 10,
     total: 0,
-    last_page: 1,
+    totalPage: 1,
   });
   const [comboCurrentPage, setComboCurrentPage] = useState(1);
   const [selectedAreaIdFromTables, setSelectedAreaIdFromTables] =
@@ -118,34 +118,29 @@ const FormOrderCreate = () => {
     fetchCategories();
   }, []);
 
-  const fetchDishes = async () => {
+  const fetchDishes = async (page = 1) => {
     setLoadingDishes(true);
     try {
       const params = {
+        page,
+        per_page: 10,
         name: search || undefined,
         category_id: categoryFilter || undefined,
       };
-
-      console.log(params);
 
       const res = await getDishes(params);
       const items = res.data?.data?.items;
       if (Array.isArray(items)) {
         setDishes(items);
-        setMeta({
-          current_page: res.data.data.meta.page || 1,
-          per_page: res.data.data.meta.perPage || 10,
-          total: res.data.data.meta.total || 0,
-          last_page: res.data.data.meta.totalPage || 1,
-        });
+        setMeta(res.data.data.meta);
         setCurrentPage(res.data.data.meta.page || 1);
       } else {
         setDishes([]);
         setMeta({
-          current_page: 1,
-          per_page: 10,
+          page: 1,
+          perPage: 10,
           total: 0,
-          last_page: 1,
+          totalPage: 1,
         });
         toast.error("Cấu trúc dữ liệu API không đúng!");
       }
@@ -153,10 +148,10 @@ const FormOrderCreate = () => {
       console.error("Error fetching dishes:", error.response || error);
       setDishes([]);
       setMeta({
-        current_page: 1,
-        per_page: 10,
+        page: 1,
+        perPage: 10,
         total: 0,
-        last_page: 1,
+        totalPage: 1,
       });
       toast.error("Lỗi khi tải danh sách món ăn!");
     } finally {
@@ -177,21 +172,16 @@ const FormOrderCreate = () => {
       const items = res.data?.data?.items;
       if (Array.isArray(items)) {
         setCombos(items);
-        setComboMeta({
-          current_page: res.data.data.meta.page || 1,
-          per_page: res.data.data.meta.perPage || 10,
-          total: res.data.data.meta.total || 0,
-          last_page: res.data.data.meta.totalPage || 1,
-        });
+        setComboMeta(res.data.data.meta);
         setComboCurrentPage(res.data.data.meta.page || 1);
       } else {
         setCombos([]);
-        setComboMeta({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
+        setComboMeta({ page: 1, perPage: 10, total: 0, totalPage: 1 });
         toast.error("Cấu trúc dữ liệu API combo không đúng!");
       }
     } catch {
       setCombos([]);
-      setComboMeta({ current_page: 1, per_page: 10, total: 0, last_page: 1 });
+      setComboMeta({ page: 1, perPage: 10, total: 0, totalPage: 1 });
       toast.error("Lỗi khi tải danh sách combo!");
     } finally {
       setLoadingCombos(false);
@@ -251,18 +241,19 @@ const FormOrderCreate = () => {
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setCurrentPage(1);
-    fetchDishes(1);
+    // Không cần gọi fetchDishes ở đây vì useEffect sẽ tự động gọi khi search hoặc currentPage thay đổi
   };
 
   const handleCategoryFilterChange = (e) => {
     setCategoryFilter(e.target.value);
     setCurrentPage(1);
-    fetchDishes(1);
+    // Không cần gọi fetchDishes ở đây vì useEffect sẽ tự động gọi khi categoryFilter hoặc currentPage thay đổi
   };
 
   const handlePageChange = (pageNumber) => {
-    if (pageNumber > 0 && pageNumber <= meta.last_page) {
+    if (pageNumber > 0 && pageNumber <= meta.totalPage) {
       setCurrentPage(pageNumber);
+      // Không cần gọi fetchDishes ở đây vì useEffect sẽ tự động gọi khi currentPage thay đổi
     }
   };
 
@@ -519,7 +510,7 @@ const FormOrderCreate = () => {
               <div className="d-flex justify-content-center mt-3">
                 <CustomPaginate
                   currentPage={currentPage}
-                  totalPages={meta.last_page}
+                  totalPages={meta.totalPage}
                   onPageChange={handlePageChange}
                 />
               </div>
@@ -537,7 +528,7 @@ const FormOrderCreate = () => {
                       onChange={(e) => {
                         setComboSearch(e.target.value);
                         setComboCurrentPage(1);
-                        fetchCombos(1);
+                        // Không cần gọi fetchCombos ở đây vì useEffect sẽ tự động gọi khi comboSearch hoặc comboCurrentPage thay đổi
                       }}
                     />
                   </div>
@@ -549,7 +540,7 @@ const FormOrderCreate = () => {
                     onChange={(e) => {
                       setComboCategoryFilter(e.target.value);
                       setComboCurrentPage(1);
-                      fetchCombos(1);
+                      // Không cần gọi fetchCombos ở đây vì useEffect sẽ tự động gọi khi comboCategoryFilter hoặc comboCurrentPage thay đổi
                     }}
                     disabled={loadingCategories}
                   >
@@ -606,8 +597,13 @@ const FormOrderCreate = () => {
               <div className="d-flex justify-content-center mt-3">
                 <CustomPaginate
                   currentPage={comboCurrentPage}
-                  totalPages={comboMeta.last_page}
-                  onPageChange={setComboCurrentPage}
+                  totalPages={comboMeta.totalPage}
+                  onPageChange={(pageNumber) => {
+                    if (pageNumber > 0 && pageNumber <= comboMeta.totalPage) {
+                      setComboCurrentPage(pageNumber);
+                      // Không cần gọi fetchCombos ở đây vì useEffect sẽ tự động gọi khi comboCurrentPage thay đổi
+                    }
+                  }}
                 />
               </div>
             </>
