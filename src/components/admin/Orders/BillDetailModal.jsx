@@ -20,7 +20,6 @@ import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import {
   getBillDetails,
   exportBill,
-  BASE_URL,
 } from "@services/admin/orderService";
 import { toast } from "react-toastify";
 import {
@@ -41,7 +40,9 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString("vi-VN");
 };
 
-const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
+const fullUrl = `http://localhost:8000/storage/`;
+
+const BillDetailModal = ({ isOpen, toggle, orderId }) => {
   const [billData, setBillData] = useState(null);
   const [paymentData, setPaymentData] = useState(null);
   const [orderData, setOrderData] = useState(null);
@@ -408,8 +409,8 @@ const BillDetailModal = ({ isOpen, toggle, orderId, fullUrl }) => {
                           <div className="d-flex align-items-center">
                             <img
                               src={
-                                item.menu_item?.image_url
-                                  ? `${fullUrl}${item.menu_item.image_url}`
+                                (item.menu_item?.image_url || item.combo?.image_url)
+                                  ? `${fullUrl}${item.menu_item?.image_url || item.combo?.image_url}`
                                   : dishDefaultImg
                               }
                               alt={

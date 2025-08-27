@@ -15,6 +15,7 @@ import {
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import ListTrashCombo from "@components/admin/Combos/ListTrashCombo";
 import ModalCombo from "@components/admin/Combos/ModalCombo";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
 import { toast } from "react-toastify";
 import {
   getCombos,
@@ -466,28 +467,7 @@ const ComboIndex = () => {
                   </h4>
                   <div className="mb-2">{selectedCombo.description}</div>
                   <div className="row mb-2">
-                    <div className="col-6">
-                      <div
-                        style={{
-                          background: "#f8f9fa",
-                          borderRadius: 8,
-                          padding: 12,
-                        }}
-                      >
-                        <div style={{ color: "#888" }}>Giá gốc</div>
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            fontSize: 18,
-                            textDecoration: "line-through",
-                          }}
-                        >
-                          {selectedCombo.original_total_price?.toLocaleString()}{" "}
-                          đ
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-6">
+                    <div className="col-12 mt-3">
                       <div
                         style={{
                           background: "#e6f9ed",
@@ -503,52 +483,11 @@ const ComboIndex = () => {
                             color: "#28a745",
                           }}
                         >
-                          {selectedCombo.selling_price?.toLocaleString()} đ
+                          {formatPriceToVND(selectedCombo.selling_price || 0)}
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div
-                    className="mb-2"
-                    style={{
-                      background: "#fff6ed",
-                      borderRadius: 8,
-                      padding: 12,
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "#ff6600",
-                        fontWeight: 600,
-                        fontSize: 18,
-                      }}
-                    >
-                      Mức giảm giá {selectedCombo.discount_percent || 0}%
-                    </span>
-                  </div>
-                  <div className="row mt-2">
-                    <div className="col-6">
-                      <div
-                        style={{
-                          background: "#eafaf3",
-                          borderRadius: 8,
-                          padding: 12,
-                          textAlign: "center",
-                        }}
-                      >
-                        <div
-                          style={{
-                            color: "#28a745",
-                            fontWeight: 600,
-                            fontSize: 24,
-                          }}
-                        >
-                          {selectedCombo.orders || 0}
-                        </div>
-                        <div>Đơn hàng</div>
-                      </div>
-                    </div>
-                    <div className="col-6">
+                    <div className="col-12 mt-2">
                       <div
                         style={{
                           background: "#f8f9fa",
