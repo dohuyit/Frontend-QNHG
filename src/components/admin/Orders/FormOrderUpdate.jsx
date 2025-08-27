@@ -164,7 +164,7 @@ const FormOrderUpdate = () => {
                   id: item.combo_id.id,
                   name: item.combo_id.combo_name || "Combo không tên",
                   price: item.unit_price || item.price,
-                  image_url: item.image_url,
+                  image_url: item.combo_id?.image_url || item.image_url,
                   combo_id: item.combo_id.id,
                 };
               } else {
@@ -1518,7 +1518,9 @@ const FormOrderUpdate = () => {
                             <img
                               src={
                                 item.image_url
-                                  ? `${fullUrl}${item.image_url}`
+                                  ? (String(item.image_url).startsWith("http")
+                                      ? item.image_url
+                                      : `${fullUrl}${item.image_url}`)
                                   : dishDefaultImg
                               }
                               alt={
@@ -1527,6 +1529,10 @@ const FormOrderUpdate = () => {
                                   : item.name || "Món ăn không tên"
                               }
                               className="order-item-img"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = dishDefaultImg;
+                              }}
                             />
                           </div>
                           <div className="flex-grow-1 d-flex align-items-center">
