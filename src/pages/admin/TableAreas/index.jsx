@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -9,8 +9,6 @@ import {
   Col,
   Spinner,
   Input,
-  InputGroup,
-  InputGroupText,
   Form,
   FormGroup,
   Label,
@@ -23,6 +21,7 @@ import Badge from "@components/admin/ui/Badge";
 import {
   getTableAreas,
   countTableArea,
+  deleteTableArea,
 } from "@services/admin/tableAreaService";
 import Swal from "sweetalert2";
 import TableAreaModal from "./TableAreaModal";
@@ -63,6 +62,15 @@ const TableAreaIndex = () => {
     all: 0,
   });
 
+  // Client-side search filter
+  const filteredAreas = useMemo(() => {
+    const keyword = (search || "").toLowerCase().trim();
+    if (!keyword) return areaData.items || [];
+    return (areaData.items || []).filter((a) =>
+      String(a.name || "").toLowerCase().includes(keyword)
+    );
+  }, [areaData.items, search]);
+
   const statusOptions = [
     { value: "all", label: "Tất cả", badgeColor: "secondary" },
     { value: "active", label: "Hoạt động", badgeColor: "success" },
@@ -75,25 +83,21 @@ const TableAreaIndex = () => {
       const params = {
         page,
         per_page: 10,
-        // Nếu filterName có giá trị thì không gửi query (search)
-        query: filterName ? undefined : search || undefined,
+        // Không gửi search lên API nữa - lọc ở client
         status: status !== "all" ? status : undefined,
         name: filterName || undefined,
         capacity: filterCapacity || undefined,
       };
       const res = await getTableAreas(params);
-      console.log("API SUCCESS:", res.data);
-      setAreaData({
-        items: res.data.data.items,
-        meta: res.data.data.meta,
-      });
+      const data = res.data?.data || {};
+      setAreaData({ items: data.items || [], meta: data.meta || {} });
       setMeta({
-        current_page: res.data.data.meta.page || 1,
-        per_page: res.data.data.meta.perPage || 10,
-        total: res.data.data.meta.total || 0,
-        last_page: res.data.data.meta.totalPage || 1,
+        current_page: data.meta?.page || 1,
+        per_page: data.meta?.perPage || 10,
+        total: data.meta?.total || 0,
+        last_page: data.meta?.totalPage || 1,
       });
-      setCurrentPage(res.data.data.meta.page || 1);
+      setCurrentPage(data.meta?.page || 1);
     } catch (error) {
       console.error("API ERROR:", error);
       Swal.fire({
@@ -119,7 +123,8 @@ const TableAreaIndex = () => {
   useEffect(() => {
     fetchTableAreas(currentPage);
     fetchAreaStatusCounts();
-  }, [currentPage, search, status, filterName, filterCapacity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, status, filterName, filterCapacity]);
 
   const openAddModal = () => {
     setIsEdit(false);
@@ -129,7 +134,6 @@ const TableAreaIndex = () => {
   };
 
   const openEditModal = (area) => {
-    console.log("Opening edit modal for area:", area);
     setIsEdit(true);
     setSelectedId(area.id);
     setErrors({});
@@ -141,8 +145,6 @@ const TableAreaIndex = () => {
       setErrors(validationErrors);
       return;
     }
-
-    // Success case - refresh data and close modal
     fetchTableAreas(currentPage);
     setModalOpen(false);
     setErrors({});
@@ -151,44 +153,70 @@ const TableAreaIndex = () => {
   const handleStatusChange = (value) => {
     setStatus(value);
     setCurrentPage(1);
-    fetchTableAreas(1);
   };
 
-  const getStatusBadge = (status) => {
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= (meta.last_page || 1)) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: "Xác nhận xóa",
+        text: "Bạn có chắc chắn muốn xóa khu vực bàn này không?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Xóa",
+        cancelButtonText: "Hủy",
+      });
+      if (result.isConfirmed) {
+        await deleteTableArea(id);
+        Swal.fire({
+          title: "Thành công!",
+          text: "Đã xóa khu vực bàn thành công",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+        fetchTableAreas(currentPage);
+      }
+    } catch (error) {
+      console.error("Error deleting area:", error);
+      Swal.fire({
+        title: "Lỗi!",
+        text: error.response?.data?.message || "Không thể xóa khu vực bàn",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
+  const getStatusBadge = (st) => {
     const statusConfig = {
       active: { type: "success", text: "Hoạt động" },
       inactive: { type: "danger", text: "Không hoạt động" },
     };
-    const config = statusConfig[status] || {
-      type: "secondary",
-      text: "Không xác định",
-    };
+    const config = statusConfig[st] || { type: "secondary", text: "Không xác định" };
     return <Badge type={config.type}>{config.text}</Badge>;
   };
 
   return (
     <div className="page-content">
-      <Breadcrumbs
-        title="Danh sách khu vực bàn"
-        breadcrumbItem="Quản lí khu vực bàn"
-      />
+      <Breadcrumbs title="Danh sách khu vực bàn" breadcrumbItem="Quản lí khu vực bàn" />
 
-      {/* Status Filter Card */}
       <Card className="mb-4">
         <CardHeader className="bg-white border-bottom-0">
           <Row className="align-items-center">
-            <Col
-              md={7}
-              sm={12}
-              className="mb-2 mb-md-0 d-flex align-items-center"
-            >
+            <Col md={7} sm={12} className="mb-2 mb-md-0 d-flex align-items-center">
               <StatusFilterGroup
                 options={statusOptions.map((opt) => ({
                   ...opt,
                   badgeCount:
                     opt.value === "all"
-                      ? (areaStatusCounts.active || 0) +
-                        (areaStatusCounts.inactive || 0)
+                      ? (areaStatusCounts.active || 0) + (areaStatusCounts.inactive || 0)
                       : areaStatusCounts[opt.value] || 0,
                 }))}
                 value={status}
@@ -196,11 +224,7 @@ const TableAreaIndex = () => {
                 style={{ gap: "1rem" }}
               />
             </Col>
-            <Col
-              md={5}
-              sm={12}
-              className="d-flex justify-content-md-end justify-content-start gap-2"
-            >
+            <Col md={5} sm={12} className="d-flex justify-content-md-end justify-content-start gap-2">
               <Button color="success" onClick={openAddModal}>
                 <i className="mdi mdi-plus me-1"></i>
                 Thêm khu vực bàn
@@ -210,7 +234,6 @@ const TableAreaIndex = () => {
         </CardHeader>
       </Card>
 
-      {/* Search and Filter Card */}
       <Card className="mb-4">
         <CardHeader className="bg-white border-bottom-0">
           <SearchAndStatusFilterBar
@@ -222,12 +245,7 @@ const TableAreaIndex = () => {
             searchPlaceholder="Tìm kiếm khu vực bàn..."
             statusPlaceholder="Tất cả trạng thái"
             rightContent={
-              <Button
-                color="light"
-                className="border"
-                style={{ minWidth: 140 }}
-                onClick={() => setShowFilter(true)}
-              >
+              <Button color="light" className="border" style={{ minWidth: 140 }} onClick={() => setShowFilter(true)}>
                 <i className="mdi mdi-filter-variant me-1"></i> Lọc nâng cao
               </Button>
             }
@@ -235,28 +253,18 @@ const TableAreaIndex = () => {
         </CardHeader>
       </Card>
 
-      {/* Advanced Filter Offcanvas */}
-      <Offcanvas
-        direction="end"
-        isOpen={showFilter}
-        toggle={() => setShowFilter(false)}
-      >
+      <Offcanvas direction="end" isOpen={showFilter} toggle={() => setShowFilter(false)}>
         <OffcanvasHeader toggle={() => setShowFilter(false)}>
           <span>Bộ lọc nâng cao</span>
           <Button
             color="light"
             size="sm"
-            style={{
-              position: "absolute",
-              right: 48,
-              top: 12,
-              boxShadow: "none",
-              zIndex: 1,
-            }}
+            style={{ position: "absolute", right: 48, top: 12, boxShadow: "none", zIndex: 1 }}
             onClick={() => {
               setFilterName("");
               setFilterCapacity("");
-              fetchTableAreas();
+              setCurrentPage(1);
+              fetchTableAreas(1);
             }}
             title="Làm mới bộ lọc"
           >
@@ -289,7 +297,6 @@ const TableAreaIndex = () => {
         </OffcanvasBody>
       </Offcanvas>
 
-      {/* Data Table Card */}
       <Card>
         <CardBody>
           {loading ? (
@@ -309,14 +316,14 @@ const TableAreaIndex = () => {
                 </tr>
               </thead>
               <tbody>
-                {areaData.items.length === 0 ? (
+                {filteredAreas.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center text-muted">
                       Không có dữ liệu
                     </td>
                   </tr>
                 ) : (
-                  areaData.items.map((area, idx) => (
+                  filteredAreas.map((area, idx) => (
                     <tr key={area.id}>
                       <td>{idx + 1}</td>
                       <td>{area.name}</td>
@@ -324,14 +331,12 @@ const TableAreaIndex = () => {
                       <td>{area.capacity} người</td>
                       <td>{getStatusBadge(area.status)}</td>
                       <td>
-                        <div className="text-center" role="group">
-                          <Button
-                            color="primary"
-                            size="sm"
-                            onClick={() => openEditModal(area)}
-                            title="Chỉnh sửa"
-                          >
+                        <div className="btn-group" role="group">
+                          <Button color="primary" size="sm" onClick={() => openEditModal(area)} title="Chỉnh sửa">
                             <i className="mdi mdi-pencil"></i>
+                          </Button>
+                          <Button color="danger" size="sm" onClick={() => handleDelete(area.id)} title="Xóa">
+                            <i className="mdi mdi-delete"></i>
                           </Button>
                         </div>
                       </td>
@@ -344,7 +349,6 @@ const TableAreaIndex = () => {
         </CardBody>
       </Card>
 
-      {/* TableAreaModal component */}
       <TableAreaModal
         modalOpen={modalOpen}
         setModalOpen={setModalOpen}
