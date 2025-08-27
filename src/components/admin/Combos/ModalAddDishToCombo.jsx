@@ -3,6 +3,9 @@ import { Modal, Button } from "reactstrap";
 import { addItemToCombo } from "@services/admin/comboService";
 import { toast } from "react-toastify";
 import { getDishes } from "@services/admin/dishService";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
+
+const fullUrl = `http://localhost:8000/storage/`;
 
 const ModalAddDishToCombo = ({
   isOpen,
@@ -133,26 +136,39 @@ const ModalAddDishToCombo = ({
                   }}
                 >
                   <div className="d-flex align-items-center">
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        background: "#eee",
-                        marginRight: 16,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 20,
-                        color: "#bbb",
-                      }}
-                    >
-                      <i className="mdi mdi-image"></i>
+                    <div style={{ marginRight: 16 }}>
+                      {dish.image_url ? (
+                        <img
+                          src={`${fullUrl}${dish.image_url}`}
+                          alt={dish.name}
+                          style={{
+                            width: 48,
+                            height: 48,
+                            objectFit: "cover",
+                            borderRadius: 4
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 4,
+                            background: "#eee",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#bbb",
+                          }}
+                        >
+                          <i className="mdi mdi-image"></i>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <div style={{ fontWeight: 600 }}>{dish.name}</div>
                       <div style={{ color: "#888", fontSize: 15 }}>
-                        {dish.selling_price?.toLocaleString()} đ &nbsp;•&nbsp;{" "}
+                        {formatPriceToVND(dish.selling_price)} &nbsp;•&nbsp; {" "}
                         {dish.category?.name || "Chưa phân loại"}
                       </div>
                     </div>

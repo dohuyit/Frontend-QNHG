@@ -17,6 +17,9 @@ import { toast } from "react-toastify";
 import { getDishes } from "@services/admin/dishService";
 import ModalAddDishToCombo from "@components/admin/Combos/ModalAddDishToCombo";
 import { createCombo, updateCombo } from "@services/admin/comboService";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
+
+const fullUrl = `http://localhost:8000/storage/`;
 
 const ModalCombo = ({
   modalOpen,
@@ -44,9 +47,8 @@ const ModalCombo = ({
 
   useEffect(() => {
     if (modalOpen) {
-      const fullImageUrl = "http://localhost:8000/storage/";
       if (isEdit && combo.image_url && typeof combo.image_url === "string") {
-        setPreviewImage(`${fullImageUrl}${combo.image_url}`);
+        setPreviewImage(`${fullUrl}${combo.image_url}`);
       } else {
         setPreviewImage(null);
       }
@@ -309,7 +311,7 @@ const ModalCombo = ({
             <Col md={5}>
               {/* Tổng giá gốc các món */}
               <div style={{ marginBottom: 16, background: "#fffbe6", borderRadius: 8, padding: 12, fontWeight: 600, fontSize: 18, color: "#ff6600", textAlign: "center", border: "1px solid #ffe58f" }}>
-                Tổng giá gốc: {combo.original_total_price?.toLocaleString()} đ
+                Tổng giá gốc: {formatPriceToVND(combo.original_total_price || 0)}
               </div>
               <div style={{ maxHeight: 420, overflowY: "auto", border: "1px solid #eee", borderRadius: 8, padding: 12, background: "#fafbfc" }}>
                 <div className="fw-bold mb-2">Danh sách món ăn</div>
@@ -342,9 +344,14 @@ const ModalCombo = ({
                           >
                             {item.image_url ? (
                               <img
-                                src={item.image_url}
-                                alt={item.name}
+                                src={`${fullUrl}${item.image_url}`}
+                                alt={item.name || item.dish_name}
                                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '';
+                                  e.target.parentElement.innerHTML = '<i class="mdi mdi-food" style="font-size: 22px; color: #bbb;"></i>';
+                                }}
                               />
                             ) : (
                               <i className="mdi mdi-food" style={{ fontSize: 22, color: "#bbb" }}></i>
@@ -353,7 +360,7 @@ const ModalCombo = ({
                           <div>
                             <div style={{ fontWeight: 600 }}>{item.name || item.dish_name}</div>
                             <div style={{ color: "#888", fontSize: 15 }}>
-                              {item.selling_price?.toLocaleString()} đ{" "}
+                              {formatPriceToVND(item.selling_price || 0)}{" "}
                               {item.category?.name && (
                                 <span
                                   style={{

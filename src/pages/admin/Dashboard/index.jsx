@@ -17,6 +17,7 @@ import classNames from "classnames";
 
 import Breadcrumbs from "@components/admin/ui/Breadcrumb";
 import StackedColumnChart from "./StackedColumnChart";
+import { formatPriceToVND } from "@helpers/formatPriceToVND";
 
 import {
   getReservationStatusStats,
@@ -68,7 +69,7 @@ const Dashboard = ({ t = (key) => key })  => {
   );
 
   // Giá trung bình
-  const averagePrice = totalOrders ? (totalRevenue / totalOrders).toFixed(2) : 0;
+  const averagePrice = totalOrders ? totalRevenue / totalOrders : 0;
 
   // Dữ liệu báo cáo tổng quan
   const reports = [
@@ -81,13 +82,13 @@ const Dashboard = ({ t = (key) => key })  => {
     {
       title: t("Doanh thu"),
       iconClass: "bx-archive-in",
-      description: `$${totalRevenue.toFixed(2)}`,
+      description: formatPriceToVND(totalRevenue),
       color: "success",
     },
     {
       title: t("Giá trung bình"),
       iconClass: "bx-purchase-tag-alt",
-      description: `$${averagePrice}`,
+      description: formatPriceToVND(averagePrice),
       color: "warning",
     },
   ];

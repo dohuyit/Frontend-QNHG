@@ -433,7 +433,7 @@ const FaceIndex = () => {
           </ModalHeader>
           <ModalBody>
             <Row>
-              <Col md={6}>
+              <Col md={12}>
                 <Form>
                   <FormGroup>
                     <Label>Chọn nhân viên cần đăng ký <span className="text-danger">*</span></Label>
@@ -458,7 +458,7 @@ const FaceIndex = () => {
                   })()}
                 </Form>
               </Col>
-              <Col md={6}>
+              <Col md={12}>
                 <Alert color="info" fade={false}>
                   <i className="fas fa-info-circle me-2"></i>
                   Hệ thống sẽ chụp {FACE_RECOGNITION_CONSTANTS.MAX_IMAGES} ảnh khuôn mặt của bạn.
@@ -471,7 +471,7 @@ const FaceIndex = () => {
                 <div className="text-center mb-3">
                   <div className="position-relative d-inline-block">
                     <video ref={videoRef} autoPlay playsInline muted
-                      style={{ width: '400px', height: '300px', border: '2px solid #ddd', borderRadius: '8px', background: '#000' }} />
+                      style={{ width: '100%', height: '300px', border: '2px solid #ddd', borderRadius: '8px', background: '#000' }} />
                     {!isVideoReady && (
                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }}
                         className="d-flex flex-column align-items-center justify-content-center text-white">

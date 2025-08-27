@@ -220,7 +220,7 @@ export const cameraUtils = {
 // Constants
 export const FACE_RECOGNITION_CONSTANTS = {
   MIN_ACCURACY: 20,
-  MAX_IMAGES: 100,
-  CAPTURE_INTERVAL: 20, // ms
+  MAX_IMAGES: 20,
+  CAPTURE_INTERVAL: 5, // ms
   ROLES: ['Admin', 'Quản lý bếp', 'Nhân viên']
 };
